@@ -1,14 +1,16 @@
 package cars;
 
+import java.io.Serializable;
 import java.time.Instant;
 
-public class NodeData {
+public class Pulse implements Serializable {
+	//private String idSender;
 	private String msgID;
 	private String position;
 	private double velocity;
 	private Instant timestamp;
 	
-	public NodeData(String msgID, String position, double velocity, Instant timestamp) {
+	public Pulse(String msgID, String position, double velocity, Instant timestamp) {
 		super();
 		this.msgID = msgID;
 		this.position = position;
@@ -31,6 +33,5 @@ public class NodeData {
 	public Instant getTimestamp() {
 		return timestamp;
 	}
-	
 	
 }

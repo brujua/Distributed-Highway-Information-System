@@ -1,12 +1,15 @@
 package cars;
+
+import java.io.Serializable;
+
 /*
  * Structure of information of a Node
 */
-public class StNode {
+public class StNode implements Serializable {
 	private String id;
 	private String ip;
 	private int port;
-	NodeData lastestData;
+	Pulse lastestData;
 	
 	public StNode(String id, String ip, int port) {
 		super();
