@@ -4,7 +4,11 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class Car implements Listener{
+public class Car implements MsgListener{
+	// temporary constants
+	public final String ip = "localhost";
+	public final int port = 5555;
+	
 	private String id;
 	private String position;
 	private double velocity;
@@ -22,7 +26,7 @@ public class Car implements Listener{
 		msgCounter = BigInteger.valueOf(0);
 		highWayNodes = new ArrayList<>();
 		neighs = new ArrayList<>();
-		msgHandler = new MsgHandler();
+		msgHandler = new MsgHandler(this.ip, this.port);
 		msgHandler.addListener(this);
 		
 		registerInNetwork();

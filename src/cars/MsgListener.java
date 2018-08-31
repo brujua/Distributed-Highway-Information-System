@@ -1,5 +1,5 @@
 package cars;
 
-public interface Listener {
+public interface MsgListener {
 	public void notify(Message m);
 }
