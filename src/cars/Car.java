@@ -13,7 +13,6 @@ public class Car implements MsgListener{
 	private String position;
 	private double velocity;
 	private BigInteger msgCounter;
-	//private Thread listeningThread;
 	private MsgHandler msgHandler;
 	private ArrayList<StNode> highWayNodes; // centralized part of the network
 	private ArrayList<StNode> neighs; //other cars near by
@@ -26,20 +25,26 @@ public class Car implements MsgListener{
 		msgCounter = BigInteger.valueOf(0);
 		highWayNodes = new ArrayList<>();
 		neighs = new ArrayList<>();
+		//first register in the highway network
+		registerInNetwork();
+		//then start listening for msgs with the MsgHandler
 		msgHandler = new MsgHandler(this.ip, this.port);
 		msgHandler.addListener(this);
 		
-		registerInNetwork();
+		
 		emitPulses();
 	}
 	
 	private void registerInNetwork() {
+		//send hello to first highwayNode
+		// if it doenst reply in some time, try next one
 		
+		//send and receive
 		
 	}
 	
 	private void emitPulses() {
-		
+		//call to method emitMessage() of the msgHandler
 	}
 
 	
@@ -52,7 +57,21 @@ public class Car implements MsgListener{
 
 	@Override
 	public void notify(Message m) {
-		// TODO Auto-generated method stub
+		// TODO
+		switch(m.getType()) {
+			case HELLO: {
+				break;
+			}
+			case PULSE: {
+				break;
+			}
+			case REDIRECT: {
+				break;
+			}
+			default: {
+				//TODO log message of unknown type
+			}
+		}
 		
 	}
 
