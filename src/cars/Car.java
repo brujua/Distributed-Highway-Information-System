@@ -1,32 +1,38 @@
 package cars;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.math.BigInteger;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketTimeoutException;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.UUID;
 
-import common.Message;
-import common.MsgHandler;
-import common.MsgListener;
-import common.StNode;
+import common.*;
 
 public class Car implements MsgListener{
+	private static final int HELLO_TIMEOUT = 1000;
 	// temporary constants
 	public final String ip = "localhost";
 	public final int port = 5555;
 	
 	private String id;
-	private String position;
+	private Position position;
 	private double velocity;
 	private BigInteger msgCounter;
 	private MsgHandler msgHandler;
 	
-	//ACA CREO QUE LOS NODOS DE LA AUTOPISTA TIENEN ESTRUCTURA DISTINTA A LA DE LOS NODOS AUTOS
-	//@TODO
-	
 	private ArrayList<StNode> highWayNodes; // centralized part of the network
 	private ArrayList<StNode> neighs; //other cars near by
 	
-	public Car (String position, double velocity) {
+	public Car (Position position, double velocity) throws NoPeersFoundException {
 		super();
 		id = UUID.randomUUID().toString();
 		this.position = position;
@@ -44,11 +50,48 @@ public class Car implements MsgListener{
 		emitPulses();
 	}
 	
-	private void registerInNetwork() {
-		//send hello to first highwayNode
-		// if it doenst reply in some time, try next one
+	private void registerInNetwork() throws NoPeersFoundException {
+		boolean registered = false;
+		StNode highwNode;
+		Iterator<StNode> nodIterator = highWayNodes.iterator();
 		
-		//send and receive
+		byte[] packetBuffer = new byte[1024];
+		DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
+		ByteArrayInputStream bin = new ByteArrayInputStream(packetBuffer);
+		DataInputStream din = new DataInputStream(bin);  
+		
+		while(!registered) {
+			if(nodIterator.hasNext()) 
+				highwNode = nodIterator.next();
+			else 
+				throw new NoPeersFoundException(); 
+			try {
+				//send hello
+				Message msg = new Message(MsgType.HELLO, this.getPulse());
+				byte[] serializedMessage = msg.toByteArr();
+				DatagramPacket udpPckt = new DatagramPacket(serializedMessage, serializedMessage.length, InetAddress.getByName(highwNode.getIP()) , highwNode.getPort());
+				
+				DatagramSocket udpS = new DatagramSocket(this.port);
+				//wait for response
+				udpS.setSoTimeout(HELLO_TIMEOUT);  
+		        while(true){    // receive data until timeout
+		            try {
+		                udpS.receive(receiverPacket);
+		                registered=true;
+		            }
+		            catch (SocketTimeoutException e) {
+		                // timeout exception.
+		                //TODO log
+		            	break;
+		            }
+		        }
+		        
+			} catch(Exception e) {
+				e.printStackTrace();
+				//TODO log
+			}
+		};
+		
 		
 	}
 	
@@ -56,7 +99,9 @@ public class Car implements MsgListener{
 		//call to method emitMessage() of the msgHandler
 	}
 
-	
+	public Pulse getPulse() {
+		return new Pulse(id + msgCounter, position, velocity, Instant.now());
+	}
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
