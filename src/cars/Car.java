@@ -3,13 +3,16 @@ package cars;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.IOException;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -58,7 +61,7 @@ public class Car implements MsgListener{
 		byte[] packetBuffer = new byte[1024];
 		DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
 		ByteArrayInputStream bin = new ByteArrayInputStream(packetBuffer);
-		DataInputStream din = new DataInputStream(bin);  
+		//DataInputStream din = new DataInputStream(bin);  
 		
 		while(!registered) {
 			if(nodIterator.hasNext()) 
@@ -103,8 +106,30 @@ public class Car implements MsgListener{
 		return new Pulse(id + msgCounter, position, velocity, Instant.now());
 	}
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
+		String agusIP = "192.168.0.65";
+		int port = 9000;
+		
+		Message msg = new Message(MsgType.HELLO, new Pulse("5555", new Position("0", "5"), 4.5, Instant.now()));
+		byte[] serializedMessage = msg.toByteArr();
+		DatagramSocket socket;
+		DatagramPacket udpPckt;
+		try {
+			socket = new DatagramSocket(5554);
+			udpPckt = new DatagramPacket(serializedMessage, serializedMessage.length, InetAddress.getByName(agusIP) , port);
+			socket.send(udpPckt);
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SocketException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		
 	}
 
 
