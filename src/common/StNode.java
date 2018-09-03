@@ -1,4 +1,4 @@
-package cars;
+package common;
 
 import java.io.Serializable;
 

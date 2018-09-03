@@ -1,4 +1,4 @@
-package cars;
+package common;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +26,7 @@ public class MsgHandler implements MsgObservable{
 	}
 
 	@Override
+	// El parametro tendria que ser objeto, entonces para todos los nodos se usa segun su instanceofObj 
 	public void addListener(MsgListener l) {
 		// TODO Auto-generated method stub
 		

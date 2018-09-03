@@ -3,14 +3,16 @@ package cars;
 import java.io.Serializable;
 import java.time.Instant;
 
+import common.Position;
+
 public class Pulse implements Serializable {
 	//private String idSender;
 	private String msgID;
-	private String position;
+	private Position position;
 	private double velocity;
 	private Instant timestamp;
 	
-	public Pulse(String msgID, String position, double velocity, Instant timestamp) {
+	public Pulse(String msgID, Position position, double velocity, Instant timestamp) {
 		super();
 		this.msgID = msgID;
 		this.position = position;
@@ -22,7 +24,7 @@ public class Pulse implements Serializable {
 		return msgID;
 	}
 
-	public String getPosition() {
+	public Position getPosition() {
 		return position;
 	}
 

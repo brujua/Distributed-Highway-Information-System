@@ -4,6 +4,11 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.UUID;
 
+import common.Message;
+import common.MsgHandler;
+import common.MsgListener;
+import common.StNode;
+
 public class Car implements MsgListener{
 	// temporary constants
 	public final String ip = "localhost";
@@ -14,6 +19,10 @@ public class Car implements MsgListener{
 	private double velocity;
 	private BigInteger msgCounter;
 	private MsgHandler msgHandler;
+	
+	//ACA CREO QUE LOS NODOS DE LA AUTOPISTA TIENEN ESTRUCTURA DISTINTA A LA DE LOS NODOS AUTOS
+	//@TODO
+	
 	private ArrayList<StNode> highWayNodes; // centralized part of the network
 	private ArrayList<StNode> neighs; //other cars near by
 	
