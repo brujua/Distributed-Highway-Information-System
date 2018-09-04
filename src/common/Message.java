@@ -31,7 +31,7 @@ public class Message implements Serializable{
 			oo.writeObject(this);
 			oo.close();	
 		} catch (IOException e) {
-			// TODO log error
+			// TODO log error 
 			e.printStackTrace();
 		}			
 		return bStream.toByteArray();

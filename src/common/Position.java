@@ -1,6 +1,8 @@
 package common;
 
-public class Position {
+import java.io.Serializable;
+
+public class Position implements Serializable{
 
 	private String cordx;
 	private String cordy;
