@@ -109,7 +109,7 @@ public class Car implements MsgListener{
 		String agusIP = "192.168.0.65";
 		int port = 9000;
 		
-		Message msg = new Message(MsgType.HELLO, new Pulse("5555", new Position("0", "5"), 4.5, Instant.now()));
+		Message msg = new Message(MsgType.HELLO, new Pulse("5555", new Position(0.0, 5.0,Units.KiloMeters), 4.5, Instant.now()));
 		byte[] serializedMessage = msg.toByteArr();
 		DatagramSocket socket;
 		DatagramPacket udpPckt;

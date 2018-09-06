@@ -1,8 +1,13 @@
 package highway;
 
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
 import java.math.BigInteger;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.util.ArrayList;
 
+import cars.Pulse;
 import common.Message;
 import common.MsgHandler;
 import common.MsgListener;
@@ -39,7 +44,21 @@ public class HighWay implements MsgListener{
 
 	
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+		try {
+			byte[] packetBuffer = new byte[1024];
+			DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
+			DatagramSocket sockett = new DatagramSocket(9000);
+			sockett.receive(receiverPacket);
+			ByteArrayInputStream baos = new ByteArrayInputStream(packetBuffer);
+		      ObjectInputStream oos = new ObjectInputStream(baos);
+		      Message m = (Message)oos.readObject();
+		      System.out.println(m.getType());
+		      Pulse p =(Pulse) m.getData();
+		      System.out.println(p.getMsgID());
+		      
+		} catch (Exception e) {
+			
+		}
 
 	}
 	

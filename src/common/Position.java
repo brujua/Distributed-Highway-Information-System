@@ -1,38 +1,47 @@
 package common;
 
-public class Position {
+import java.io.Serializable;
 
-	private String cordx;
-	private String cordy;
+public class Position implements Serializable{
+
+	private Double cordx;
+	private Double cordy;
+	private Units unity;
 	//max distance to a near node
 	private final double maxDistance = 10;
 	
 	
 	
-	public Position(String coordX, String coordY) {
+	public Position(Double coordX, Double coordY, Units kilometers) {
 		super();
 		coordX = cordx;
 		coordY = cordy;
+		kilometers = kilometers;
 		
 		
 		
 	}
 
-	public String getCordx() {
+	public Double getCordx() {
 		return cordx;
 	}
 
-	public String getCordy() {
+	public Double getCordy() {
 		return cordy;
 	}
 	
-	public void isNear(Position position) {
+	public Units getUnity() {
+		return this.unity;
+	}
+	
+	public double distance(Position position) {
 		
-		//Return if the parameter position is near this position 
-		//TODO
-		return ;
+		double distX = Math.pow((position.cordx - this.cordx),2); 
+		double distY = Math.pow((position.cordy - this.cordy),2);
+				
+		return Math.sqrt(distX+distY) ;
 		
 	}
 	
-	
+
 }
