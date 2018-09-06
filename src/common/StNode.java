@@ -29,6 +29,14 @@ public class StNode implements Serializable, Messageable {
 	public int getPort() {
 		return this.port;
 	}
+
+
+
+	@Override
+	public String getId() {
+		
+		return this.id;
+	}
 	
 	
 	

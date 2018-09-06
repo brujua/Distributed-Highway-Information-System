@@ -43,6 +43,37 @@ public class HighWay implements MsgListener{
 	}
 
 	
+	public ArrayList<StNode> getCarNodes(){
+		
+		return this.carNodes;
+		
+		
+	}
+	
+	private void addCarNode (StNode car){
+		synchronized (this.carNodes) {
+			this.carNodes.add(car);
+		
+		}
+	}
+	
+	
+	private void removeCarNode (StNode car){
+		
+		synchronized (this.carNodes) {
+			ArrayList<StNode> auxlist = new ArrayList<StNode>();
+			
+			for(StNode carNode: this.carNodes) {
+				if (carNode.getId() != car.getId()) {
+					auxlist.add(carNode);
+				}
+			}
+			
+			this.carNodes = auxlist;
+		}
+	}
+	
+	
 	public static void main(String[] args) {
 		try {
 			byte[] packetBuffer = new byte[1024];
@@ -65,7 +96,20 @@ public class HighWay implements MsgListener{
 	
 	@Override
 	public void notify(Message m) {
-		// TODO Auto-generated method stub
+		switch(m.getType()) {
+		case HELLO: {
+			break;
+		}
+		case PULSE: {
+			break;
+		}
+		case REDIRECT: {
+			break;
+		}
+		default: {
+			//TODO log message of unknown type
+		}
+	}
 		
 	}
 	
