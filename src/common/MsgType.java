@@ -1,5 +1,5 @@
 package common;
 
 public enum MsgType {
-	PULSE, HELLO, REDIRECT;
+	PULSE, HELLO, HELLO_RESPONSE, REDIRECT;
 }

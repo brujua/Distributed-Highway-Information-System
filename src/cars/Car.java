@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
@@ -16,6 +17,7 @@ import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 
 import common.*;
@@ -34,6 +36,8 @@ public class Car implements MsgListener{
 	
 	private ArrayList<StNode> highWayNodes; // centralized part of the network
 	private ArrayList<StNode> neighs; //other cars near by
+	private StNode selectedHWNode;
+	private ArrayList<StNode> farCars;
 	
 	public Car (Position position, double velocity) throws NoPeersFoundException {
 		super();
@@ -43,6 +47,8 @@ public class Car implements MsgListener{
 		msgCounter = BigInteger.valueOf(0);
 		highWayNodes = new ArrayList<>();
 		neighs = new ArrayList<>();
+		farCars = new ArrayList<>();
+		
 		//first register in the highway network
 		registerInNetwork();
 		//then start listening for msgs with the MsgHandler
@@ -51,55 +57,128 @@ public class Car implements MsgListener{
 		
 		
 		emitPulses();
+		monitorFarCars();
 	}
 	
+	
+
 	private void registerInNetwork() throws NoPeersFoundException {
 		boolean registered = false;
 		StNode highwNode;
-		Iterator<StNode> nodIterator = highWayNodes.iterator();
-		
-		byte[] packetBuffer = new byte[1024];
-		DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
-		ByteArrayInputStream bin = new ByteArrayInputStream(packetBuffer);
-		//DataInputStream din = new DataInputStream(bin);  
-		
+		Iterator<StNode> nodIterator = highWayNodes.iterator();		
 		while(!registered) {
 			if(nodIterator.hasNext()) 
 				highwNode = nodIterator.next();
 			else 
 				throw new NoPeersFoundException(); 
-			try {
-				//send hello
-				Message msg = new Message(MsgType.HELLO, this.getPulse());
-				byte[] serializedMessage = msg.toByteArr();
-				DatagramPacket udpPckt = new DatagramPacket(serializedMessage, serializedMessage.length, InetAddress.getByName(highwNode.getIP()) , highwNode.getPort());
-				
-				DatagramSocket udpS = new DatagramSocket(this.port);
-				//wait for response
-				udpS.setSoTimeout(HELLO_TIMEOUT);  
-		        while(true){    // receive data until timeout
-		            try {
-		                udpS.receive(receiverPacket);
-		                registered=true;
-		            }
-		            catch (SocketTimeoutException e) {
-		                // timeout exception.
-		                //TODO log
-		            	break;
-		            }
-		        }
-		        
-			} catch(Exception e) {
-				e.printStackTrace();
-				//TODO log
-			}
-		};
-		
-		
+			if(tryRegister(highwNode))
+				registered = true;
+		}		
 	}
 	
+	
+	/**
+	 * Attempts to register to a node, if it respond with a Redirect, makes a recursive call to the new node
+	 * @param hwNode node to wich the registration will be attempted
+	 * @return  returns true on success, false on failure.
+	 */
+	private boolean tryRegister(StNode hwNode) {
+		try {
+			if(hwNode==null)
+				return false;
+			// send hello
+			DatagramSocket sendSocket = new DatagramSocket();
+			Message msg = new Message(MsgType.HELLO, this.getPulse());
+			byte[] serializedHello = msg.toByteArr();
+			DatagramPacket helloPckt = new DatagramPacket(serializedHello, serializedHello.length, InetAddress.getByName(hwNode.getIP()) , hwNode.getPort());
+			sendSocket.send(helloPckt);
+			
+			// receive response
+			DatagramSocket receiveS = new DatagramSocket(this.port);
+			byte[] packetBuffer = new byte[1024];
+			DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
+			receiveS.setSoTimeout(HELLO_TIMEOUT);       // wait for response until timeout            
+        	receiveS.receive(receiverPacket);
+        	//decode response
+        	ByteArrayInputStream bais = new ByteArrayInputStream(packetBuffer);
+	      	ObjectInputStream ois = new ObjectInputStream(bais);
+	      	Message m = (Message)ois.readObject();
+        	switch(m.getType()) {
+            	case HELLO_RESPONSE:{
+            		Object data = m.getData();
+            		//check and cast response, add neighs
+            		if(data instanceof Iterable<?> ) {
+            			Iterable<?> itData = (Iterable<?>) data;
+            			for(Object obj : itData) {
+            				if(itData instanceof StNode) {
+            					StNode node = (StNode) obj;
+                				if (isNear(node)) 
+                					neighs.add(node);
+                				else
+                					farCars.add(node);		
+            				} else 
+            					throw new CorruptDataException();            				            					 				
+            			}
+            		} else {
+            			throw new CorruptDataException(); 
+            		}
+            		selectedHWNode = hwNode;
+            		return true;
+            	}
+            	
+            	case REDIRECT: {
+            		Object data = m.getData();
+            		StNode hwNodeCandidate = null;
+            		if(data instanceof StNode) {
+            			hwNodeCandidate = (StNode) data;
+            			
+            		} else
+            			throw new CorruptDataException(); 
+            		return tryRegister(hwNodeCandidate);
+            	}
+            	default:{
+            		//TODO log msg response of wrong type
+            		System.out.println("Response from hw-node of wrong type");
+            		return false;
+            	}
+        	}
+        }
+		catch (CorruptDataException e) {
+			//TODO log
+			System.out.println("corrupt data on hw-node response");
+			return false;
+		} 
+        catch (SocketTimeoutException  e) {
+            // timeout exception.
+            //TODO log
+        	System.out.println("node didnt respond in time");
+        	//if it doesn't respond in time, try the next one
+        	return false;
+        }
+		catch (SocketException e) {
+			//TODO log
+			System.out.println("problems opening socket");
+			e.printStackTrace();
+			return false;
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}         
+	}
+	
+	private boolean isNear(StNode obj) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 	private void emitPulses() {
 		//call to method emitMessage() of the msgHandler
+	}
+	
+	private void monitorFarCars() {
+		// TODO Auto-generated method stub
+		
 	}
 
 	public Pulse getPulse() {
@@ -114,9 +193,10 @@ public class Car implements MsgListener{
 		DatagramSocket socket;
 		DatagramPacket udpPckt;
 		try {
-			socket = new DatagramSocket(5554);
+			socket = new DatagramSocket(5551);
 			udpPckt = new DatagramPacket(serializedMessage, serializedMessage.length, InetAddress.getByName(agusIP) , port);
 			socket.send(udpPckt);
+			System.out.println("todo ok");
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -128,7 +208,19 @@ public class Car implements MsgListener{
 			e.printStackTrace();
 		}
 		
-		
+		try {
+			byte[] packetBuffer = new byte[1024];
+			DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
+			DatagramSocket sockett = new DatagramSocket(9000);
+			sockett.receive(receiverPacket);
+			ByteArrayInputStream baos = new ByteArrayInputStream(packetBuffer);
+		      ObjectInputStream oos = new ObjectInputStream(baos);
+		      Message m = (Message)oos.readObject();
+		      System.out.println(m.getType());
+			
+		} catch (Exception e) {
+			
+		}
 		
 	}
 
