@@ -86,12 +86,10 @@ public class Car implements MsgListener{
 		try {
 			if(hwNode==null)
 				return false;
-			// send hello
-			DatagramSocket sendSocket = new DatagramSocket();
+			// send hello			
 			Message msg = new Message(MsgType.HELLO, this.getPulse());
-			byte[] serializedHello = msg.toByteArr();
-			DatagramPacket helloPckt = new DatagramPacket(serializedHello, serializedHello.length, InetAddress.getByName(hwNode.getIP()) , hwNode.getPort());
-			sendSocket.send(helloPckt);
+			MsgHandler.sendMsg(hwNode, msg);
+			
 			
 			// receive response
 			DatagramSocket receiveS = new DatagramSocket(this.port);
@@ -103,6 +101,7 @@ public class Car implements MsgListener{
         	ByteArrayInputStream bais = new ByteArrayInputStream(packetBuffer);
 	      	ObjectInputStream ois = new ObjectInputStream(bais);
 	      	Message m = (Message)ois.readObject();
+	      	//bussiness logic 
         	switch(m.getType()) {
             	case HELLO_RESPONSE:{
             		Object data = m.getData();
