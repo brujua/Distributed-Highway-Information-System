@@ -52,7 +52,7 @@ public class Car implements MsgListener{
 		//first register in the highway network
 		registerInNetwork();
 		//then start listening for msgs with the MsgHandler
-		msgHandler = new MsgHandler(this.ip, this.port);
+		msgHandler = new MsgHandler(this.port);
 		msgHandler.addListener(this);
 		
 		
@@ -227,22 +227,34 @@ public class Car implements MsgListener{
 
 	@Override
 	public void notify(Message m) {
-		// TODO
-		switch(m.getType()) {
-			case HELLO: {
-				break;
+		// The logic of the received msg will be handled on a different thread
+		Thread thread = new Thread( new Runnable() {
+			public void run() {
+				switch(m.getType()) {
+					case HELLO: {
+						break;
+					}
+					case PULSE: {
+						break;
+					}
+					case REDIRECT: {
+						break;
+					}
+					default: {
+						//TODO log message of unknown type
+					}
+				}		
 			}
-			case PULSE: {
-				break;
-			}
-			case REDIRECT: {
-				break;
-			}
-			default: {
-				//TODO log message of unknown type
-			}
-		}
+		});
 		
+		thread.start();
+		return;	
 	}
+	
+	
+	
+	
+	
+	
 
 }

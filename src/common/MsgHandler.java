@@ -12,16 +12,14 @@ import java.util.List;
 
 public class MsgHandler implements MsgObservable{
 
-	private String ip;
 	private int port;
 	private ArrayList<MsgListener> listeners;
 	private Thread listeningThread;
 	private boolean listen;
 	
 	
-	public MsgHandler(String ip, int port) {
+	public MsgHandler( int port) {
 		super();
-		this.ip = ip;
 		this.port = port;
 		listen = true;
 		listenForMsgs();
@@ -45,6 +43,7 @@ public class MsgHandler implements MsgObservable{
 			      	ObjectInputStream ois = new ObjectInputStream(bais);
 					while(listen) {
 						receiveS.receive(receiverPacket);
+		
 						Message m = (Message)ois.readObject();
 						for (MsgListener listener : listeners) {
 							listener.notify(m);
@@ -60,7 +59,6 @@ public class MsgHandler implements MsgObservable{
 	}
 
 	@Override
-	// El parametro tendria que ser objeto, entonces para todos los nodos se usa segun su instanceofObj 
 	public void addListener(MsgListener l) {
 		listeners.add(l);
 		
