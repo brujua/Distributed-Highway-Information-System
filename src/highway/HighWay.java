@@ -17,17 +17,25 @@ import common.StNode;
 public class HighWay implements MsgListener{
 
 	public final String ip = "localhost";
+	
+	//port server from cars
 	public final int port = 9000;
+	
+	
+	//port connections from Coordinator
+	public final int portCoordinator = 8000;
+	
 	
 	//node identificator
 	private String id;
 	
-	// Postion node data
+	// Postion node datas
 	private Position position;
 	
 	//MSG tools
 	private BigInteger msgCounter;
 	private MsgHandler msgHandler;
+	private MsgHandler msgHandlerCoordinator;
 	
 	//Negighs HW nodes
 	private ArrayList<StNode> neighs; //othrs node highway tolking to me 
@@ -37,9 +45,14 @@ public class HighWay implements MsgListener{
 		super();
 		this.position= position;
 		this.neighs = neighs;
-				
+		
+		
 		msgHandler = new MsgHandler(this.ip, this.port);
 		msgHandler.addListener(this);
+		
+		msgHandlerCoordinator = new MsgHandler(this.ip, this.port);
+		msgHandlerCoordinator.addListener(this);
+		
 	}
 
 	
@@ -73,29 +86,38 @@ public class HighWay implements MsgListener{
 		}
 	}
 	
-	
-	public static void main(String[] args) {
-		try {
-			byte[] packetBuffer = new byte[1024];
-			DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
-			DatagramSocket sockett = new DatagramSocket(9000);
-			sockett.receive(receiverPacket);
-			ByteArrayInputStream baos = new ByteArrayInputStream(packetBuffer);
-		      ObjectInputStream oos = new ObjectInputStream(baos);
-		      Message m = (Message)oos.readObject();
-		      System.out.println(m.getType());
-		      Pulse p =(Pulse) m.getData();
-		      System.out.println(p.getMsgID());
-		      
-		} catch (Exception e) {
-			
-		}
-
+	public void startHighWay() {
+		
 	}
+	
+	
+	
+	
+	
+//	public static void main(String[] args) {
+//		try {
+//			byte[] packetBuffer = new byte[1024];
+//			DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
+//			DatagramSocket socket = new DatagramSocket(9000);
+//			socket.receive(receiverPacket);
+//			ByteArrayInputStream baos = new ByteArrayInputStream(packetBuffer);
+//		      ObjectInputStream oos = new ObjectInputStream(baos);
+//		      Message m = (Message)oos.readObject();
+//		      System.out.println(m.getType());
+//		      Pulse p =(Pulse) m.getData();
+//		      System.out.println(p.getMsgID());
+//		      
+//		} catch (Exception e) {
+//			
+//		}
+//
+//	}
 	
 	
 	@Override
 	public void notify(Message m) {
+		
+		
 		switch(m.getType()) {
 		case HELLO: {
 			break;
