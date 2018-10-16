@@ -18,3 +18,6 @@
   
   <img src="https://i.imgur.com/JrBUGvu.png" width="500" alt="peer discovery example part8">
  </p>
+
+## Disclaimer
+This project does not feature the best practices or an enterprise quality solution, specially in the concurrent message handling. 
