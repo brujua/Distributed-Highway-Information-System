@@ -1,14 +1,12 @@
 package common;
 
-import java.util.ArrayList;
-
-public class HelloResponse {
+public class MT_HelloResponse {
 	
 	private String responseId;
 	private StNode stNode;
 	private Iterable<StNode> cars;
 	
-	public HelloResponse(String responseId, StNode stNode, Iterable<StNode> cars) {
+	public MT_HelloResponse(String responseId, StNode stNode, Iterable<StNode> cars) {
 		super();
 		this.responseId = responseId;
 		this.stNode = stNode;

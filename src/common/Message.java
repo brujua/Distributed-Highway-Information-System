@@ -28,22 +28,26 @@ public class Message implements Serializable{
 		return data;
 	}
 	
+	public String getId() {
+		return id;
+	}
+	
 	public int getIp() {
 		return ip;
-	}
-
-	public void setIp(int ip) {
-		this.ip = ip;
-	}
+	}		
 
 	public int getPort() {
 		return port;
+	}
+	
+	public void setIp(int ip) {
+		this.ip = ip;
 	}
 
 	public void setPort(int port) {
 		this.port = port;
 	}
-	
+
 	public byte[] toByteArr() {
 		ByteArrayOutputStream bStream = new ByteArrayOutputStream();		
 		try {
@@ -63,18 +67,22 @@ public class Message implements Serializable{
 			if(data instanceof String)
 				return (String) data;
 			break;
-		case HELLO:
-			break;
 		case HELLO_RESPONSE:
-			break;
-		case PULSE:
+			if(data instanceof MT_HelloResponse) {
+				MT_HelloResponse resp = (MT_HelloResponse) data;
+				return resp.getResponseId();
+			}
 			break;
 		case REDIRECT:
+			if(data instanceof MT_Redirect) {
+				MT_Redirect resp = (MT_Redirect) data;
+				return resp.getResponseId();
+			}
 			break;
 		default:
-			break;
-		
+			break;		
 		}
+		return null;
 	}
 	
 	
