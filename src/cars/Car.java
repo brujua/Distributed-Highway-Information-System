@@ -52,7 +52,7 @@ public class Car implements MsgListener{
 		//first register in the highway network
 		registerInNetwork();
 		//then start listening for msgs with the MsgHandler
-		msgHandler = new MsgHandler(this.ip, this.port);
+		msgHandler = new MsgHandler(this.port);
 		msgHandler.addListener(this);
 		
 		
@@ -87,7 +87,7 @@ public class Car implements MsgListener{
 			if(hwNode==null)
 				return false;
 			// send hello			
-			Message msg = new Message(MsgType.HELLO, this.getPulse());
+			Message msg = new Message(nextIdMsg(),MsgType.HELLO, this.getPulse());
 			MsgHandler.sendMsg(hwNode, msg);
 			
 			
@@ -166,6 +166,13 @@ public class Car implements MsgListener{
 		}         
 	}
 	
+	private String nextIdMsg() {
+		msgCounter=msgCounter.add(BigInteger.ONE); //increment msgCounter
+		return id+msgCounter;
+	}
+
+
+
 	private boolean isNear(StNode obj) {
 		// TODO Auto-generated method stub
 		return false;
@@ -187,7 +194,7 @@ public class Car implements MsgListener{
 		String agusIP = "192.168.0.65";
 		int port = 9000;
 		
-		Message msg = new Message(MsgType.HELLO, new Pulse("5555", new Position(0.0, 5.0,Units.KiloMeters), 4.5, Instant.now()));
+		Message msg = new Message("asdasID0",MsgType.HELLO, new Pulse("5555", new Position(0.0, 5.0,Units.KiloMeters), 4.5, Instant.now()));
 		byte[] serializedMessage = msg.toByteArr();
 		DatagramSocket socket;
 		DatagramPacket udpPckt;
@@ -227,22 +234,34 @@ public class Car implements MsgListener{
 
 	@Override
 	public void notify(Message m) {
-		// TODO
-		switch(m.getType()) {
-			case HELLO: {
-				break;
+		// The logic of the received msg will be handled on a different thread
+		Thread thread = new Thread( new Runnable() {
+			public void run() {
+				switch(m.getType()) {
+					case HELLO: {
+						break;
+					}
+					case PULSE: {
+						break;
+					}
+					case REDIRECT: {
+						break;
+					}
+					default: {
+						//TODO log message of unknown type
+					}
+				}		
 			}
-			case PULSE: {
-				break;
-			}
-			case REDIRECT: {
-				break;
-			}
-			default: {
-				//TODO log message of unknown type
-			}
-		}
+		});
 		
+		thread.start();
+		return;	
 	}
+	
+	
+	
+	
+	
+	
 
 }

@@ -8,13 +8,17 @@ import java.io.Serializable;
 
 public class Message implements Serializable{
 	private MsgType type;
+	private int ip;
+	private int port;
+	private String id;
 	private Object data;
 	
 	
-	public Message(MsgType type, Object data) {
+	public Message(String id, MsgType type, Object data) {
 		super();
 		this.type = type;
 		this.data = data;
+		this.id = id;
 	}
 	
 	public MsgType getType() {
@@ -24,6 +28,26 @@ public class Message implements Serializable{
 		return data;
 	}
 	
+	public String getId() {
+		return id;
+	}
+	
+	public int getIp() {
+		return ip;
+	}		
+
+	public int getPort() {
+		return port;
+	}
+	
+	public void setIp(int ip) {
+		this.ip = ip;
+	}
+
+	public void setPort(int port) {
+		this.port = port;
+	}
+
 	public byte[] toByteArr() {
 		ByteArrayOutputStream bStream = new ByteArrayOutputStream();		
 		try {
@@ -35,6 +59,30 @@ public class Message implements Serializable{
 			e.printStackTrace();
 		}			
 		return bStream.toByteArray();
+	}
+	
+	public String getResponseId() {
+		switch(this.type) {
+		case ACK:
+			if(data instanceof String)
+				return (String) data;
+			break;
+		case HELLO_RESPONSE:
+			if(data instanceof MT_HelloResponse) {
+				MT_HelloResponse resp = (MT_HelloResponse) data;
+				return resp.getResponseId();
+			}
+			break;
+		case REDIRECT:
+			if(data instanceof MT_Redirect) {
+				MT_Redirect resp = (MT_Redirect) data;
+				return resp.getResponseId();
+			}
+			break;
+		default:
+			break;		
+		}
+		return null;
 	}
 	
 	

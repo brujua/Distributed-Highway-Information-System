@@ -45,12 +45,12 @@ public class HighWay implements MsgListener{
 		super();
 		this.position= position;
 		this.neighs = neighs;
-		
-		
-		msgHandler = new MsgHandler(this.ip, this.port);
+
+				
+		msgHandler = new MsgHandler(this.port);
 		msgHandler.addListener(this);
 		
-		msgHandlerCoordinator = new MsgHandler(this.ip, this.port);
+		msgHandlerCoordinator = new MsgHandler(this.port);
 		msgHandlerCoordinator.addListener(this);
 		
 	}
@@ -116,23 +116,29 @@ public class HighWay implements MsgListener{
 	
 	@Override
 	public void notify(Message m) {
+
+		// The logic of the received msg will be handled on a different thread
+		Thread thread = new Thread( new Runnable() {
+			public void run() {
+				switch(m.getType()) {
+					case HELLO: {
+						break;
+					}
+					case PULSE: {
+						break;
+					}
+					case REDIRECT: {
+						break;
+					}
+					default: {
+						//TODO log message of unknown type
+					}
+				}		
+			}
+		});
 		
-		
-		switch(m.getType()) {
-		case HELLO: {
-			break;
-		}
-		case PULSE: {
-			break;
-		}
-		case REDIRECT: {
-			break;
-		}
-		default: {
-			//TODO log message of unknown type
-		}
-	}
-		
+		thread.start();
+		return;	
 	}
 	
 	
