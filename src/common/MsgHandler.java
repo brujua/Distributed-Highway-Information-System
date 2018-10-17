@@ -9,6 +9,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MsgHandler implements MsgObservable{
 
@@ -17,6 +19,8 @@ public class MsgHandler implements MsgObservable{
 	private Thread listeningThread;
 	private boolean listen;
 	private MsgType msg;
+	private ExecutorService threadService = Executors.newCachedThreadPool();
+	private ResponseMonitor respMonitor;
 	
 	
 	public MsgHandler( int port) {
