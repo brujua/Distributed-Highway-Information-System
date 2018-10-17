@@ -1,27 +1,41 @@
 package common;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
+
 import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 
 public class MsgHandler implements MsgObservable{
 
+	private static final int DEFAULT_MAX_RETRIES = 3;
+	private static final int DEFAULT_TIMEOUT = 200;
+	
 	private int port;
 	private ArrayList<MsgListener> listeners;
-	private Thread listeningThread;
 	private boolean listen;
+	private ExecutorService threadService = Executors.newCachedThreadPool();
+	private ResponseMonitor respMonitor;
 	
+	public MsgHandler(int port) {
+		this(port, DEFAULT_MAX_RETRIES);
+	}
 	
-	public MsgHandler( int port) {
+	public MsgHandler(int port, int maxRetries) {
 		super();
 		this.port = port;
 		listen = true;
+		// create the Response monitor that will track if an expected response was receive
+		respMonitor = new ResponseMonitor();
+		//start listening thread
 		listenForMsgs();
 	}
 
@@ -31,8 +45,7 @@ public class MsgHandler implements MsgObservable{
 	 * unless notify(), on the listener side, starts a thread to process the msg and doesn't block
 	*/
 	private void listenForMsgs() {
-		// TODO Auto-generated method stub
-		listeningThread = new Thread() {
+		threadService.execute(new Runnable() {			
 			@Override
 			public void run() {
 				try {
@@ -45,17 +58,18 @@ public class MsgHandler implements MsgObservable{
 						receiveS.receive(receiverPacket);
 		
 						Message m = (Message)ois.readObject();
-						for (MsgListener listener : listeners) {
-							listener.notify(m);
-						}
+						if(!respMonitor.check(m))
+							for (MsgListener listener : listeners) {
+								listener.notify(m);
+							}
 					}
 				} catch (Exception e) {
-					
+					//TODO log
+					System.out.println("Problemas en el thread de escucha");
+					e.printStackTrace();
 				}
-				
 			}
-		};
-		
+		});		
 	}
 
 	@Override
@@ -74,11 +88,11 @@ public class MsgHandler implements MsgObservable{
 	*/
 	public void emitMessage(List<Messageable> dest, Message msg) {
 		for (Messageable messageable : dest) {
-			MsgHandler.sendMsg(messageable, msg);
+			this.sendMsg(messageable, msg);
 		}
 	};
 	
-	public static void sendMsg(Messageable dest, Message msg) {
+	public void sendMsg(Messageable dest, Message msg) {
 		
 		try {
 			DatagramSocket sendSocket = new DatagramSocket();
@@ -86,11 +100,44 @@ public class MsgHandler implements MsgObservable{
 			DatagramPacket helloPckt;
 			helloPckt = new DatagramPacket(serializedHello, serializedHello.length, InetAddress.getByName(dest.getIP()) , dest.getPort());
 			sendSocket.send(helloPckt);
+			sendSocket.close();
 		} catch (Exception e) {
 			// TODO log
 			System.out.println("Err Mensaje no enviado");
 			e.printStackTrace();
+		} finally {
 		}
 	}
-
+	
+	public CompletableFuture<Message> sendMsgWithResponse(Messageable dest, Message msg){
+		return sendMsgWithResponse(dest, msg, DEFAULT_TIMEOUT, DEFAULT_MAX_RETRIES);
+	}
+	
+	public CompletableFuture<Message> sendMsgWithResponse(Messageable dest, Message msg, int timeout, int maxtries){
+		CompletableFuture<Message> response = new CompletableFuture<Message>();
+		respMonitor.addMsg(msg, response);
+		threadService.execute(new Runnable() {
+			
+			@Override
+			public void run() {
+				try {
+					boolean receivedResp = false;
+					for(int tries = 0;tries<maxtries && !receivedResp; tries++) {
+						sendMsg(dest, msg);
+						Thread.sleep(timeout);
+						receivedResp = response.isDone();
+					}
+					
+				
+				} catch(Exception e) {
+					System.out.println("Problemas enviando mensaje");
+					//TODO log
+					e.printStackTrace();
+				}
+					
+			}
+		});
+		
+		return response;
+	}
 }
