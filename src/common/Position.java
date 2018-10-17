@@ -16,7 +16,7 @@ public class Position implements Serializable{
 		super();
 		coordX = cordx;
 		coordY = cordy;
-		kilometers = kilometers;
+		unity = kilometers;
 		
 		
 		
