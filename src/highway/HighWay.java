@@ -9,8 +9,10 @@ import java.util.ArrayList;
 
 import cars.Pulse;
 import common.Message;
+import common.Messageable;
 import common.MsgHandler;
 import common.MsgListener;
+import common.MsgType;
 import common.Position;
 import common.StNode;
 
@@ -69,7 +71,11 @@ public class HighWay implements MsgListener{
 		
 		}
 	}
-	
+	private String nextIdMsg() {
+		msgCounter=msgCounter.add(BigInteger.ONE); //increment msgCounter
+		return id+msgCounter;
+	}
+
 	
 	private void removeCarNode (StNode car){
 		
@@ -114,6 +120,16 @@ public class HighWay implements MsgListener{
 //	}
 	
 	
+	private String getIp() {
+		return ip;
+	}
+
+
+	private int getPort() {
+		return port;
+	}
+
+
 	@Override
 	public void notify(Message m) {
 
@@ -122,12 +138,16 @@ public class HighWay implements MsgListener{
 			public void run() {
 				switch(m.getType()) {
 					case HELLO: {
+						hello(m);
 						break;
 					}
 					case PULSE: {
 						break;
 					}
 					case REDIRECT: {
+						break;
+					}
+					case ALIVE: {
 						break;
 					}
 					default: {
@@ -141,5 +161,18 @@ public class HighWay implements MsgListener{
 		return;	
 	}
 	
+	private void hello(Message m) {
+		
+		Message msg = new Message(MsgType.HELLO_RESPONSE,getIp(),getPort(),carNodes);
+		StNode carst = new StNode(m.getId(),m.getIp(),m.getPort());
+		carNodes.add(carst); 
+		msgHandler.sendMsg((Messageable) m, msg);
+	}
+	
+	private void ack(Message m) {
+		Message msg = new Message(MsgType.ACK,getIp(),getPort(),null);
+		
+		msgHandler.sendMsg((Messageable) m, msg);
+	}
 	
 }

@@ -5,20 +5,30 @@ import java.io.IOException;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.UUID;
 
 public class Message implements Serializable{
 	private MsgType type;
-	private int ip;
+	private String ip;
 	private int port;
 	private String id;
 	private Object data;
+	private Messageable Origin;
 	
 	
-	public Message(String id, MsgType type, Object data) {
+
+
+	public Message(MsgType type,String ip, int port, Object data) {
 		super();
 		this.type = type;
 		this.data = data;
-		this.id = id;
+		this.id = UUID.randomUUID().toString();;
+		this.ip = ip;
+		this.port = port;
+	}
+	
+	private Messageable getOrigin() {
+		return Origin;
 	}
 	
 	public MsgType getType() {
@@ -32,7 +42,7 @@ public class Message implements Serializable{
 		return id;
 	}
 	
-	public int getIp() {
+	public String getIp() {
 		return ip;
 	}		
 
@@ -40,7 +50,7 @@ public class Message implements Serializable{
 		return port;
 	}
 	
-	public void setIp(int ip) {
+	public void setIp(String ip) {
 		this.ip = ip;
 	}
 

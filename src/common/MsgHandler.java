@@ -16,6 +16,7 @@ public class MsgHandler implements MsgObservable{
 	private ArrayList<MsgListener> listeners;
 	private Thread listeningThread;
 	private boolean listen;
+	private MsgType msg;
 	
 	
 	public MsgHandler( int port) {
@@ -25,11 +26,13 @@ public class MsgHandler implements MsgObservable{
 		listenForMsgs();
 	}
 
+
 	/*
 	 * Starts a thread and listen for msgs
 	 * this will need refactor if we doesn't want to lose incoming messages while processing one
 	 * unless notify(), on the listener side, starts a thread to process the msg and doesn't block
 	*/
+	
 	private void listenForMsgs() {
 		// TODO Auto-generated method stub
 		listeningThread = new Thread() {
@@ -88,9 +91,12 @@ public class MsgHandler implements MsgObservable{
 			sendSocket.send(helloPckt);
 		} catch (Exception e) {
 			// TODO log
-			System.out.println("Err Mensaje no enviado");
+			System.out.println("Error Mensaje no enviado");
 			e.printStackTrace();
 		}
 	}
+	
+	
+	
 
 }
