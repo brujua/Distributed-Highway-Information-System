@@ -91,7 +91,7 @@ public class Car implements MsgListener{
 			if(hwNode==null)
 				return false;
 			// send hello and wait for response			
-			Message msg = new Message(nextIdMsg(),MsgType.HELLO, this.getPulse());
+			Message msg = new Message(MsgType.HELLO,this.ip,this.port, this.getPulse());
 			response=msgHandler.sendMsgWithResponse(hwNode, msg);
 			responseMsg = response.get();
 		
@@ -184,7 +184,7 @@ public class Car implements MsgListener{
 		String agusIP = "192.168.0.65";
 		int port = 9000;
 		
-		Message msg = new Message("asdasID0",MsgType.HELLO, new Pulse("5555", new Position(0.0, 5.0,Units.KiloMeters), 4.5, Instant.now()));
+		Message msg = new Message(MsgType.HELLO,agusIP,port, new Pulse("5555", new Position(0.0, 5.0,Units.KiloMeters), 4.5, Instant.now()));
 		byte[] serializedMessage = msg.toByteArr();
 		DatagramSocket socket;
 		DatagramPacket udpPckt;

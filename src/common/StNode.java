@@ -75,6 +75,14 @@ public class StNode implements Serializable, Messageable {
 			return false;
 		return true;
 	}
+
+
+
+	@Override
+	public Messageable getOrigin() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 	
 	
