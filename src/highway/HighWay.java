@@ -150,6 +150,9 @@ public class HighWay implements MsgListener{
 					case ALIVE: {
 						break;
 					}
+					case ACK: {
+						break;
+					}
 					default: {
 						//TODO log message of unknown type
 					}
@@ -162,17 +165,44 @@ public class HighWay implements MsgListener{
 	}
 	
 	private void hello(Message m) {
-		
-		Message msg = new Message(MsgType.HELLO_RESPONSE,getIp(),getPort(),carNodes);
+		if (isInZone()) {
+			Message msg = new Message(MsgType.HELLO_RESPONSE,getIp(),getPort(),carNodes);
+			StNode carst = new StNode(m.getId(),m.getIp(),m.getPort());
+			carNodes.add(carst); 
+			msgHandler.sendMsg((Messageable) m, msg);
+		}else {
+			redirect(m);
+		}
+	}
+	
+	private boolean isInZone() {
+		// TODO buscar si esta en la zona
+		return false;
+	}
+
+
+	private void redirect(Message m) {
+		// TODO redirecccionar a hw correspondiente
+		StNode hwRedirect = serchRedirect(((Position) m.getData()));
+		Message msg = new Message(MsgType.REDIRECT,getIp(),getPort(),hwRedirect);
 		StNode carst = new StNode(m.getId(),m.getIp(),m.getPort());
 		carNodes.add(carst); 
 		msgHandler.sendMsg((Messageable) m, msg);
 	}
-	
+
+
+	private StNode serchRedirect(Position position) {
+		// TODO Auto-generated method stub
+			StNode hwNode = null;
+		return hwNode;
+	}
+
+
 	private void ack(Message m) {
-		Message msg = new Message(MsgType.ACK,getIp(),getPort(),null);
 		
-		msgHandler.sendMsg((Messageable) m, msg);
+		//Message msg = new Message(MsgType.ACK,getIp(),getPort(),m.getId());
+		
+		//msgHandler.sendMsg((Messageable) m.getOrigin(), msg);
 	}
 	
 }

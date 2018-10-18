@@ -27,7 +27,8 @@ public class Message implements Serializable{
 		this.port = port;
 	}
 	
-	private Messageable getOrigin() {
+
+	public Messageable getOrigin() {
 		return Origin;
 	}
 	
