@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeoutException;
 
 
 public class MsgHandler implements MsgObservable{
@@ -127,7 +128,9 @@ public class MsgHandler implements MsgObservable{
 						Thread.sleep(timeout);
 						receivedResp = response.isDone();
 					}
-					
+					if(!receivedResp) {
+						response.completeExceptionally(new TimeoutException("retries exceeded"));
+					}
 				
 				} catch(Exception e) {
 					System.out.println("Problemas enviando mensaje");

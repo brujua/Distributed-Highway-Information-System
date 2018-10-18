@@ -24,7 +24,7 @@ public class ResponseMonitor{
 	}
 	
 	public boolean check(Message m) {
-		//if it is a message we were waiting, mark it as received.
+		//if it is a message we were waiting, complete its future.
 		String responseId = m.getResponseId();
 		if(responseId!=null) 
 			if(pendingMsgs.containsKey(responseId)) {

@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 import common.*;
 
@@ -49,12 +52,12 @@ public class Car implements MsgListener{
 		neighs = new ArrayList<>();
 		farCars = new ArrayList<>();
 		
-		//first register in the highway network
-		registerInNetwork();
-		//then start listening for msgs with the MsgHandler
+		//initialize the MsgHandler
 		msgHandler = new MsgHandler(this.port);
 		msgHandler.addListener(this);
 		
+		//register in the highway network
+		registerInNetwork();
 		
 		emitPulses();
 		monitorFarCars();
@@ -67,12 +70,11 @@ public class Car implements MsgListener{
 		StNode highwNode;
 		Iterator<StNode> nodIterator = highWayNodes.iterator();		
 		while(!registered) {
-			if(nodIterator.hasNext()) 
+			if(nodIterator.hasNext()) {
 				highwNode = nodIterator.next();
-			else 
+				registered = tryRegister(highwNode);
+			} else 
 				throw new NoPeersFoundException(); 
-			if(tryRegister(highwNode))
-				registered = true;
 		}		
 	}
 	
@@ -83,56 +85,44 @@ public class Car implements MsgListener{
 	 * @return  returns true on success, false on failure.
 	 */
 	private boolean tryRegister(StNode hwNode) {
+		CompletableFuture<Message> response;
+		Message responseMsg;
 		try {
 			if(hwNode==null)
 				return false;
-			// send hello			
+			// send hello and wait for response			
 			Message msg = new Message(nextIdMsg(),MsgType.HELLO, this.getPulse());
-			MsgHandler.sendMsg(hwNode, msg);
-			
-			
-			// receive response
-			DatagramSocket receiveS = new DatagramSocket(this.port);
-			byte[] packetBuffer = new byte[1024];
-			DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
-			receiveS.setSoTimeout(HELLO_TIMEOUT);       // wait for response until timeout            
-        	receiveS.receive(receiverPacket);
-        	//decode response
-        	ByteArrayInputStream bais = new ByteArrayInputStream(packetBuffer);
-	      	ObjectInputStream ois = new ObjectInputStream(bais);
-	      	Message m = (Message)ois.readObject();
+			response=msgHandler.sendMsgWithResponse(hwNode, msg);
+			responseMsg = response.get();
+		
 	      	//bussiness logic 
-        	switch(m.getType()) {
+        	switch(responseMsg.getType()) {
             	case HELLO_RESPONSE:{
-            		Object data = m.getData();
+            		Object data = responseMsg.getData();
             		//check and cast response, add neighs
-            		if(data instanceof Iterable<?> ) {
-            			Iterable<?> itData = (Iterable<?>) data;
-            			for(Object obj : itData) {
-            				if(itData instanceof StNode) {
-            					StNode node = (StNode) obj;
-                				if (isNear(node)) 
-                					neighs.add(node);
-                				else
-                					farCars.add(node);		
-            				} else 
-            					throw new CorruptDataException();            				            					 				
-            			}
-            		} else {
-            			throw new CorruptDataException(); 
-            		}
+            		if(!(data instanceof Iterable<?>))
+            			throw new CorruptDataException();             			
+        			Iterable<?> itData = (Iterable<?>) data;
+        			for(Object obj : itData) {
+        				if(!(itData instanceof StNode)) 
+        					throw new CorruptDataException();            				            					 				
+    					StNode node = (StNode) obj;
+        				if (isNear(node)) 
+        					neighs.add(node);
+        				else
+        					farCars.add(node);            				
+        			}          	
+            		
             		selectedHWNode = hwNode;
             		return true;
             	}
             	
             	case REDIRECT: {
-            		Object data = m.getData();
+            		Object data = responseMsg.getData();
             		StNode hwNodeCandidate = null;
-            		if(data instanceof StNode) {
-            			hwNodeCandidate = (StNode) data;
-            			
-            		} else
-            			throw new CorruptDataException(); 
+            		if(!(data instanceof StNode)) 
+            			throw new CorruptDataException();
+            		hwNodeCandidate = (StNode) data;           	
             		return tryRegister(hwNodeCandidate);
             	}
             	default:{
@@ -147,23 +137,23 @@ public class Car implements MsgListener{
 			System.out.println("corrupt data on hw-node response");
 			return false;
 		} 
-        catch (SocketTimeoutException  e) {
-            // timeout exception.
-            //TODO log
-        	System.out.println("node didnt respond in time");
-        	//if it doesn't respond in time, try the next one
-        	return false;
-        }
-		catch (SocketException e) {
-			//TODO log
-			System.out.println("problems opening socket");
-			e.printStackTrace();
+        catch (ExecutionException  e) {
+        	try {
+        		throw e.getCause();
+        	} catch(TimeoutException toe) {
+        		System.out.println("node doesn't respond");
+        		//if it doesn't respond in time, try the next one
+            	return false;
+        		
+        	} catch (Throwable e1) {
+				e1.printStackTrace();
+				return false;
+			}       	
+        } catch (InterruptedException e) {
+			System.out.println("Interrupted while trying to register and waiting response");
 			return false;
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return false;
-		}         
+			
+		}
 	}
 	
 	private String nextIdMsg() {
