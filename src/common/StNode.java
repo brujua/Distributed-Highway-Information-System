@@ -10,6 +10,15 @@ public class StNode implements Serializable, Messageable {
 	private String ip;
 	private int port;
 	//Pulse lastestData;
+	private Position position;
+	
+	public StNode(String id, String ip, int port,Position position) {
+		super();
+		this.id = id;
+		this.ip = ip;
+		this.port = port;
+		this.position = position;
+	}
 	
 	public StNode(String id, String ip, int port) {
 		super();
@@ -19,6 +28,12 @@ public class StNode implements Serializable, Messageable {
 	}
 	
 	
+
+	public Position getPosition() {
+		return position;
+	}
+
+
 
 	@Override
 	public String getIP() {

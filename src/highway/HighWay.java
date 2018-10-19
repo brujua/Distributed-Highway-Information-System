@@ -34,6 +34,9 @@ public class HighWay implements MsgListener{
 	// Postion node datas
 	private Position position;
 	
+	//Thi StNode
+	private StNode stNode; 
+	
 	//MSG tools
 	private BigInteger msgCounter;
 	private MsgHandler msgHandler;
@@ -42,6 +45,8 @@ public class HighWay implements MsgListener{
 	//Negighs HW nodes
 	private ArrayList<StNode> neighs; //othrs node highway tolking to me 
 	private ArrayList<StNode> carNodes; //cars in my zone to shared
+	
+	
 	
 	public HighWay ( ArrayList<StNode> neighs,Position position) {
 		super();
@@ -54,6 +59,8 @@ public class HighWay implements MsgListener{
 		
 		msgHandlerCoordinator = new MsgHandler(this.port);
 		msgHandlerCoordinator.addListener(this);
+		
+		stNode = new StNode(this.id,this.ip,this.port);
 		
 	}
 
@@ -165,17 +172,21 @@ public class HighWay implements MsgListener{
 	}
 	
 	private void hello(Message m) {
-		if (isInZone()) {
+		if (isInZone( ( (Pulse) m.getData() ).getPosition() ) ) {
 			Message msg = new Message(MsgType.HELLO_RESPONSE,getIp(),getPort(),carNodes);
 			StNode carst = new StNode(m.getId(),m.getIp(),m.getPort());
 			carNodes.add(carst); 
-			msgHandler.sendMsg((Messageable) m, msg);
+			msgHandler.sendMsg((Messageable) m.getOrigin(), msg);
 		}else {
 			redirect(m);
 		}
 	}
 	
-	private boolean isInZone() {
+	private boolean isInZone(Position pos) {
+		
+		if( (serchRedirect(pos)).equals(this.stNode)) {
+			return true;
+		}
 		// TODO buscar si esta en la zona
 		return false;
 	}
@@ -185,16 +196,36 @@ public class HighWay implements MsgListener{
 		// TODO redirecccionar a hw correspondiente
 		StNode hwRedirect = serchRedirect(((Position) m.getData()));
 		Message msg = new Message(MsgType.REDIRECT,getIp(),getPort(),hwRedirect);
-		StNode carst = new StNode(m.getId(),m.getIp(),m.getPort());
+		StNode carst = new StNode(m.getId(),m.getIp(),m.getPort(),this.getPosition());
 		carNodes.add(carst); 
-		msgHandler.sendMsg((Messageable) m, msg);
+		msgHandler.sendMsg((Messageable) m.getOrigin(), msg);
 	}
 
 
 	private StNode serchRedirect(Position position) {
-		// TODO Auto-generated method stub
-			StNode hwNode = null;
-		return hwNode;
+	// TODO Auto-generated method stub
+		Double minDistance = this.position.distance(position);
+		Position pos = this.position;
+		//StNode nearHwNode = new StNode(this.id,this.ip,this.port);
+		StNode nearHwNode = stNode;
+		for(StNode hwNode : this.getNeighs()) {
+			if(minDistance > (position.distance(hwNode.getPosition()))) {
+				minDistance = position.distance(hwNode.getPosition());
+				nearHwNode = hwNode;
+			}
+		}
+		
+		return nearHwNode;
+	}
+
+
+	private ArrayList<StNode> getNeighs() {
+		return neighs;
+	}
+
+
+	public Position getPosition() {
+		return position;
 	}
 
 

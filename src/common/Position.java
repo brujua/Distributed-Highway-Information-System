@@ -43,6 +43,13 @@ public class Position implements Serializable{
 		
 	}
 	
+	static double distancebetwen(Position position,Position position2) {
+		
+		double distX = Math.pow((position.cordx - position2.cordx),2); 
+		double distY = Math.pow((position.cordy - position2.cordy),2);
+				
+		return Math.sqrt(distX+distY) ;
+	}
 
 }
 	
