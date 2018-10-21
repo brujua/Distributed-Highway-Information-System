@@ -26,7 +26,7 @@ import java.util.concurrent.TimeoutException;
 import common.*;
 
 public class Car implements MsgListener{
-	private static final int HELLO_TIMEOUT = 1000;
+
 	// temporary constants
 	public final String ip = "localhost";
 	public final int port = 5555;
@@ -98,32 +98,11 @@ public class Car implements MsgListener{
 	      	//bussiness logic 
         	switch(responseMsg.getType()) {
             	case HELLO_RESPONSE:{
-            		Object data = responseMsg.getData();
-            		//check and cast response, add neighs
-            		if(!(data instanceof Iterable<?>))
-            			throw new CorruptDataException();             			
-        			Iterable<?> itData = (Iterable<?>) data;
-        			for(Object obj : itData) {
-        				if(!(itData instanceof StNode)) 
-        					throw new CorruptDataException();            				            					 				
-    					StNode node = (StNode) obj;
-        				if (isNear(node)) 
-        					neighs.add(node);
-        				else
-        					farCars.add(node);            				
-        			}          	
-            		
-            		selectedHWNode = hwNode;
+            		handleHelloResponse(responseMsg);
             		return true;
-            	}
-            	
+        			}      	
             	case REDIRECT: {
-            		Object data = responseMsg.getData();
-            		StNode hwNodeCandidate = null;
-            		if(!(data instanceof StNode)) 
-            			throw new CorruptDataException();
-            		hwNodeCandidate = (StNode) data;           	
-            		return tryRegister(hwNodeCandidate);
+            		return handleRedirect(responseMsg);
             	}
             	default:{
             		//TODO log msg response of wrong type
@@ -154,6 +133,42 @@ public class Car implements MsgListener{
 			return false;
 			
 		}
+	}
+	
+	/**
+	 * @param responseMsg
+	 * @throws CorruptDataException
+	 */
+	private void handleHelloResponse(Message responseMsg) throws CorruptDataException {
+		Object data = responseMsg.getData();
+		//check and cast response, add neighs
+		if(!(data instanceof MT_HelloResponse))
+			throw new CorruptDataException();             			
+		MT_HelloResponse helloRsp = (MT_HelloResponse) data;
+		addMultipleCars(helloRsp.getCars());		
+		selectedHWNode = helloRsp.getStNode();		
+	}
+	
+
+	/**
+	 * @param cars
+	 */
+	private void addMultipleCars(Iterable<StNode> cars) {
+		for(StNode car : cars) {
+			//TODO
+		}
+		
+	}
+
+
+
+	private boolean handleRedirect(Message redirectMsg) throws CorruptDataException{
+		Object data = redirectMsg.getData();
+		MT_Redirect redi = null;
+		if(!(data instanceof MT_Redirect)) 
+			throw new CorruptDataException();
+		redi = (MT_Redirect) data;           	
+		return tryRegister(redi.getRedirectedNode());
 	}
 	
 	private String nextIdMsg() {

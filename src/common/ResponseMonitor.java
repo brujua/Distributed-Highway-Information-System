@@ -8,9 +8,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ResponseMonitor{
-
-	public ExecutorService service = Executors.newCachedThreadPool();
-	
 	
 	//maps responseID of the msgs pending and a boolean that marks if it was received
 	public Map<String, CompletableFuture<Message>> pendingMsgs = new ConcurrentHashMap<String, CompletableFuture<Message>>();
@@ -23,6 +20,9 @@ public class ResponseMonitor{
 		pendingMsgs.put(m.getId(), future);
 	}
 	
+	public void remove(Message m) {
+		pendingMsgs.remove(m);
+	}
 	public boolean check(Message m) {
 		//if it is a message we were waiting, complete its future.
 		String responseId = m.getResponseId();

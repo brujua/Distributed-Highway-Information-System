@@ -110,6 +110,11 @@ public class MsgHandler implements MsgObservable{
 		}
 	}
 	
+	/**
+	 * @param dest
+	 * @param msg
+	 * @return
+	 */
 	public CompletableFuture<Message> sendMsgWithResponse(Messageable dest, Message msg){
 		return sendMsgWithResponse(dest, msg, DEFAULT_TIMEOUT, DEFAULT_MAX_RETRIES);
 	}
@@ -131,6 +136,9 @@ public class MsgHandler implements MsgObservable{
 					if(!receivedResp) {
 						response.completeExceptionally(new TimeoutException("retries exceeded"));
 					}
+					// sleep some in case a duplicate response arrives and then remove from monitor
+					Thread.sleep(DEFAULT_TIMEOUT);
+					respMonitor.remove(msg);
 				
 				} catch(Exception e) {
 					System.out.println("Problemas enviando mensaje");

@@ -9,11 +9,10 @@ import java.util.UUID;
 
 public class Message implements Serializable{
 	private MsgType type;
-	private String ip;
-	private int port;
+	private String origIp;	//origin
+	private int origPort;	//origin
 	private String id;
 	private Object data;
-	private Messageable Origin;
 	
 	
 
@@ -23,14 +22,10 @@ public class Message implements Serializable{
 		this.type = type;
 		this.data = data;
 		this.id = UUID.randomUUID().toString();;
-		this.ip = ip;
-		this.port = port;
+		this.origIp = ip;
+		this.origPort = port;
 	}
 	
-
-	public Messageable getOrigin() {
-		return Origin;
-	}
 	
 	public MsgType getType() {
 		return type;
@@ -44,19 +39,19 @@ public class Message implements Serializable{
 	}
 	
 	public String getIp() {
-		return ip;
+		return origIp;
 	}		
 
 	public int getPort() {
-		return port;
+		return origPort;
 	}
 	
 	public void setIp(String ip) {
-		this.ip = ip;
+		this.origIp = ip;
 	}
 
 	public void setPort(int port) {
-		this.port = port;
+		this.origPort = port;
 	}
 
 	public byte[] toByteArr() {

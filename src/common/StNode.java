@@ -60,8 +60,6 @@ public class StNode implements Serializable, Messageable {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
-		result = prime * result + ((ip == null) ? 0 : ip.hashCode());
-		result = prime * result + port;
 		return result;
 	}
 
@@ -81,25 +79,7 @@ public class StNode implements Serializable, Messageable {
 				return false;
 		} else if (!id.equals(other.id))
 			return false;
-		if (ip == null) {
-			if (other.ip != null)
-				return false;
-		} else if (!ip.equals(other.ip))
-			return false;
-		if (port != other.port)
-			return false;
 		return true;
 	}
-
-
-
-	@Override
-	public Messageable getOrigin() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	
-	
 	
 }
