@@ -2,24 +2,22 @@ package common;
 
 import java.io.Serializable;
 
-public class Position implements Serializable{
+/**
+ * This class models a point of an object in space
+ *
+ * @implSpec This class is immutable and thread-safe.
+ */
+public final class Position implements Serializable{
 
-	private Double cordx;
-	private Double cordy;
-	private Units unity;
-	//max distance to a near node
-	private final double maxDistance = 10;
+	private final Double cordx;
+	private final Double cordy;
+	private final Unit unit;	
 	
-	
-	
-	public Position(Double coordX, Double coordY, Units kilometers) {
+	public Position(Double coordX, Double coordY, Unit unit) {
 		super();
-		coordX = cordx;
-		coordY = cordy;
-		unity = kilometers;
-		
-		
-		
+		this.cordx = coordX;
+		this.cordy = coordY;
+		this.unit = unit;		
 	}
 
 	public Double getCordx() {
@@ -30,8 +28,8 @@ public class Position implements Serializable{
 		return cordy;
 	}
 	
-	public Units getUnity() {
-		return this.unity;
+	public Unit getUnity() {
+		return this.unit;
 	}
 	
 	public double distance(Position position) {

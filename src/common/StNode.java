@@ -1,39 +1,49 @@
 package common;
 
 import java.io.Serializable;
+import java.time.Instant;
 
-/*
- * Structure of information of a Node
+/**
+ * This class its the minimal model of a Node
+ * 
+ * @implSpec This class is immutable and thread-safe.
 */
-public class StNode implements Serializable, Messageable {
-	private String id;
-	private String ip;
-	private int port;
-	//Pulse lastestData;
-	private Position position;
+public final class StNode implements Serializable, Messageable {
+	private final String id;
+	private final String ip;
+	private final int port;
+	private final Pulse pulse;	
 	
-	public StNode(String id, String ip, int port,Position position) {
+	public StNode(String id, String ip, int port, Pulse pulse) {
 		super();
 		this.id = id;
 		this.ip = ip;
 		this.port = port;
-		this.position = position;
+		this.pulse = pulse;
 	}
-	
-	public StNode(String id, String ip, int port) {
-		super();
-		this.id = id;
-		this.ip = ip;
-		this.port = port;
-	}
-	
-	
 
+	/**
+	 * Constructor for static nodes, velocity and timestamp are set to 0 and now() respectively
+	 * @param id
+	 * @param ip
+	 * @param port
+	 * @param position
+	 */
+	public StNode(String id, String ip, int port, Position position) {
+		this(id,ip,port,new Pulse(position, 0, Instant.now()));
+	}
+	
 	public Position getPosition() {
-		return position;
+		return pulse.getPosition();
 	}
-
-
+	
+	public Instant getTimestamp() {
+		return this.pulse.getTimestamp();
+	}
+	
+	public double getVelocity() {
+		return this.pulse.getVelocity();
+	}
 
 	@Override
 	public String getIP() {
@@ -65,6 +75,11 @@ public class StNode implements Serializable, Messageable {
 
 
 
+	/** 
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 * this equals only evaluates for equal id
+	 * so, if two StNodes has different attributes but same id, are considered equal
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)

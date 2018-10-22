@@ -193,13 +193,13 @@ public class Car implements MsgListener{
 	}
 
 	public Pulse getPulse() {
-		return new Pulse(id + msgCounter, position, velocity, Instant.now());
+		return new Pulse(position, velocity, Instant.now());
 	}
 	public static void main(String[] args) {
 		String agusIP = "192.168.0.65";
 		int port = 9000;
 		
-		Message msg = new Message(MsgType.HELLO,agusIP,port, new Pulse("5555", new Position(0.0, 5.0,Units.KiloMeters), 4.5, Instant.now()));
+		Message msg = new Message(MsgType.HELLO,agusIP,port, new Pulse(new Position(0.0, 5.0,Unit.KiloMeters), 4.5, Instant.now()));
 		byte[] serializedMessage = msg.toByteArr();
 		DatagramSocket socket;
 		DatagramPacket udpPckt;
