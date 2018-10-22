@@ -1,4 +1,4 @@
-package common;
+package network;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

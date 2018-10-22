@@ -7,14 +7,15 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.ArrayList;
 
-import cars.Pulse;
-import common.Message;
-import common.Messageable;
-import common.MsgHandler;
-import common.MsgListener;
-import common.MsgType;
 import common.Position;
+import common.Pulse;
 import common.StNode;
+import network.MT_HelloResponse;
+import network.Message;
+import network.Messageable;
+import network.MsgHandler;
+import network.MsgListener;
+import network.MsgType;
 
 public class HighWay implements MsgListener{
 
@@ -60,7 +61,7 @@ public class HighWay implements MsgListener{
 		msgHandlerCoordinator = new MsgHandler(this.port);
 		msgHandlerCoordinator.addListener(this);
 		
-		stNode = new StNode(this.id,this.ip,this.port);
+		stNode = new StNode(this.id,this.ip,this.port,position);
 		
 	}
 
@@ -172,11 +173,11 @@ public class HighWay implements MsgListener{
 	}
 	
 	private void hello(Message m) {
-		if (isInZone( ( (Pulse) m.getData() ).getPosition() ) ) {
-			Message msg = new Message(MsgType.HELLO_RESPONSE,getIp(),getPort(),carNodes);
-			StNode carst = new StNode(m.getId(),m.getIp(),m.getPort());
-			carNodes.add(carst); 
-			msgHandler.sendMsg((Messageable) m.getOrigin(), msg);
+		StNode helloNode = (StNode) m.getData();
+		if (isInZone( helloNode.getPosition() ) ) {
+			Message msg = new Message(MsgType.HELLO_RESPONSE,getIp(),getPort(),new MT_HelloResponse(m.getId(), stNode, carNodes));
+			carNodes.add(helloNode); 
+			msgHandler.sendMsg(helloNode, msg);
 		}else {
 			redirect(m);
 		}

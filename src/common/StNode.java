@@ -3,6 +3,8 @@ package common;
 import java.io.Serializable;
 import java.time.Instant;
 
+import network.Messageable;
+
 /**
  * This class its the minimal model of a Node
  * 
