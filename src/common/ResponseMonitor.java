@@ -23,13 +23,20 @@ public class ResponseMonitor{
 	public void remove(Message m) {
 		pendingMsgs.remove(m);
 	}
-	public boolean check(Message m) {
+	
+	/**
+	 * Checks if a message its a response expected to be received, and completes its associated future
+	 * 
+	 * @param msg Message to check
+	 * @return true if it was a expected response
+	 */
+	public boolean check(Message msg) {
 		//if it is a message we were waiting, complete its future.
-		String responseId = m.getResponseId();
+		String responseId = msg.getResponseId();
 		if(responseId!=null) 
 			if(pendingMsgs.containsKey(responseId)) {
 				CompletableFuture<Message> fut = pendingMsgs.get(responseId);
-				fut.complete(m);
+				fut.complete(msg);
 				return true;
 			}
 		return false;

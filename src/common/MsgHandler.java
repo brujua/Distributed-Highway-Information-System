@@ -56,6 +56,11 @@ public class MsgHandler implements MsgObservable{
 					ByteArrayInputStream bais = new ByteArrayInputStream(packetBuffer);
 			      	ObjectInputStream ois = new ObjectInputStream(bais);
 					while(listen) {
+						if(Thread.currentThread().isInterrupted()) {
+							//TODO log
+		                    System.out.println("Listening thread interrupted");
+		                    break;
+		                }
 						receiveS.receive(receiverPacket);
 		
 						Message m = (Message)ois.readObject();
@@ -150,5 +155,12 @@ public class MsgHandler implements MsgObservable{
 		});
 		
 		return response;
+	}
+	
+	/**
+	 * Stops listening and sending, interrupting all threads that are currently running 
+	 */
+	public void close() {
+		threadService.shutdownNow();
 	}
 }
