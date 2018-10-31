@@ -10,6 +10,7 @@ import java.time.Instant;
  *
  */
 public final class  Pulse implements Serializable {
+	
 	private final Position position;
 	private final double velocity;
 	private final Instant timestamp;
@@ -33,4 +34,8 @@ public final class  Pulse implements Serializable {
 		return timestamp;
 	}
 	
+	@Override
+	public String toString() {
+		return "Pulse [position=" + position + ", velocity=" + velocity + ", timestamp=" + timestamp + "]";
+	}
 }

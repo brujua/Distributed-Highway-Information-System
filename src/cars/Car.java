@@ -1,18 +1,14 @@
 package cars;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
+
 import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -38,6 +34,9 @@ public class Car implements MsgListener{
 	public final String ip = "localhost";
 	public final int port = 5555;
 	
+	public final double PRIMARY_RANGE = 200;
+	public final double SECONDARY_RANGE = Double.MAX_VALUE;
+	
 	private String id;
 	private Position position;
 	private double velocity;
@@ -48,16 +47,21 @@ public class Car implements MsgListener{
 	private ArrayList<StNode> neighs; //other cars near by
 	private StNode selectedHWNode;
 	private ArrayList<StNode> farCars;
+	private CarMonitor primaryMonitor;
+	private CarMonitor secondaryMonitor;
 	
-	public Car (Position position, double velocity) throws NoPeersFoundException {
+	
+	public Car(Position position, double velocity, List<StNode> highwayNodes) throws NoPeersFoundException {
 		super();
 		id = UUID.randomUUID().toString();
 		this.position = position;
 		this.velocity = velocity;
 		msgCounter = BigInteger.valueOf(0);
-		highWayNodes = new ArrayList<>();
+		highWayNodes = new ArrayList<StNode>(highwayNodes);
 		neighs = new ArrayList<>();
 		farCars = new ArrayList<>();
+		primaryMonitor = new CarMonitor(PRIMARY_RANGE, position);
+		secondaryMonitor = new CarMonitor(SECONDARY_RANGE, position);
 		
 		//initialize the MsgHandler
 		msgHandler = new MsgHandler(this.port);
@@ -70,15 +74,22 @@ public class Car implements MsgListener{
 		monitorFarCars();
 	}
 	
+	public Car (Position position, double velocity) throws NoPeersFoundException {
+		this(position, velocity, new ArrayList<>());
+	}
+	
 	
 
 	private void registerInNetwork() throws NoPeersFoundException {
 		boolean registered = false;
 		StNode highwNode;
-		Iterator<StNode> nodIterator = highWayNodes.iterator();		
+		Iterator<StNode> nodIterator = highWayNodes.iterator();	
 		while(!registered) {
 			if(nodIterator.hasNext()) {
 				highwNode = nodIterator.next();
+				System.out.println("Intentando registro en nodo");
+				System.out.println(highwNode);
+				
 				registered = tryRegister(highwNode);
 			} else 
 				throw new NoPeersFoundException(); 
@@ -98,7 +109,7 @@ public class Car implements MsgListener{
 			if(hwNode==null)
 				return false;
 			// send hello and wait for response			
-			Message msg = new Message(MsgType.HELLO,this.ip,this.port, this.getPulse());
+			Message msg = new Message(MsgType.HELLO,this.ip,this.port, getStNode());
 			response=msgHandler.sendMsgWithResponse(hwNode, msg);
 			responseMsg = response.get();
 		
@@ -161,8 +172,11 @@ public class Car implements MsgListener{
 	 * @param cars
 	 */
 	private void addMultipleCars(Iterable<StNode> cars) {
+		boolean updated = false;
 		for(StNode car : cars) {
-			//TODO
+			updated = primaryMonitor.update(car);
+			if(!updated)
+				secondaryMonitor.update(car);
 		}
 		
 	}
@@ -178,13 +192,6 @@ public class Car implements MsgListener{
 		return tryRegister(redi.getRedirectedNode());
 	}
 	
-	private String nextIdMsg() {
-		msgCounter=msgCounter.add(BigInteger.ONE); //increment msgCounter
-		return id+msgCounter;
-	}
-
-
-
 	private boolean isNear(StNode obj) {
 		// TODO Auto-generated method stub
 		return false;
@@ -271,9 +278,28 @@ public class Car implements MsgListener{
 	}
 	
 	
+	public void move() {
+		
+	}
 	
+	public Iterable<StNode> getNeighs(){
+		return primaryMonitor.getList();
+	}
 	
+	public StNode getNearestNeigh() {
+		List<StNode> neighs = primaryMonitor.getList();
+		if(neighs.isEmpty())
+			return null;
+		return neighs.get(0);
+	}
 	
+	public StNode getSelectedHWnode() {
+		return selectedHWNode;
+	}
 	
+	public StNode getStNode() {
+		return new StNode(id, ip, port, position);
+	}
+
 
 }

@@ -20,6 +20,10 @@ public final class Position implements Serializable{
 		this.unit = unit;		
 	}
 
+	public Position(Double coordX, Double coordY) {
+		this(coordX, coordY, Unit.KiloMeters);
+	}
+
 	public Double getCordx() {
 		return cordx;
 	}
@@ -49,6 +53,12 @@ public final class Position implements Serializable{
 		return Math.sqrt(distX+distY) ;
 	}
 
+	@Override
+	public String toString() {
+		return "Position [cordx=" + cordx + ", cordy=" + cordy + "]";
+	}
+
+	
 }
 	
 

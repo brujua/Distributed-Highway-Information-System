@@ -46,6 +46,10 @@ public final class StNode implements Serializable, Messageable {
 	public double getVelocity() {
 		return this.pulse.getVelocity();
 	}
+	
+	public StNode updatePulse(Pulse pulse) {
+		return new StNode(id, ip, port, pulse);
+	}
 
 	@Override
 	public String getIP() {
@@ -98,5 +102,11 @@ public final class StNode implements Serializable, Messageable {
 			return false;
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return "StNode [id=" + id.substring(0, 5) + ", ip=" + ip + ", port=" +port+ "]";
+	}
+	
 	
 }

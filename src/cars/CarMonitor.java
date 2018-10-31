@@ -1,16 +1,20 @@
-package common;
+package cars;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;;
+import java.util.List;
+
+import common.Position;
+import common.StNode;;
 
 public class CarMonitor {
 	private double range;
 	private Position position;
 	private List<StNode> cars;
 	
-	public CarMonitor(double range) {
+	public CarMonitor(double range, Position initPos) {
 		this.range = range;
+		this.position = initPos;
 		cars = Collections.synchronizedList(new ArrayList<StNode>());
 	}
 	
@@ -50,12 +54,18 @@ public class CarMonitor {
 	}
 	
 	/**
-	 * @note Its important to synchronize the reading of this list while iterating over it.
-	 *
-	 * @return the list of the cars being monitored
+	 * @return the copy of the list of the cars being monitored
 	 */
 	public List<StNode> getList(){
-		return cars;
+		//make a copy of the list;
+		List<StNode> list;
+		synchronized (cars) {
+			list = new ArrayList<StNode>(cars.size());
+			for (StNode car : cars) {
+				list.add(car);
+			}
+		}
+		return list;
 	}
 	
 	

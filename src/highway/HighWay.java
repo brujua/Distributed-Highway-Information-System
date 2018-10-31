@@ -6,10 +6,12 @@ import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.ArrayList;
+import java.util.UUID;
 
 import common.Position;
 import common.Pulse;
 import common.StNode;
+import network.CorruptDataException;
 import network.MT_HelloResponse;
 import network.Message;
 import network.Messageable;
@@ -21,11 +23,11 @@ public class HighWay implements MsgListener{
 
 	public final String ip = "localhost";
 	
-	//port server from cars
-	public final int port = 9000;
+	//listening port for cars
+	public final int portCars = 5007;
 	
 	
-	//port connections from Coordinator
+	//listening port for Coordinator
 	public final int portCoordinator = 8000;
 	
 	
@@ -48,20 +50,19 @@ public class HighWay implements MsgListener{
 	private ArrayList<StNode> carNodes; //cars in my zone to shared
 	
 	
-	
-	public HighWay ( ArrayList<StNode> neighs,Position position) {
+	public HighWay (ArrayList<StNode> neighs , Position position) {
 		super();
 		this.position= position;
 		this.neighs = neighs;
-
-				
-		msgHandler = new MsgHandler(this.port);
+		this.id = UUID.randomUUID().toString();
+		neighs = new ArrayList<>();
+		carNodes = new ArrayList<>();
+		msgHandler = new MsgHandler(this.portCars);		
+		msgHandlerCoordinator = new MsgHandler(this.portCoordinator);
 		msgHandler.addListener(this);
-		
-		msgHandlerCoordinator = new MsgHandler(this.port);
 		msgHandlerCoordinator.addListener(this);
 		
-		stNode = new StNode(this.id,this.ip,this.port,position);
+		stNode = new StNode(this.id,this.ip,this.portCars,position);
 		
 	}
 
@@ -108,24 +109,27 @@ public class HighWay implements MsgListener{
 	
 	
 	
-//	public static void main(String[] args) {
-//		try {
-//			byte[] packetBuffer = new byte[1024];
-//			DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
-//			DatagramSocket socket = new DatagramSocket(9000);
-//			socket.receive(receiverPacket);
-//			ByteArrayInputStream baos = new ByteArrayInputStream(packetBuffer);
-//		      ObjectInputStream oos = new ObjectInputStream(baos);
-//		      Message m = (Message)oos.readObject();
-//		      System.out.println(m.getType());
-//		      Pulse p =(Pulse) m.getData();
-//		      System.out.println(p.getMsgID());
-//		      
-//		} catch (Exception e) {
-//			
-//		}
-//
-//	}
+	public static void main(String[] args) {
+		try {
+			/*byte[] packetBuffer = new byte[1024];
+			DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
+			DatagramSocket socket = new DatagramSocket(9000);
+			socket.receive(receiverPacket);
+			ByteArrayInputStream baos = new ByteArrayInputStream(packetBuffer);
+		      ObjectInputStream oos = new ObjectInputStream(baos);
+		      Message m = (Message)oos.readObject();
+		      System.out.println(m.getType());
+		      Pulse p =(Pulse) m.getData();
+		      System.out.println(p.getMsgID());*/
+			
+			HighWay hw = new HighWay(new ArrayList<>(), new Position(0.0, 0.0));
+			System.out.println(hw.getStNode());
+		      
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
 	
 	
 	private String getIp() {
@@ -134,7 +138,11 @@ public class HighWay implements MsgListener{
 
 
 	private int getPort() {
-		return port;
+		return portCars;
+	}
+	
+	public StNode getStNode() {
+		return new StNode(id, ip, portCars, position);
 	}
 
 
@@ -144,9 +152,11 @@ public class HighWay implements MsgListener{
 		// The logic of the received msg will be handled on a different thread
 		Thread thread = new Thread( new Runnable() {
 			public void run() {
-				switch(m.getType()) {
+				try {
+					switch(m.getType()) {
 					case HELLO: {
-						hello(m);
+						
+						handleHello(m);
 						break;
 					}
 					case PULSE: {
@@ -165,19 +175,27 @@ public class HighWay implements MsgListener{
 						//TODO log message of unknown type
 					}
 				}		
-			}
+			
+				} catch(CorruptDataException cde) {
+					cde.printStackTrace();
+					//TODO log
+					System.out.println("corrupt data on hw-node response");
+				}
+			}	
 		});
 		
 		thread.start();
 		return;	
 	}
 	
-	private void hello(Message m) {
-		StNode helloNode = (StNode) m.getData();
-		if (isInZone( helloNode.getPosition() ) ) {
-			Message msg = new Message(MsgType.HELLO_RESPONSE,getIp(),getPort(),new MT_HelloResponse(m.getId(), stNode, carNodes));
-			carNodes.add(helloNode); 
-			msgHandler.sendMsg(helloNode, msg);
+	private void handleHello(Message m) throws CorruptDataException {
+		if(!(m.getData() instanceof StNode))
+			throw new CorruptDataException();
+		StNode node = (StNode) m.getData();
+		if (isInZone( node.getPosition() ) ) {
+			Message msg = new Message(MsgType.HELLO_RESPONSE, getIp(),getPort(), new MT_HelloResponse(m.getId(), stNode, carNodes));
+			carNodes.add(node); 
+			msgHandler.sendMsg(node, msg);
 		}else {
 			redirect(m);
 		}
@@ -185,11 +203,12 @@ public class HighWay implements MsgListener{
 	
 	private boolean isInZone(Position pos) {
 		
-		if( (serchRedirect(pos)).equals(this.stNode)) {
+		/*if( (serchRedirect(pos)).equals(this.stNode)) {
 			return true;
 		}
 		// TODO buscar si esta en la zona
-		return false;
+		return false;*/
+		return true;
 	}
 
 
@@ -199,7 +218,7 @@ public class HighWay implements MsgListener{
 		Message msg = new Message(MsgType.REDIRECT,getIp(),getPort(),hwRedirect);
 		StNode carst = new StNode(m.getId(),m.getIp(),m.getPort(),this.getPosition());
 		carNodes.add(carst); 
-		msgHandler.sendMsg((Messageable) m.getOrigin(), msg);
+		msgHandler.sendMsg(carst, msg);
 	}
 
 

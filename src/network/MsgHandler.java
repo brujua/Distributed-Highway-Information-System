@@ -34,6 +34,8 @@ public class MsgHandler implements MsgObservable{
 		super();
 		this.port = port;
 		listen = true;
+		listeners = new ArrayList<MsgListener>();
+			
 		// create the Response monitor that will track if an expected response was receive
 		respMonitor = new ResponseMonitor();
 		//start listening thread
@@ -51,10 +53,10 @@ public class MsgHandler implements MsgObservable{
 			public void run() {
 				try {
 					DatagramSocket receiveS = new DatagramSocket(port);
-					byte[] packetBuffer = new byte[1024];
+					byte[] packetBuffer = new byte[2048];
 					DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
 					ByteArrayInputStream bais = new ByteArrayInputStream(packetBuffer);
-			      	ObjectInputStream ois = new ObjectInputStream(bais);
+			      	
 					while(listen) {
 						if(Thread.currentThread().isInterrupted()) {
 							//TODO log
@@ -62,18 +64,23 @@ public class MsgHandler implements MsgObservable{
 		                    break;
 		                }
 						receiveS.receive(receiverPacket);
-		
+						ObjectInputStream ois = new ObjectInputStream(bais);
 						Message m = (Message)ois.readObject();
 						if(!respMonitor.check(m))
 							for (MsgListener listener : listeners) {
 								listener.notify(m);
 							}
 					}
-				} catch (Exception e) {
+				} catch(IOException | ClassNotFoundException e) {
+					e.printStackTrace();
+					System.out.println("problemas thread escucha puerto " + port);
+				}
+				
+				/*catch (Exception e) {
 					//TODO log
 					System.out.println("Problemas en el thread de escucha");
 					e.printStackTrace();
-				}
+				}*/
 			}
 		});		
 	}
@@ -100,8 +107,8 @@ public class MsgHandler implements MsgObservable{
 	
 	public void sendMsg(Messageable dest, Message msg) {
 		
-		try {
-			DatagramSocket sendSocket = new DatagramSocket();
+		try(DatagramSocket sendSocket = new DatagramSocket();) {
+			
 			byte[] serializedHello = msg.toByteArr();
 			DatagramPacket helloPckt;
 			helloPckt = new DatagramPacket(serializedHello, serializedHello.length, InetAddress.getByName(dest.getIP()) , dest.getPort());
@@ -111,8 +118,8 @@ public class MsgHandler implements MsgObservable{
 			// TODO log
 			System.out.println("Err Mensaje no enviado");
 			e.printStackTrace();
-		} finally {
 		}
+		
 	}
 	
 	/**
