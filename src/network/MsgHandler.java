@@ -53,9 +53,7 @@ public class MsgHandler implements MsgObservable{
 			public void run() {
 				try {
 					DatagramSocket receiveS = new DatagramSocket(port);
-					byte[] packetBuffer = new byte[2048];
-					DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
-					ByteArrayInputStream bais = new ByteArrayInputStream(packetBuffer);
+					
 			      	
 					while(listen) {
 						if(Thread.currentThread().isInterrupted()) {
@@ -63,9 +61,13 @@ public class MsgHandler implements MsgObservable{
 		                    System.out.println("Listening thread interrupted");
 		                    break;
 		                }
+						byte[] packetBuffer = new byte[4096];
+						DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
+						ByteArrayInputStream bais = new ByteArrayInputStream(packetBuffer);
 						receiveS.receive(receiverPacket);
 						ObjectInputStream ois = new ObjectInputStream(bais);
 						Message m = (Message)ois.readObject();
+						ois.close();
 						if(!respMonitor.check(m))
 							for (MsgListener listener : listeners) {
 								listener.notify(m);

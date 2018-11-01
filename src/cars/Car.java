@@ -32,12 +32,13 @@ public class Car implements MsgListener{
 
 	// temporary constants
 	public final String ip = "localhost";
-	public final int port = 5555;
+	public final int tentativePort = 5555;	
 	
 	public final double PRIMARY_RANGE = 200;
 	public final double SECONDARY_RANGE = Double.MAX_VALUE;
 	
 	private String id;
+	private int port;
 	private Position position;
 	private double velocity;
 	private BigInteger msgCounter;
@@ -56,6 +57,7 @@ public class Car implements MsgListener{
 		id = UUID.randomUUID().toString();
 		this.position = position;
 		this.velocity = velocity;
+		this.port = getAvailablePort();
 		msgCounter = BigInteger.valueOf(0);
 		highWayNodes = new ArrayList<StNode>(highwayNodes);
 		neighs = new ArrayList<>();
@@ -77,8 +79,14 @@ public class Car implements MsgListener{
 	public Car (Position position, double velocity) throws NoPeersFoundException {
 		this(position, velocity, new ArrayList<>());
 	}
-	
-	
+		
+	private int getAvailablePort() {
+		int avPort = this.tentativePort;
+		while(Util.isUDPPortOccupied(avPort)) {
+			avPort++;
+		}
+		return avPort;
+	}	
 
 	private void registerInNetwork() throws NoPeersFoundException {
 		boolean registered = false;
@@ -93,7 +101,8 @@ public class Car implements MsgListener{
 				registered = tryRegister(highwNode);
 			} else 
 				throw new NoPeersFoundException(); 
-		}		
+		}
+		System.out.println("Registered in node:" + selectedHWNode);
 	}
 	
 	
@@ -282,7 +291,7 @@ public class Car implements MsgListener{
 		
 	}
 	
-	public Iterable<StNode> getNeighs(){
+	public List<StNode> getNeighs(){
 		return primaryMonitor.getList();
 	}
 	
