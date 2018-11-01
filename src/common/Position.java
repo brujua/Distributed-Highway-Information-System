@@ -1,6 +1,7 @@
 package common;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * This class models a point of an object in space
@@ -60,11 +61,7 @@ public final class Position implements Serializable{
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((cordx == null) ? 0 : cordx.hashCode());
-		result = prime * result + ((cordy == null) ? 0 : cordy.hashCode());
-		return result;
+		return Objects.hash(cordx,cordy);
 	}
 
 	@Override
