@@ -5,17 +5,19 @@ import java.util.Collections;
 import java.util.List;
 
 import common.Position;
+import common.Pulse;
 import common.StNode;;
 
-public class CarMonitor {
+public class CarMonitor implements MotionObserver{
 	private double range;
-	private Position position;
 	private List<StNode> cars;
+	private Position position;
 	
-	public CarMonitor(double range, Position initPos) {
+	public CarMonitor(double range, MotionObservable carrier) {
 		this.range = range;
-		this.position = initPos;
 		cars = Collections.synchronizedList(new ArrayList<StNode>());
+		// subscribe to the carrier of this monitor to be notified in changes of position
+		carrier.addObserver(this);
 	}
 	
 	public void setRange(double range) {
@@ -46,13 +48,7 @@ public class CarMonitor {
 			return true;
 		}		
 	}
-	
-	public void updatePosition(Position position) {
-		synchronized(this.position) {
-			this.position = position;
-		}
-	}
-	
+		
 	/**
 	 * @return the copy of the list of the cars being monitored
 	 */
@@ -66,6 +62,12 @@ public class CarMonitor {
 			}
 		}
 		return list;
+	}
+
+	@Override
+	public void notify(Pulse pulse) {
+		this.position = pulse.getPosition();
+		
 	}
 	
 	

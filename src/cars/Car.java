@@ -67,8 +67,8 @@ public class Car implements MsgListener, MotionObservable{
 		this.velocity = velocity;
 		this.port = getAvailablePort();
 		highWayNodes = new ArrayList<StNode>(highwayNodes);
-		primaryMonitor = new CarMonitor(PRIMARY_RANGE, position);
-		secondaryMonitor = new CarMonitor(SECONDARY_RANGE, position);
+		primaryMonitor = new CarMonitor(PRIMARY_RANGE, this);
+		secondaryMonitor = new CarMonitor(SECONDARY_RANGE, this);
 		
 		//initialize the MsgHandler
 		msgHandler = new MsgHandler(this.port);
@@ -223,6 +223,7 @@ public class Car implements MsgListener, MotionObservable{
 	public Pulse getPulse() {
 		return new Pulse(position, velocity, Instant.now());
 	}
+	
 	public static void main(String[] args) {
 		String agusIP = "192.168.0.65";
 		int port = 9000;
@@ -305,7 +306,7 @@ public class Car implements MsgListener, MotionObservable{
 	
 	private void notifyMotionObservers() {
 		for (MotionObserver obs : motionObservers) {
-			obs.notify(new Pulse(position, velocity, Instant.now()));
+			obs.notify(this.getPulse());
 		}
 		
 	}
@@ -331,7 +332,9 @@ public class Car implements MsgListener, MotionObservable{
 
 	@Override
 	public void addObserver(MotionObserver mo) {
-		motionObservers .add(mo);
+		motionObservers.add(mo);
+		//immediately notify of current pulse
+		mo.notify(this.getPulse());
 		
 	}
 
