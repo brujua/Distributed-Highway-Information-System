@@ -15,7 +15,7 @@ import common.Position;
 import common.StNode;
 import highway.HighWay;
 
-class CarInitTest {
+class CarProtocolTests {
 	static final Double coordXOrigin = 0.0;
 	static final Double coordYOrigin = 0.0;
 	
@@ -50,6 +50,28 @@ class CarInitTest {
 			List<StNode> car2Neighs = car2.getNeighs();
 			assert(car2Neighs.contains(car1.getStNode()));		
 			
+		} catch (NoPeersFoundException e) {
+			// TODO Auto-generated catch block
+			fail("NoPeersFoundException");
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	void testHelloCarCar() {
+		try {
+			double velocityCar1 = 2;
+			Car car1 = new Car(new Position(coordXOrigin+2, coordYOrigin+2),velocityCar1,hwNodes);
+			car1.move();
+			Thread.sleep(1000);
+			Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
+			List<StNode> car2Neighs = car2.getNeighs();
+			Position car1Pos = car1.getStNode().getPosition();
+			Position car12Pos = car2Neighs.get(0).getPosition();
+			assertEquals(car1Pos, car12Pos);
 		} catch (NoPeersFoundException e) {
 			// TODO Auto-generated catch block
 			fail("NoPeersFoundException");

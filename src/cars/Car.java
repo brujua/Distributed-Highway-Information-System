@@ -36,18 +36,16 @@ public class Car implements MsgListener{
 	
 	public final double PRIMARY_RANGE = 200;
 	public final double SECONDARY_RANGE = Double.MAX_VALUE;
+	public final int pulseRefreshTime = 1000;
 	
 	private String id;
 	private int port;
 	private Position position;
 	private double velocity;
-	private BigInteger msgCounter;
 	private MsgHandler msgHandler;
 	
 	private ArrayList<StNode> highWayNodes; // centralized part of the network
-	private ArrayList<StNode> neighs; //other cars near by
 	private StNode selectedHWNode;
-	private ArrayList<StNode> farCars;
 	private CarMonitor primaryMonitor;
 	private CarMonitor secondaryMonitor;
 	
@@ -58,13 +56,10 @@ public class Car implements MsgListener{
 		this.position = position;
 		this.velocity = velocity;
 		this.port = getAvailablePort();
-		msgCounter = BigInteger.valueOf(0);
 		highWayNodes = new ArrayList<StNode>(highwayNodes);
-		neighs = new ArrayList<>();
-		farCars = new ArrayList<>();
 		primaryMonitor = new CarMonitor(PRIMARY_RANGE, position);
 		secondaryMonitor = new CarMonitor(SECONDARY_RANGE, position);
-		
+		//primarypulseEmiter = new PulseEmiter(pulseRefreshTime,primaryMonitor);
 		//initialize the MsgHandler
 		msgHandler = new MsgHandler(this.port);
 		msgHandler.addListener(this);
@@ -121,8 +116,7 @@ public class Car implements MsgListener{
 			Message msg = new Message(MsgType.HELLO,this.ip,this.port, getStNode());
 			response=msgHandler.sendMsgWithResponse(hwNode, msg);
 			responseMsg = response.get();
-		
-	      	//bussiness logic 
+			
         	switch(responseMsg.getType()) {
             	case HELLO_RESPONSE:{
             		handleHelloResponse(responseMsg);
@@ -288,9 +282,15 @@ public class Car implements MsgListener{
 	
 	
 	public void move() {
-		
+		position = new Position(position.getCordx()+velocity, position.getCordy()+velocity);
+		updateMonitorsPosition();
 	}
 	
+	private void updateMonitorsPosition() {
+		primaryMonitor.updatePosition(position);
+		secondaryMonitor.updatePosition(position);		
+	}
+
 	public List<StNode> getNeighs(){
 		return primaryMonitor.getList();
 	}

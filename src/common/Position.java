@@ -58,6 +58,39 @@ public final class Position implements Serializable{
 		return "Position [cordx=" + cordx + ", cordy=" + cordy + "]";
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((cordx == null) ? 0 : cordx.hashCode());
+		result = prime * result + ((cordy == null) ? 0 : cordy.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Position other = (Position) obj;
+		if (cordx == null) {
+			if (other.cordx != null)
+				return false;
+		} else if (!cordx.equals(other.cordx))
+			return false;
+		if (cordy == null) {
+			if (other.cordy != null)
+				return false;
+		} else if (!cordy.equals(other.cordy))
+			return false;
+		return true;
+	}
+
+
+
 	
 }
 	
