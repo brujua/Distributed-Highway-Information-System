@@ -17,6 +17,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import common.*;
@@ -30,24 +34,29 @@ import network.MsgType;
 
 public class Car implements MsgListener{
 
-	// temporary constants
+	// -- temporary constants --
 	public final String ip = "localhost";
 	public final int tentativePort = 5555;	
-	
+	// range for the monitors
 	public final double PRIMARY_RANGE = 200;
 	public final double SECONDARY_RANGE = Double.MAX_VALUE;
+
 	public final int pulseRefreshTime = 1000;
+	public final TimeUnit pRefreshTimeUnit = TimeUnit.MILLISECONDS;
 	
 	private String id;
 	private int port;
 	private Position position;
 	private double velocity;
-	private MsgHandler msgHandler;
 	
+	private MsgHandler msgHandler;
 	private ArrayList<StNode> highWayNodes; // centralized part of the network
 	private StNode selectedHWNode;
 	private CarMonitor primaryMonitor;
 	private CarMonitor secondaryMonitor;
+	private PulseEmiter pulseEmiter;
+	private ScheduledExecutorService pulseScheduler = Executors.newSingleThreadScheduledExecutor();
+	
 	
 	
 	public Car(Position position, double velocity, List<StNode> highwayNodes) throws NoPeersFoundException {
@@ -59,11 +68,12 @@ public class Car implements MsgListener{
 		highWayNodes = new ArrayList<StNode>(highwayNodes);
 		primaryMonitor = new CarMonitor(PRIMARY_RANGE, position);
 		secondaryMonitor = new CarMonitor(SECONDARY_RANGE, position);
-		//primarypulseEmiter = new PulseEmiter(pulseRefreshTime,primaryMonitor);
+		
 		//initialize the MsgHandler
 		msgHandler = new MsgHandler(this.port);
 		msgHandler.addListener(this);
 		
+		pulseEmiter = new PulseEmiter(primaryMonitor,msgHandler);
 		//register in the highway network
 		registerInNetwork();
 		
@@ -201,7 +211,7 @@ public class Car implements MsgListener{
 	}
 
 	private void emitPulses() {
-		//call to method emitMessage() of the msgHandler
+		pulseScheduler.scheduleWithFixedDelay(pulseEmiter, 0, pulseRefreshTime, pRefreshTimeUnit);
 	}
 	
 	private void monitorFarCars() {
