@@ -74,7 +74,7 @@ public class Car implements MsgListener, MotionObservable{
 		msgHandler = new MsgHandler(this.port);
 		msgHandler.addListener(this);
 		
-		pulseEmiter = new PulseEmiter(primaryMonitor,msgHandler);
+		pulseEmiter = new PulseEmiter(this,primaryMonitor,msgHandler, getStNode());
 		//register in the highway network
 		registerInNetwork();
 		

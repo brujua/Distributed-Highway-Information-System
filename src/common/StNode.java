@@ -105,6 +105,10 @@ public final class StNode implements Serializable, Messageable {
 	public String toString() {
 		return "StNode [id=" + id.substring(0, 5) + ", ip=" + ip + ", port=" +port+ "]";
 	}
+
+	public StNode changePulse(Pulse pulse) {
+		return new StNode(id, ip, port, pulse.getPosition());
+	}
 	
 	
 }
