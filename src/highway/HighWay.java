@@ -1,20 +1,17 @@
 package highway;
 
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
+
 import java.math.BigInteger;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.util.ArrayList;
 import java.util.UUID;
 
 import common.Position;
-import common.Pulse;
+
 import common.StNode;
 import network.CorruptDataException;
 import network.MT_HelloResponse;
 import network.Message;
-import network.Messageable;
+
 import network.MsgHandler;
 import network.MsgListener;
 import network.MsgType;
@@ -185,7 +182,6 @@ public class HighWay implements MsgListener{
 		});
 		
 		thread.start();
-		return;	
 	}
 	
 	private void handleHello(Message m) throws CorruptDataException {
@@ -214,7 +210,7 @@ public class HighWay implements MsgListener{
 
 	private void redirect(Message m) {
 		// TODO redirecccionar a hw correspondiente
-		StNode hwRedirect = serchRedirect(((Position) m.getData()));
+		StNode hwRedirect = searchRedirect(((Position) m.getData()));
 		Message msg = new Message(MsgType.REDIRECT,getIp(),getPort(),hwRedirect);
 		StNode carst = new StNode(m.getId(),m.getIp(),m.getPort(),this.getPosition());
 		carNodes.add(carst); 
@@ -222,7 +218,7 @@ public class HighWay implements MsgListener{
 	}
 
 
-	private StNode serchRedirect(Position position) {
+	private StNode searchRedirect(Position position) {
 	// TODO Auto-generated method stub
 		Double minDistance = this.position.distance(position);
 		Position pos = this.position;
