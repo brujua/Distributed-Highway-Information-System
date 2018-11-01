@@ -1,15 +1,6 @@
 package cars;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 
-import java.math.BigInteger;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -17,7 +8,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -195,8 +186,6 @@ public class Car implements MsgListener, MotionObservable{
 		
 	}
 
-
-
 	private boolean handleRedirect(Message redirectMsg) throws CorruptDataException{
 		Object data = redirectMsg.getData();
 		MT_Redirect redi = null;
@@ -206,11 +195,6 @@ public class Car implements MsgListener, MotionObservable{
 		return tryRegister(redi.getRedirectedNode());
 	}
 	
-	private boolean isNear(StNode obj) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
 	private void emitPulses() {
 		pulseScheduler.scheduleWithFixedDelay(pulseEmiter, 0, pulseRefreshTime, pRefreshTimeUnit);
 	}
@@ -224,48 +208,6 @@ public class Car implements MsgListener, MotionObservable{
 		return new Pulse(position, velocity, Instant.now());
 	}
 	
-	public static void main(String[] args) {
-		String agusIP = "192.168.0.65";
-		int port = 9000;
-		
-		Message msg = new Message(MsgType.HELLO,agusIP,port, new Pulse(new Position(0.0, 5.0,Unit.KiloMeters), 4.5, Instant.now()));
-		byte[] serializedMessage = msg.toByteArr();
-		DatagramSocket socket;
-		DatagramPacket udpPckt;
-		try {
-			socket = new DatagramSocket(5551);
-			udpPckt = new DatagramPacket(serializedMessage, serializedMessage.length, InetAddress.getByName(agusIP) , port);
-			socket.send(udpPckt);
-			System.out.println("todo ok");
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SocketException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		try {
-			byte[] packetBuffer = new byte[1024];
-			DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
-			DatagramSocket sockett = new DatagramSocket(9000);
-			sockett.receive(receiverPacket);
-			ByteArrayInputStream baos = new ByteArrayInputStream(packetBuffer);
-		      ObjectInputStream oos = new ObjectInputStream(baos);
-		      Message m = (Message)oos.readObject();
-		      System.out.println(m.getType());
-			
-		} catch (Exception e) {
-			
-		}
-		
-	}
-
-
-
 	@Override
 	public void notify(Message m) {
 		// The logic of the received msg will be handled on a different thread
@@ -289,7 +231,6 @@ public class Car implements MsgListener, MotionObservable{
 		});
 		
 		thread.start();
-		return;	
 	}
 	
 	
