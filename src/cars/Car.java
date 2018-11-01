@@ -32,7 +32,7 @@ import network.MsgHandler;
 import network.MsgListener;
 import network.MsgType;
 
-public class Car implements MsgListener{
+public class Car implements MsgListener, MotionObservable{
 
 	// -- temporary constants --
 	public final String ip = "localhost";
@@ -56,6 +56,7 @@ public class Car implements MsgListener{
 	private CarMonitor secondaryMonitor;
 	private PulseEmiter pulseEmiter;
 	private ScheduledExecutorService pulseScheduler = Executors.newSingleThreadScheduledExecutor();
+	private List<MotionObserver> motionObservers = new ArrayList<>();
 	
 	
 	
@@ -292,13 +293,21 @@ public class Car implements MsgListener{
 	
 	
 	public void move() {
-		position = new Position(position.getCordx()+velocity, position.getCordy()+velocity);
-		updateMonitorsPosition();
+		//move with current velocity
+		move(velocity);
 	}
 	
-	private void updateMonitorsPosition() {
-		primaryMonitor.updatePosition(position);
-		secondaryMonitor.updatePosition(position);		
+	public void move(double newVelocity) {
+		velocity = newVelocity;
+		position = new Position(position.getCordx()+velocity, position.getCordy()+velocity);
+		notifyMotionObservers();
+	}
+	
+	private void notifyMotionObservers() {
+		for (MotionObserver obs : motionObservers) {
+			obs.notify(new Pulse(position, velocity, Instant.now()));
+		}
+		
 	}
 
 	public List<StNode> getNeighs(){
@@ -318,6 +327,18 @@ public class Car implements MsgListener{
 	
 	public StNode getStNode() {
 		return new StNode(id, ip, port, position);
+	}
+
+	@Override
+	public void addObserver(MotionObserver mo) {
+		motionObservers .add(mo);
+		
+	}
+
+	@Override
+	public void removeObserver(MotionObserver mo) {
+		motionObservers.remove(mo);
+		
 	}
 
 
