@@ -1,11 +1,20 @@
-package common;
+package network;
 
-public class MT_HelloResponse {
+import java.io.Serializable;
+
+import common.StNode;
+
+public class MT_HelloResponse implements Serializable{
 	
 	private String responseId;
 	private StNode stNode;
 	private Iterable<StNode> cars;
 	
+	/**
+	 * @param responseId
+	 * @param stNode
+	 * @param cars Must implement serializable
+	 */
 	public MT_HelloResponse(String responseId, StNode stNode, Iterable<StNode> cars) {
 		super();
 		this.responseId = responseId;

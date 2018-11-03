@@ -1,19 +1,6 @@
 package cars;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.math.BigInteger;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -21,41 +8,64 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import common.*;
+import network.CorruptDataException;
+import network.MT_HelloResponse;
+import network.MT_Redirect;
+import network.Message;
+import network.MsgHandler;
+import network.MsgListener;
+import network.MsgType;
 
-public class Car implements MsgListener{
+public class Car implements MsgListener, MotionObservable{
 
-	// temporary constants
+	// -- temporary constants --
 	public final String ip = "localhost";
-	public final int port = 5555;
+	public final int tentativePort = 5555;	
+	// range for the monitors
+	public final double PRIMARY_RANGE = 200;
+	public final double SECONDARY_RANGE = Double.MAX_VALUE;
+
+	public final int pulseRefreshTime = 1000;
+	public final TimeUnit pRefreshTimeUnit = TimeUnit.MILLISECONDS;
 	
 	private String id;
+	private int port;
 	private Position position;
 	private double velocity;
-	private BigInteger msgCounter;
+	
 	private MsgHandler msgHandler;
-	
 	private ArrayList<StNode> highWayNodes; // centralized part of the network
-	private ArrayList<StNode> neighs; //other cars near by
 	private StNode selectedHWNode;
-	private ArrayList<StNode> farCars;
+	private CarMonitor primaryMonitor;
+	private CarMonitor secondaryMonitor;
+	private PulseEmiter pulseEmiter;
+	private ScheduledExecutorService pulseScheduler = Executors.newSingleThreadScheduledExecutor();
+	private List<MotionObserver> motionObservers = new ArrayList<>();
 	
-	public Car (Position position, double velocity) throws NoPeersFoundException {
+	
+	
+	public Car(Position position, double velocity, List<StNode> highwayNodes) throws NoPeersFoundException {
 		super();
 		id = UUID.randomUUID().toString();
 		this.position = position;
 		this.velocity = velocity;
-		msgCounter = BigInteger.valueOf(0);
-		highWayNodes = new ArrayList<>();
-		neighs = new ArrayList<>();
-		farCars = new ArrayList<>();
+		this.port = getAvailablePort();
+		highWayNodes = new ArrayList<StNode>(highwayNodes);
+		primaryMonitor = new CarMonitor(PRIMARY_RANGE, this);
+		secondaryMonitor = new CarMonitor(SECONDARY_RANGE, this);
 		
 		//initialize the MsgHandler
 		msgHandler = new MsgHandler(this.port);
 		msgHandler.addListener(this);
 		
+		pulseEmiter = new PulseEmiter(this,primaryMonitor,msgHandler, getStNode());
 		//register in the highway network
 		registerInNetwork();
 		
@@ -63,19 +73,33 @@ public class Car implements MsgListener{
 		monitorFarCars();
 	}
 	
-	
+	public Car (Position position, double velocity) throws NoPeersFoundException {
+		this(position, velocity, new ArrayList<>());
+	}
+		
+	private int getAvailablePort() {
+		int avPort = this.tentativePort;
+		while(Util.isUDPPortOccupied(avPort)) {
+			avPort++;
+		}
+		return avPort;
+	}	
 
 	private void registerInNetwork() throws NoPeersFoundException {
 		boolean registered = false;
 		StNode highwNode;
-		Iterator<StNode> nodIterator = highWayNodes.iterator();		
+		Iterator<StNode> nodIterator = highWayNodes.iterator();	
 		while(!registered) {
 			if(nodIterator.hasNext()) {
 				highwNode = nodIterator.next();
+				System.out.println("Intentando registro en nodo");
+				System.out.println(highwNode);
+				
 				registered = tryRegister(highwNode);
 			} else 
 				throw new NoPeersFoundException(); 
-		}		
+		}
+		System.out.println("Registered in node:" + selectedHWNode);
 	}
 	
 	
@@ -91,11 +115,10 @@ public class Car implements MsgListener{
 			if(hwNode==null)
 				return false;
 			// send hello and wait for response			
-			Message msg = new Message(MsgType.HELLO,this.ip,this.port, this.getPulse());
+			Message msg = new Message(MsgType.HELLO,this.ip,this.port, getStNode());
 			response=msgHandler.sendMsgWithResponse(hwNode, msg);
 			responseMsg = response.get();
-		
-	      	//bussiness logic 
+			
         	switch(responseMsg.getType()) {
             	case HELLO_RESPONSE:{
             		handleHelloResponse(responseMsg);
@@ -154,13 +177,14 @@ public class Car implements MsgListener{
 	 * @param cars
 	 */
 	private void addMultipleCars(Iterable<StNode> cars) {
+		boolean updated = false;
 		for(StNode car : cars) {
-			//TODO
+			updated = primaryMonitor.update(car);
+			if(!updated)
+				secondaryMonitor.update(car);
 		}
 		
 	}
-
-
 
 	private boolean handleRedirect(Message redirectMsg) throws CorruptDataException{
 		Object data = redirectMsg.getData();
@@ -171,20 +195,8 @@ public class Car implements MsgListener{
 		return tryRegister(redi.getRedirectedNode());
 	}
 	
-	private String nextIdMsg() {
-		msgCounter=msgCounter.add(BigInteger.ONE); //increment msgCounter
-		return id+msgCounter;
-	}
-
-
-
-	private boolean isNear(StNode obj) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
 	private void emitPulses() {
-		//call to method emitMessage() of the msgHandler
+		pulseScheduler.scheduleWithFixedDelay(pulseEmiter, 0, pulseRefreshTime, pRefreshTimeUnit);
 	}
 	
 	private void monitorFarCars() {
@@ -193,50 +205,9 @@ public class Car implements MsgListener{
 	}
 
 	public Pulse getPulse() {
-		return new Pulse(id + msgCounter, position, velocity, Instant.now());
+		return new Pulse(position, velocity, Instant.now());
 	}
-	public static void main(String[] args) {
-		String agusIP = "192.168.0.65";
-		int port = 9000;
-		
-		Message msg = new Message(MsgType.HELLO,agusIP,port, new Pulse("5555", new Position(0.0, 5.0,Units.KiloMeters), 4.5, Instant.now()));
-		byte[] serializedMessage = msg.toByteArr();
-		DatagramSocket socket;
-		DatagramPacket udpPckt;
-		try {
-			socket = new DatagramSocket(5551);
-			udpPckt = new DatagramPacket(serializedMessage, serializedMessage.length, InetAddress.getByName(agusIP) , port);
-			socket.send(udpPckt);
-			System.out.println("todo ok");
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SocketException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		try {
-			byte[] packetBuffer = new byte[1024];
-			DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
-			DatagramSocket sockett = new DatagramSocket(9000);
-			sockett.receive(receiverPacket);
-			ByteArrayInputStream baos = new ByteArrayInputStream(packetBuffer);
-		      ObjectInputStream oos = new ObjectInputStream(baos);
-		      Message m = (Message)oos.readObject();
-		      System.out.println(m.getType());
-			
-		} catch (Exception e) {
-			
-		}
-		
-	}
-
-
-
+	
 	@Override
 	public void notify(Message m) {
 		// The logic of the received msg will be handled on a different thread
@@ -260,13 +231,59 @@ public class Car implements MsgListener{
 		});
 		
 		thread.start();
-		return;	
 	}
 	
 	
+	public void move() {
+		//move with current velocity
+		move(velocity);
+	}
 	
+	public void move(double newVelocity) {
+		velocity = newVelocity;
+		position = new Position(position.getCordx()+velocity, position.getCordy()+velocity);
+		notifyMotionObservers();
+	}
 	
+	private void notifyMotionObservers() {
+		for (MotionObserver obs : motionObservers) {
+			obs.notify(this.getPulse());
+		}
+		
+	}
+
+	public List<StNode> getNeighs(){
+		return primaryMonitor.getList();
+	}
 	
+	public StNode getNearestNeigh() {
+		List<StNode> neighs = primaryMonitor.getList();
+		if(neighs.isEmpty())
+			return null;
+		return neighs.get(0);
+	}
 	
+	public StNode getSelectedHWnode() {
+		return selectedHWNode;
+	}
+	
+	public StNode getStNode() {
+		return new StNode(id, ip, port, position);
+	}
+
+	@Override
+	public void addObserver(MotionObserver mo) {
+		motionObservers.add(mo);
+		//immediately notify of current pulse
+		mo.notify(this.getPulse());
+		
+	}
+
+	@Override
+	public void removeObserver(MotionObserver mo) {
+		motionObservers.remove(mo);
+		
+	}
+
 
 }

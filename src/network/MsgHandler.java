@@ -1,4 +1,4 @@
-package common;
+package network;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -34,6 +34,8 @@ public class MsgHandler implements MsgObservable{
 		super();
 		this.port = port;
 		listen = true;
+		listeners = new ArrayList<MsgListener>();
+			
 		// create the Response monitor that will track if an expected response was receive
 		respMonitor = new ResponseMonitor();
 		//start listening thread
@@ -51,24 +53,36 @@ public class MsgHandler implements MsgObservable{
 			public void run() {
 				try {
 					DatagramSocket receiveS = new DatagramSocket(port);
-					byte[] packetBuffer = new byte[1024];
-					DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
-					ByteArrayInputStream bais = new ByteArrayInputStream(packetBuffer);
-			      	ObjectInputStream ois = new ObjectInputStream(bais);
+					
+			      	
 					while(listen) {
+						if(Thread.currentThread().isInterrupted()) {
+							//TODO log
+		                    System.out.println("Listening thread interrupted");
+		                    break;
+		                }
+						byte[] packetBuffer = new byte[4096];
+						DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
+						ByteArrayInputStream bais = new ByteArrayInputStream(packetBuffer);
 						receiveS.receive(receiverPacket);
-		
+						ObjectInputStream ois = new ObjectInputStream(bais);
 						Message m = (Message)ois.readObject();
+						ois.close();
 						if(!respMonitor.check(m))
 							for (MsgListener listener : listeners) {
 								listener.notify(m);
 							}
 					}
-				} catch (Exception e) {
+				} catch(IOException | ClassNotFoundException e) {
+					e.printStackTrace();
+					System.out.println("problemas thread escucha puerto " + port);
+				}
+				
+				/*catch (Exception e) {
 					//TODO log
 					System.out.println("Problemas en el thread de escucha");
 					e.printStackTrace();
-				}
+				}*/
 			}
 		});		
 	}
@@ -95,8 +109,8 @@ public class MsgHandler implements MsgObservable{
 	
 	public void sendMsg(Messageable dest, Message msg) {
 		
-		try {
-			DatagramSocket sendSocket = new DatagramSocket();
+		try(DatagramSocket sendSocket = new DatagramSocket();) {
+			
 			byte[] serializedHello = msg.toByteArr();
 			DatagramPacket helloPckt;
 			helloPckt = new DatagramPacket(serializedHello, serializedHello.length, InetAddress.getByName(dest.getIP()) , dest.getPort());
@@ -106,8 +120,8 @@ public class MsgHandler implements MsgObservable{
 			// TODO log
 			System.out.println("Err Mensaje no enviado");
 			e.printStackTrace();
-		} finally {
 		}
+		
 	}
 	
 	/**
@@ -150,5 +164,12 @@ public class MsgHandler implements MsgObservable{
 		});
 		
 		return response;
+	}
+	
+	/**
+	 * Stops listening and sending, interrupting all threads that are currently running 
+	 */
+	public void close() {
+		threadService.shutdownNow();
 	}
 }

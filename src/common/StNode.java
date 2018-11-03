@@ -1,42 +1,70 @@
 package common;
 
 import java.io.Serializable;
+import java.time.Instant;
+import java.util.Objects;
 
-/*
- * Structure of information of a Node
+import network.Messageable;
+
+/**
+ * This class its the minimal model of a Node
+ * 
+ * @implSpec This class is immutable and thread-safe.
 */
-public class StNode implements Serializable, Messageable {
-	private String id;
-	private String ip;
-	private int port;
-	//Pulse lastestData;
-	private Position position;
+public final class StNode implements Serializable, Messageable {
+	private final String id;
+	private final String ip;
+	private final int port;
+	private final Pulse pulse;	
 	
-	private static final double DEFAULT_POSITION_X = 0;
-	private static final double DEFAULT_POSITION_Y = 0;
-	private static final Units DEFAULT_UNIT = Units.KiloMeters;
+
+//	private static final double DEFAULT_POSITION_X = 0;
+//	private static final double DEFAULT_POSITION_Y = 0;
+//	private static final Units DEFAULT_UNIT = Units.KiloMeters;
 
 	
-	public StNode(String id, String ip, int port) {
-		this(id,ip,port,new Position(DEFAULT_POSITION_X, DEFAULT_POSITION_Y, DEFAULT_UNIT));
-	}
+//	public StNode(String id, String ip, int port) {
+//		this(id,ip,port,new Position(DEFAULT_POSITION_X, DEFAULT_POSITION_Y, DEFAULT_UNIT));
+//	}
 	
 	
-	public StNode(String id, String ip, int port,Position position) {
+
+	public StNode(String id, String ip, int port, Pulse pulse) {
+		super();
+
 		this.id = id;
 		this.ip = ip;
 		this.port = port;
-		this.position = position;
+		this.pulse = pulse;
+	}
+
+
+	/**
+	 * Constructor for static nodes, velocity and timestamp are set to 0 and now() respectively
+	 * @param id
+	 * @param ip
+	 * @param port
+	 * @param position
+	 */
+	public StNode(String id, String ip, int port, Position position) {
+		this(id,ip,port,new Pulse(position, 0, Instant.now()));
 	}
 	
-
-	
-
 	public Position getPosition() {
-		return position;
+		return pulse.getPosition();
 	}
-
-
+	
+	public Instant getTimestamp() {
+		return this.pulse.getTimestamp();
+	}
+	
+	public double getVelocity() {
+		return this.pulse.getVelocity();
+	}
+	
+	public StNode updatePulse(Pulse pulse) {
+		return new StNode(id, ip, port, pulse);
+	}
 
 	@Override
 	public String getIP() {
@@ -60,14 +88,16 @@ public class StNode implements Serializable, Messageable {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((id == null) ? 0 : id.hashCode());
-		return result;
+		return Objects.hash(id);
 	}
 
 
 
+	/** 
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 * this equals only evaluates for equal id
+	 * so, if two StNodes has different attributes but same id, are considered equal
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -84,5 +114,15 @@ public class StNode implements Serializable, Messageable {
 			return false;
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return "StNode [id=" + id.substring(0, 5) + ", ip=" + ip + ", port=" +port+ "]";
+	}
+
+	public StNode changePulse(Pulse pulse) {
+		return new StNode(id, ip, port, pulse.getPosition());
+	}
+	
 	
 }

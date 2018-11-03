@@ -1,4 +1,6 @@
-package common;
+package network;
+
+import common.StNode;
 
 public class MT_Redirect {
 	private String responseId;

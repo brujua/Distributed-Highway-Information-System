@@ -1,25 +1,28 @@
 package common;
 
 import java.io.Serializable;
+import java.util.Objects;
 
-public class Position implements Serializable{
+/**
+ * This class models a point of an object in space
+ *
+ * @implSpec This class is immutable and thread-safe.
+ */
+public final class Position implements Serializable{
 
-	private Double cordx;
-	private Double cordy;
-	private Units unity;
-	//max distance to a near node
-	private final double maxDistance = 10;
+	private final Double cordx;
+	private final Double cordy;
+	private final Unit unit;	
 	
-	
-	
-	public Position(Double coordX, Double coordY, Units kilometers) {
+	public Position(Double coordX, Double coordY, Unit unit) {
 		super();
-		coordX = cordx;
-		coordY = cordy;
-		unity = kilometers;
-		
-		
-		
+		this.cordx = coordX;
+		this.cordy = coordY;
+		this.unit = unit;		
+	}
+
+	public Position(Double coordX, Double coordY) {
+		this(coordX, coordY, Unit.KiloMeters);
 	}
 
 	public Double getCordx() {
@@ -30,8 +33,8 @@ public class Position implements Serializable{
 		return cordy;
 	}
 	
-	public Units getUnity() {
-		return this.unity;
+	public Unit getUnity() {
+		return this.unit;
 	}
 	
 	public double distance(Position position) {
@@ -51,6 +54,41 @@ public class Position implements Serializable{
 		return Math.sqrt(distX+distY) ;
 	}
 
+	@Override
+	public String toString() {
+		return "Position [cordx=" + cordx + ", cordy=" + cordy + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(cordx,cordy);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Position other = (Position) obj;
+		if (cordx == null) {
+			if (other.cordx != null)
+				return false;
+		} else if (!cordx.equals(other.cordx))
+			return false;
+		if (cordy == null) {
+			if (other.cordy != null)
+				return false;
+		} else if (!cordy.equals(other.cordy))
+			return false;
+		return true;
+	}
+
+
+
+	
 }
 	
 
