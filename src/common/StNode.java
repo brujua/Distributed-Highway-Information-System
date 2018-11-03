@@ -12,21 +12,24 @@ public class StNode implements Serializable, Messageable {
 	//Pulse lastestData;
 	private Position position;
 	
+	private static final double DEFAULT_POSITION_X = 0;
+	private static final double DEFAULT_POSITION_Y = 0;
+	private static final Units DEFAULT_UNIT = Units.KiloMeters;
+
+	
+	public StNode(String id, String ip, int port) {
+		this(id,ip,port,new Position(DEFAULT_POSITION_X, DEFAULT_POSITION_Y, DEFAULT_UNIT));
+	}
+	
+	
 	public StNode(String id, String ip, int port,Position position) {
-		super();
 		this.id = id;
 		this.ip = ip;
 		this.port = port;
 		this.position = position;
 	}
 	
-	public StNode(String id, String ip, int port) {
-		super();
-		this.id = id;
-		this.ip = ip;
-		this.port = port;
-	}
-	
+
 	
 
 	public Position getPosition() {

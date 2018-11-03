@@ -8,6 +8,8 @@ import java.net.DatagramSocket;
 import java.util.ArrayList;
 
 import cars.Pulse;
+import common.MT_HelloResponse;
+import common.MT_Redirect;
 import common.Message;
 import common.Messageable;
 import common.MsgHandler;
@@ -137,6 +139,16 @@ public class HighWay implements MsgListener{
 	}
 
 
+	private ArrayList<StNode> getNeighs() {
+		return neighs;
+	}
+
+
+	public Position getPosition() {
+		return position;
+	}
+
+	
 	@Override
 	public void notify(Message m) {
 
@@ -172,11 +184,13 @@ public class HighWay implements MsgListener{
 	}
 	
 	private void hello(Message m) {
+		
 		if (isInZone( ( (Pulse) m.getData() ).getPosition() ) ) {
-			Message msg = new Message(MsgType.HELLO_RESPONSE,getIp(),getPort(),carNodes);
+			MT_HelloResponse hResponse = new MT_HelloResponse(m.getId(), stNode, carNodes);
+			Message msg = new Message(MsgType.HELLO_RESPONSE,getIp(),getPort(),hResponse);
 			StNode carst = new StNode(m.getId(),m.getIp(),m.getPort());
 			carNodes.add(carst); 
-			msgHandler.sendMsg((Messageable) m.getOrigin(), msg);
+			msgHandler.sendMsg(carst, msg);
 		}else {
 			redirect(m);
 		}
@@ -195,10 +209,11 @@ public class HighWay implements MsgListener{
 	private void redirect(Message m) {
 		// TODO redirecccionar a hw correspondiente
 		StNode hwRedirect = serchRedirect(((Position) m.getData()));
-		Message msg = new Message(MsgType.REDIRECT,getIp(),getPort(),hwRedirect);
+		MT_Redirect redirect = new MT_Redirect(m.getId(), hwRedirect);
+		Message msg = new Message(MsgType.REDIRECT,getIp(),getPort(),redirect);
 		StNode carst = new StNode(m.getId(),m.getIp(),m.getPort(),this.getPosition());
 		carNodes.add(carst); 
-		msgHandler.sendMsg((Messageable) m.getOrigin(), msg);
+		msgHandler.sendMsg(carst, msg);
 	}
 
 
@@ -219,14 +234,6 @@ public class HighWay implements MsgListener{
 	}
 
 
-	private ArrayList<StNode> getNeighs() {
-		return neighs;
-	}
-
-
-	public Position getPosition() {
-		return position;
-	}
 
 
 	private void ack(Message m) {
