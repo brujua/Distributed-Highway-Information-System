@@ -2,6 +2,7 @@ package highway;
 
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -50,7 +51,7 @@ public class HighWay implements MsgListener{
 	//Negighs HW nodes
 	private ArrayList<StNode> neighs; //othrs node highway tolking to me 
 	private ArrayList<StNode> carNodes; //cars in my zone to shared
-	
+	//private SerializableList<StNode>
 	
 	public HighWay (ArrayList<StNode> neighs , Position position) {
 		super();
@@ -82,10 +83,10 @@ public class HighWay implements MsgListener{
 		
 		}
 	}
-	private String nextIdMsg() {
-		msgCounter=msgCounter.add(BigInteger.ONE); //increment msgCounter
-		return id+msgCounter;
-	}
+//	private String nextIdMsg() {
+//		msgCounter=msgCounter.add(BigInteger.ONE); //increment msgCounter
+//		return id+msgCounter;
+//	}
 
 	
 	private void removeCarNode (StNode car){
@@ -172,6 +173,7 @@ public class HighWay implements MsgListener{
 						break;
 					}
 					case PULSE: {
+						pulseRecive((Pulse) m.getData());
 						break;
 					}
 					case REDIRECT: {
@@ -225,6 +227,10 @@ public class HighWay implements MsgListener{
 		return true;
 	}
 
+	
+	private void pulseRecive(Pulse pulse) {
+		
+	}
 
 	private void redirect(Message m) {
 		// TODO redirecccionar a hw correspondiente

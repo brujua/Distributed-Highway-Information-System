@@ -2,6 +2,7 @@ package cars;
 
 import java.util.List;
 
+import common.CarMonitor;
 import common.Pulse;
 import common.StNode;
 import network.Message;
