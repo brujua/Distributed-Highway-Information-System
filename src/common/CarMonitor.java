@@ -20,13 +20,19 @@ public class CarMonitor implements MotionObserver{
 	private Position position;
 	
 	public final double MAX_TIMEOUT = 100;
+	//private final static double DEFAULT_RANGE = 800;
+	
 	
 	public CarMonitor(double range, MotionObservable carrier) {
+		super();
 		this.range = range;
 		cars = new ConcurrentHashMap<StNode, Instant>();
 		//cars = Collections.synchronizedList(new ArrayList<StNode>());
 		// subscribe to the carrier of this monitor to be notified in changes of position
-		carrier.addObserver(this);
+		if(carrier!=null) {
+			carrier.addObserver(this);
+		}
+		
 		
 		Thread thread = new Thread(new Runnable() {
 			
@@ -38,6 +44,9 @@ public class CarMonitor implements MotionObserver{
 			
 		});
 		thread.start();
+	}	public CarMonitor(Double range) {
+		this(range,null);
+		
 	}
 	
 	public void setRange(double range) {
@@ -45,8 +54,11 @@ public class CarMonitor implements MotionObserver{
 	}
 	
 	public boolean isInRange(StNode node) {
+		/*
 		double distance = position.distance(node.getPosition());
 		return (distance <= range);
+		*/
+		return true;
 	}
 	
 	/**

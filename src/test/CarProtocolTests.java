@@ -84,13 +84,13 @@ class CarProtocolTests {
 	}
 	
 	@Test
-	void testNeighbourGivenByHwOnRegister2() {
+	void testCarMonitorKeepCars() {
 		try {
 			Car car1 = new Car(new Position(coordXOrigin+2, coordYOrigin+2),2,hwNodes);
 			Thread.sleep(1000);
 			Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
 			List<StNode> car2Neighs = car2.getNeighs();
-			assert(car2Neighs.contains(car1.getStNode()));		
+			//assert(car2Neighs.contains(car1.getStNode()));		
 			
 			Thread.sleep(10001);
 			car2Neighs = car2.getNeighs();
