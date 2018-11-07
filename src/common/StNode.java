@@ -17,13 +17,27 @@ public final class StNode implements Serializable, Messageable {
 	private final int port;
 	private final Pulse pulse;	
 	
+
+//	private static final double DEFAULT_POSITION_X = 0;
+//	private static final double DEFAULT_POSITION_Y = 0;
+//	private static final Units DEFAULT_UNIT = Units.KiloMeters;
+
+	
+//	public StNode(String id, String ip, int port) {
+//		this(id,ip,port,new Position(DEFAULT_POSITION_X, DEFAULT_POSITION_Y, DEFAULT_UNIT));
+//	}
+	
+	
+
 	public StNode(String id, String ip, int port, Pulse pulse) {
 		super();
+
 		this.id = id;
 		this.ip = ip;
 		this.port = port;
 		this.pulse = pulse;
 	}
+
 
 	/**
 	 * Constructor for static nodes, velocity and timestamp are set to 0 and now() respectively
