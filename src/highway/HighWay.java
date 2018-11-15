@@ -12,6 +12,7 @@ import java.util.UUID;
 import common.CarMonitor;
 import common.Position;
 
+import common.Pulse;
 import common.StNode;
 import network.CorruptDataException;
 import network.MT_HelloResponse;

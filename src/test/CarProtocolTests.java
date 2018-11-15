@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import cars.Car;
@@ -70,6 +69,7 @@ class CarProtocolTests {
 			Thread.sleep(1000);
 			Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
 			List<StNode> car2Neighs = car2.getNeighs();
+			assert (!car2Neighs.isEmpty());
 			Position car1Pos = car1.getStNode().getPosition();
 			Position car12Pos = car2Neighs.get(0).getPosition();
 			assertEquals(car1Pos, car12Pos);

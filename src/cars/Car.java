@@ -1,5 +1,7 @@
 package cars;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -24,6 +26,8 @@ import network.MsgListener;
 import network.MsgType;
 
 public class Car implements MsgListener, MotionObservable{
+
+	private static final Logger logger = LoggerFactory.getLogger(Car.class);
 
 	// -- temporary constants --
 	public final String ip = "localhost";
@@ -64,7 +68,7 @@ public class Car implements MsgListener, MotionObservable{
 		//initialize the MsgHandler
 		msgHandler = new MsgHandler(this.port);
 		msgHandler.addListener(this);
-		
+
 		pulseEmiter = new PulseEmiter(this,primaryMonitor,msgHandler, getStNode());
 		//register in the highway network
 		registerInNetwork();
@@ -92,14 +96,16 @@ public class Car implements MsgListener, MotionObservable{
 		while(!registered) {
 			if(nodIterator.hasNext()) {
 				highwNode = nodIterator.next();
-				System.out.println("Intentando registro en nodo");
-				System.out.println(highwNode);
+				logger.info("Intentando registro en nodo: " + highwNode);
+				//System.out.println("Intentando registro en nodo");
+				//System.out.println(highwNode);
 				
 				registered = tryRegister(highwNode);
 			} else 
 				throw new NoPeersFoundException(); 
 		}
-		System.out.println("Registered in node:" + selectedHWNode);
+		logger.info("Registered in node:" + selectedHWNode);
+		//System.out.println("Registered in node:" + selectedHWNode);
 	}
 	
 	
@@ -128,15 +134,15 @@ public class Car implements MsgListener, MotionObservable{
             		return handleRedirect(responseMsg);
             	}
             	default:{
-            		//TODO log msg response of wrong type
-            		System.out.println("Response from hw-node of wrong type");
+		            logger.error("Response from hw-node of wrong type, node: "+hwNode+" type: "+responseMsg.getType());
+            		//System.out.println("Response from hw-node of wrong type");
             		return false;
             	}
         	}
         }
 		catch (CorruptDataException e) {
-			//TODO log
-			System.out.println("corrupt data on hw-node response");
+			logger.error("corrupt data on hw-node response");
+			//System.out.println("corrupt data on hw-node response");
 			return false;
 		} 
         catch (ExecutionException  e) {
@@ -177,19 +183,22 @@ public class Car implements MsgListener, MotionObservable{
 	 * @param cars
 	 */
 	private void addMultipleCars(Iterable<StNode> cars) {
-		boolean updated = false;
 		for(StNode car : cars) {
-			updated = primaryMonitor.update(car);
-			if(!updated)
-				secondaryMonitor.update(car);
+			addNeigh(car);
 		}
 		
+	}
+
+	private void addNeigh(StNode car){
+		boolean updated = primaryMonitor.update(car);
+		if(!updated)
+			secondaryMonitor.update(car);
 	}
 
 	private boolean handleRedirect(Message redirectMsg) throws CorruptDataException{
 		Object data = redirectMsg.getData();
 		MT_Redirect redi = null;
-		if(!(data instanceof MT_Redirect)) 
+		if(!(data instanceof MT_Redirect))
 			throw new CorruptDataException();
 		redi = (MT_Redirect) data;           	
 		return tryRegister(redi.getRedirectedNode());

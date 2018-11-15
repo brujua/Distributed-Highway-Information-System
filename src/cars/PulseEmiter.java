@@ -24,17 +24,21 @@ public class PulseEmiter implements Runnable, MotionObserver{
 
 	@Override
 	public void run() {
+		Message msg;
 		List<StNode> nodes = carMonitor.getList();
-		Message msg = new Message(MsgType.PULSE,source.getId(),source.getPort(),source);
+		synchronized (source){
+			 msg = new Message(MsgType.PULSE,source.getId(),source.getPort(),source);
+		}
 		for (StNode node : nodes) {
 			msgHandler.sendMsg(node, msg);
 		}
-		
 	}
 
 	@Override
 	public void notify(Pulse pulse) {
-		source = source.changePulse(pulse);
+		synchronized (source){
+			source = source.changePulse(pulse);
+		}
 	}
 	
 }
