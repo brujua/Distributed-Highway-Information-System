@@ -32,8 +32,8 @@ public class CarMonitor implements MotionObserver{
 		if(carrier!=null) {
 			carrier.addObserver(this);
 		}
-		
-		
+
+
 		Thread thread = new Thread(new Runnable() {
 			
 			@Override
@@ -44,9 +44,10 @@ public class CarMonitor implements MotionObserver{
 			
 		});
 		thread.start();
-	}	public CarMonitor(Double range) {
+	}
+
+	public CarMonitor(Double range) {
 		this(range,null);
-		
 	}
 	
 	public void setRange(double range) {
@@ -99,11 +100,13 @@ public class CarMonitor implements MotionObserver{
 	 * @return the copy of the list of the cars being monitored
 	 */
 	public List<StNode> getList(){
-		//make a copy of the list;
+		//make a copy of the list
 		List<StNode> list;
-		list = new ArrayList<StNode>(cars.size());
-		for (StNode car : cars.keySet()) {
-			list.add(car);
+		synchronized (cars) {
+			list = new ArrayList<StNode>(cars.size());
+			for (StNode car : cars.keySet()) {
+				list.add(car);
+			}
 		}
 		
 	/*	synchronized (cars) {

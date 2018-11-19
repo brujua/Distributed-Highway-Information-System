@@ -128,7 +128,8 @@ public class Car implements MsgListener, MotionObservable{
         	switch(responseMsg.getType()) {
             	case HELLO_RESPONSE:{
             		handleHelloResponse(responseMsg);
-            		return true;
+		            selectedHWNode = ((MT_HelloResponse)responseMsg.getData()).getStNode();
+		            return true;
         			}      	
             	case REDIRECT: {
             		return handleRedirect(responseMsg);
@@ -164,46 +165,27 @@ public class Car implements MsgListener, MotionObservable{
 		}
 	}
 	
-	/**
-	 * @param responseMsg
-	 * @throws CorruptDataException
-	 */
-	private void handleHelloResponse(Message responseMsg) throws CorruptDataException {
-		Object data = responseMsg.getData();
-		//check and cast response, add neighs
-		if(!(data instanceof MT_HelloResponse))
-			throw new CorruptDataException();             			
-		MT_HelloResponse helloRsp = (MT_HelloResponse) data;
-		addMultipleCars(helloRsp.getCars());		
-		selectedHWNode = helloRsp.getStNode();		
-	}
+
 	
 
 	/**
 	 * @param cars
 	 */
-	private void addMultipleCars(Iterable<StNode> cars) {
+	private void updateMultipleCars(Iterable<StNode> cars) {
 		for(StNode car : cars) {
-			addNeigh(car);
+			updateNeigh(car);
 		}
 		
 	}
 
-	private void addNeigh(StNode car){
+	private void updateNeigh(StNode car){
 		boolean updated = primaryMonitor.update(car);
 		if(!updated)
 			secondaryMonitor.update(car);
 	}
 
-	private boolean handleRedirect(Message redirectMsg) throws CorruptDataException{
-		Object data = redirectMsg.getData();
-		MT_Redirect redi = null;
-		if(!(data instanceof MT_Redirect))
-			throw new CorruptDataException();
-		redi = (MT_Redirect) data;           	
-		return tryRegister(redi.getRedirectedNode());
-	}
-	
+
+
 	private void emitPulses() {
 		pulseScheduler.scheduleWithFixedDelay(pulseEmiter, 0, pulseRefreshTime, pRefreshTimeUnit);
 	}
@@ -222,27 +204,111 @@ public class Car implements MsgListener, MotionObservable{
 		// The logic of the received msg will be handled on a different thread
 		Thread thread = new Thread( new Runnable() {
 			public void run() {
-				switch(m.getType()) {
-					case HELLO: {
-						break;
+				try {
+					switch (m.getType()) {
+						case HELLO: {
+							handleHello(m);
+							break;
+						}
+						case PULSE: {
+							handlePulse(m);
+							break;
+						}
+						case REDIRECT: {
+							handleRedirect(m);
+							break;
+						}
+						default: {
+							//TODO log message of unknown type
+						}
 					}
-					case PULSE: {
-						break;
-					}
-					case REDIRECT: {
-						break;
-					}
-					default: {
-						//TODO log message of unknown type
-					}
-				}		
+				}catch(CorruptDataException cde){
+					logger.error("Corrupt data exception on message: "+ m +" /n exception msg: "+cde.getMessage());
+				}
 			}
 		});
 		
 		thread.start();
 	}
-	
-	
+
+	private void handleHello(Message m) throws CorruptDataException {
+		if(m.getType() != MsgType.HELLO || ! (m.getData() instanceof StNode )){
+			throw new CorruptDataException();
+		}
+		StNode car = (StNode) m.getData();
+		logger.info("Hello received on node: " + getStNode() + "from node: " + car);
+		sendHelloResponse(m);
+
+	}
+
+	private boolean handleRedirect(Message redirectMsg) throws CorruptDataException{
+		Object data = redirectMsg.getData();
+		MT_Redirect redi = null;
+		if(!(data instanceof MT_Redirect))
+			throw new CorruptDataException();
+		redi = (MT_Redirect) data;
+		logger.info("Redirected received on node: " + getStNode());
+		return tryRegister(redi.getRedirectedNode());
+	}
+
+	/**
+	 * @param responseMsg
+	 * @throws CorruptDataException
+	 */
+	private void handleHelloResponse(Message responseMsg) throws CorruptDataException {
+		if(responseMsg.getType() != MsgType.HELLO_RESPONSE || ! (responseMsg.getData() instanceof MT_HelloResponse) )
+			throw new CorruptDataException();
+		MT_HelloResponse helloRsp = (MT_HelloResponse) responseMsg.getData();
+		updateNeigh(helloRsp.getStNode());
+		logger.info("Hello Response received on node: " + getStNode() + "from node: " + helloRsp.getStNode());
+		//check new cars that i dont know of, and send them a Hello msg
+		List<StNode> knownCars = primaryMonitor.getList();
+		knownCars.addAll(secondaryMonitor.getList());
+		for (StNode car: helloRsp.getCars()) {
+			if(! knownCars.contains(car)){
+				sendHello(car);
+			}
+		}
+	}
+
+
+
+	private void handlePulse(Message m) throws CorruptDataException {
+		if(m.getType() != MsgType.PULSE || ! (m.getData() instanceof StNode )){
+			throw new CorruptDataException();
+		}
+		StNode car = (StNode) m.getData();
+		updateNeigh(car);
+		logger.info("Pulse received on node: " + getStNode()+" from node: "+car);
+	}
+
+	private boolean sendHello(StNode car) throws CorruptDataException{
+		CompletableFuture<Message> msgHelloRsp = msgHandler.sendMsgWithResponse(car, new Message(MsgType.HELLO, ip, port, getStNode()));
+		try {
+			handleHelloResponse(msgHelloRsp.get());
+			return true;
+		} catch (InterruptedException e) {
+			logger.error("Interrupted while waiting hello response");
+			return false;
+		} catch (ExecutionException e) {
+			if(e.getCause() instanceof TimeoutException){
+				logger.error("Car does not respond to Hello. Car: "+ car );
+			}
+			return false;
+		}
+	}
+
+	private void sendHelloResponse(Message m) throws CorruptDataException {
+		if(! (m.getData() instanceof StNode )){
+			throw new CorruptDataException();
+		}
+		StNode car = (StNode) m.getData();
+		MT_HelloResponse response = new MT_HelloResponse(m.getId(),getStNode(),primaryMonitor.getList());
+		Message msg = new Message(MsgType.HELLO_RESPONSE,ip,port, response);
+		msgHandler.sendMsg(car,msg);
+	}
+
+
 	public void move() {
 		//move with current velocity
 		move(velocity);
