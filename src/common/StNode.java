@@ -15,19 +15,20 @@ public final class StNode implements Serializable, Messageable {
 	private final String id;
 	private final String ip;
 	private final int port;
-	private final Pulse pulse;	
-	
+
+	private final Pulse pulse;
+
+
 
 //	private static final double DEFAULT_POSITION_X = 0;
 //	private static final double DEFAULT_POSITION_Y = 0;
 //	private static final Units DEFAULT_UNIT = Units.KiloMeters;
 
-	
+
 //	public StNode(String id, String ip, int port) {
 //		this(id,ip,port,new Position(DEFAULT_POSITION_X, DEFAULT_POSITION_Y, DEFAULT_UNIT));
 //	}
-	
-	
+
 
 	public StNode(String id, String ip, int port, Pulse pulse) {
 		super();
@@ -49,19 +50,19 @@ public final class StNode implements Serializable, Messageable {
 	public StNode(String id, String ip, int port, Position position) {
 		this(id,ip,port,new Pulse(position, 0, Instant.now()));
 	}
-	
+
 	public Position getPosition() {
 		return pulse.getPosition();
 	}
-	
+
 	public Instant getTimestamp() {
 		return this.pulse.getTimestamp();
 	}
-	
+
 	public double getVelocity() {
 		return this.pulse.getVelocity();
 	}
-	
+
 	public StNode updatePulse(Pulse pulse) {
 		return new StNode(id, ip, port, pulse);
 	}
@@ -80,7 +81,7 @@ public final class StNode implements Serializable, Messageable {
 
 	@Override
 	public String getId() {
-		
+
 		return this.id;
 	}
 
@@ -93,7 +94,7 @@ public final class StNode implements Serializable, Messageable {
 
 
 
-	/** 
+	/**
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 * this equals only evaluates for equal id
 	 * so, if two StNodes has different attributes but same id, are considered equal
@@ -123,6 +124,10 @@ public final class StNode implements Serializable, Messageable {
 	public StNode changePulse(Pulse pulse) {
 		return new StNode(id, ip, port, pulse.getPosition());
 	}
-	
-	
+
+	public Pulse getPulse() {
+		return pulse;
+	}
+
+
 }

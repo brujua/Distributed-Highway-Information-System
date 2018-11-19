@@ -184,7 +184,7 @@ public class HighWay implements MsgListener{
 						break;
 					}
 					case PULSE: {
-						pulseRecive((Pulse) m.getData());
+						pulseRecive(((StNode)m.getData()).getPulse());
 						break;
 					}
 					case REDIRECT: {
