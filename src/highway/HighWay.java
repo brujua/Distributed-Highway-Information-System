@@ -1,9 +1,5 @@
 package highway;
 
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
-
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +18,11 @@ import network.Message;
 import network.MsgHandler;
 import network.MsgListener;
 import network.MsgType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HighWay implements MsgListener{
+	private static final Logger logger = LoggerFactory.getLogger(CarMonitor.class);
 
 	public final String ip = "localhost";
 	
@@ -184,7 +183,7 @@ public class HighWay implements MsgListener{
 						break;
 					}
 					case PULSE: {
-						pulseRecive(((StNode)m.getData()).getPulse());
+						handlePulse(m);
 						break;
 					}
 					case REDIRECT: {
@@ -242,8 +241,21 @@ public class HighWay implements MsgListener{
 	}
 
 	
-	private void pulseRecive(Pulse pulse) {
-		
+	private void handlePulse(Message msg) throws CorruptDataException {
+		if(msg.getType() != MsgType.PULSE || ! (msg.getData() instanceof StNode )){
+			throw new CorruptDataException();
+		}
+		StNode car = (StNode) msg.getData();
+		logger.info("Pulse received on node: " + getStNode()+" from node: "+car);
+		if(isInZone(car.getPosition()))
+			updateCar(car);
+		else
+			redirect(msg);
+
+	}
+
+	private void updateCar(StNode car) {
+		carMonitor.update(car);
 	}
 
 	private void redirect(Message m) {

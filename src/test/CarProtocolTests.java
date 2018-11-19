@@ -61,14 +61,14 @@ class CarProtocolTests {
 	}
 	
 	@Test
-	void testHelloCarCar() {
+	void testPulsesUpdatePosition() {
 		try {
 			double velocityCar1 = 2;
 			Car car1 = new Car(new Position(coordXOrigin+2, coordYOrigin+2),velocityCar1,hwNodes);
 			car1.move();
 			Thread.sleep(500);
 			Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
-			Thread.sleep(1500);
+			Thread.sleep(3500);
 			List<StNode> car2Neighs = car2.getNeighs();
 			assert (!car2Neighs.isEmpty());
 			Position car1Pos = car1.getStNode().getPosition();
@@ -91,7 +91,7 @@ class CarProtocolTests {
 
 			Thread.sleep(10001);
 			List<StNode> car2Neighs = car2.getNeighs();
-			assert(car2Neighs.isEmpty());
+			assert(!car2Neighs.isEmpty());
 			
 		} catch (NoPeersFoundException e) {
 			// TODO Auto-generated catch block

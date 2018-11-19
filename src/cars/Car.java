@@ -122,8 +122,9 @@ public class Car implements MsgListener, MotionObservable{
 			
         	switch(responseMsg.getType()) {
             	case HELLO_RESPONSE:{
-            		handleHelloResponse(responseMsg);
+            		handleHelloResponse(responseMsg,true);
 		            selectedHWNode = ((MT_HelloResponse)responseMsg.getData()).getStNode();
+		            pulseEmiter.setHighwayNode(selectedHWNode);
 		            return true;
         			}      	
             	case REDIRECT: {
@@ -248,18 +249,19 @@ public class Car implements MsgListener, MotionObservable{
 	 * @param responseMsg
 	 * @throws CorruptDataException
 	 */
-	private void handleHelloResponse(Message responseMsg) throws CorruptDataException {
+	private void handleHelloResponse(Message responseMsg, boolean isHWNode) throws CorruptDataException {
 		if(responseMsg.getType() != MsgType.HELLO_RESPONSE || ! (responseMsg.getData() instanceof MT_HelloResponse) )
 			throw new CorruptDataException();
 		MT_HelloResponse helloRsp = (MT_HelloResponse) responseMsg.getData();
-		updateNeigh(helloRsp.getStNode());
+		if(!isHWNode)
+			updateNeigh(helloRsp.getStNode());
 		logger.info("Hello Response received on node: " + getStNode() + "from node: " + helloRsp.getStNode());
 		//check new cars that i dont know of, and send them a Hello msg
 		List<StNode> knownCars = primaryMonitor.getList();
 		knownCars.addAll(secondaryMonitor.getList());
 		for (StNode car: helloRsp.getCars()) {
 			if(! knownCars.contains(car)){
-				sendHello(car);
+				sendHello(car,false);
 			}
 		}
 	}
@@ -275,10 +277,10 @@ public class Car implements MsgListener, MotionObservable{
 		logger.info("Pulse received on node: " + getStNode()+" from node: "+car);
 	}
 
-	private boolean sendHello(StNode car) throws CorruptDataException{
+	private boolean sendHello(StNode car, boolean isHWNode) throws CorruptDataException{
 		CompletableFuture<Message> msgHelloRsp = msgHandler.sendMsgWithResponse(car, new Message(MsgType.HELLO, ip, port, getStNode()));
 		try {
-			handleHelloResponse(msgHelloRsp.get());
+			handleHelloResponse(msgHelloRsp.get(), isHWNode);
 			return true;
 		} catch (InterruptedException e) {
 			logger.error("Interrupted while waiting hello response");
