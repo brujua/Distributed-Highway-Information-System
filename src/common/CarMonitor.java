@@ -8,18 +8,22 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
+import cars.Car;
 import cars.MotionObservable;
 import cars.MotionObserver;
-import network.Message;;
+import network.Message;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;;
 
 public class CarMonitor implements MotionObserver{
+	private static final Logger logger = LoggerFactory.getLogger(CarMonitor.class);
 	private double range;
 	//private List<StNode> cars;
 	private Map<StNode,Instant> cars ;
 		
 	private Position position;
 	
-	public final double MAX_TIMEOUT = 100;
+	public final double MAX_TIMEOUT = 5000;
 	//private final static double DEFAULT_RANGE = 800;
 	
 	
@@ -125,16 +129,18 @@ public class CarMonitor implements MotionObserver{
 				Thread.sleep(1000);
 			
 				long now = (Instant.now()).toEpochMilli() ;
-				for (StNode car : cars.keySet()) {
-					if( ((car.getTimestamp()).toEpochMilli()>= MAX_TIMEOUT )) {
-						
-						cars.remove(car);
+				synchronized (cars) {
+					for (StNode car : cars.keySet()) {
+						if ((now -(car.getTimestamp()).toEpochMilli() >= MAX_TIMEOUT)) {
+
+							cars.remove(car);
+							logger.info("Removed " + car + " from monitor list due to timeout");
+						}
 					}
 				}
 			}
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("CarMonitor timeout thread interrupted");
 		}
 	}
 	
