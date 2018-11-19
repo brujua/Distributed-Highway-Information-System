@@ -118,7 +118,7 @@ public final class StNode implements Serializable, Messageable {
 
 	@Override
 	public String toString() {
-		return "StNode[id=" + id.substring(0, 5);
+		return "StNode[id=" + id.substring(0, 5)+"]";
 	}
 
 	public StNode changePulse(Pulse pulse) {

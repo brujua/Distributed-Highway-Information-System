@@ -5,8 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 
 import cars.Car;
 import cars.MotionObservable;
@@ -20,34 +19,24 @@ public class CarMonitor implements MotionObserver{
 	private double range;
 	//private List<StNode> cars;
 	private Map<StNode,Instant> cars ;
+	private ScheduledExecutorService timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
 		
 	private Position position;
-	
-	public final double MAX_TIMEOUT = 5000;
+
+	public final long timeOutCheckRefreshTime = 2000;
+	public final long MAX_TIMEOUT = 5000;
 	//private final static double DEFAULT_RANGE = 800;
-	
 	
 	public CarMonitor(double range, MotionObservable carrier) {
 		super();
 		this.range = range;
 		cars = new ConcurrentHashMap<StNode, Instant>();
-		//cars = Collections.synchronizedList(new ArrayList<StNode>());
 		// subscribe to the carrier of this monitor to be notified in changes of position
 		if(carrier!=null) {
 			carrier.addObserver(this);
 		}
 
-
-		Thread thread = new Thread(new Runnable() {
-			
-			@Override
-			public void run() {
-				checkTimeOut();
-				
-			}
-			
-		});
-		thread.start();
+		timeoutScheduler.scheduleWithFixedDelay(new TimeOutChecker(), timeOutCheckRefreshTime, timeOutCheckRefreshTime, TimeUnit.MILLISECONDS);
 	}
 
 	public CarMonitor(Double range) {
@@ -92,45 +81,32 @@ public class CarMonitor implements MotionObserver{
 				list.add(car);
 			}
 		}
-		
-	/*	synchronized (cars) {
-			list = new ArrayList<StNode>(cars.size());
-			for (StNode car : cars) {
-				list.add(car);
-			}
-		}*/
 		return list;
 	}
-	
-	
-	public void checkTimeOut() {
-		try {
-			while(true) {
-				Thread.sleep(1000);
-			
-				long now = (Instant.now()).toEpochMilli() ;
-				synchronized (cars) {
-					for (StNode car : cars.keySet()) {
-						if ((now -(car.getTimestamp()).toEpochMilli() >= MAX_TIMEOUT)) {
-
-							cars.remove(car);
-							logger.info("Removed " + car + " from monitor list due to timeout");
-						}
-					}
-				}
-			}
-		} catch (InterruptedException e) {
-			logger.error("CarMonitor timeout thread interrupted");
-		}
-	}
-	
 
 	@Override
 	public void notify(Pulse pulse) {
 		this.position = pulse.getPosition();
 		
 	}
-	
-	
-	
+
+	private class TimeOutChecker implements Runnable {
+		@Override
+		public void run(){
+			checkTimeOut();
+		}
+
+		public void checkTimeOut() {
+			long now = (Instant.now()).toEpochMilli() ;
+			synchronized (cars) {
+				for (StNode car : cars.keySet()) {
+					if ((now -(car.getTimestamp()).toEpochMilli() >= MAX_TIMEOUT)) {
+
+						cars.remove(car);
+						logger.info("Removed " + car + " from monitor list due to timeout");
+					}
+				}
+			}
+		}
+	}
 }
