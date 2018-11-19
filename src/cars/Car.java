@@ -8,13 +8,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 import common.*;
 import network.CorruptDataException;
@@ -50,9 +44,10 @@ public class Car implements MsgListener, MotionObservable{
 	private CarMonitor primaryMonitor;
 	private CarMonitor secondaryMonitor;
 	private PulseEmiter pulseEmiter;
-	private ScheduledExecutorService pulseScheduler = Executors.newSingleThreadScheduledExecutor();
 	private List<MotionObserver> motionObservers = new ArrayList<>();
-	
+	private ScheduledExecutorService pulseScheduler = Executors.newSingleThreadScheduledExecutor();
+	private ExecutorService threadService = Executors.newCachedThreadPool();
+
 	
 	
 	public Car(Position position, double velocity, List<StNode> highwayNodes) throws NoPeersFoundException {
@@ -202,7 +197,7 @@ public class Car implements MsgListener, MotionObservable{
 	@Override
 	public void notify(Message m) {
 		// The logic of the received msg will be handled on a different thread
-		Thread thread = new Thread( new Runnable() {
+		threadService.execute( new Runnable() {
 			public void run() {
 				try {
 					switch (m.getType()) {
@@ -227,8 +222,6 @@ public class Car implements MsgListener, MotionObservable{
 				}
 			}
 		});
-		
-		thread.start();
 	}
 
 	private void handleHello(Message m) throws CorruptDataException {
