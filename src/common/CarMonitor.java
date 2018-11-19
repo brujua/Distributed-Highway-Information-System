@@ -100,7 +100,7 @@ public class CarMonitor implements MotionObserver{
 			long now = (Instant.now()).toEpochMilli() ;
 			synchronized (cars) {
 				for (StNode car : cars.keySet()) {
-					if ((now -(car.getTimestamp()).toEpochMilli() >= MAX_TIMEOUT)) {
+					if ((now - cars.get(car).toEpochMilli() >= MAX_TIMEOUT)) {
 
 						cars.remove(car);
 						logger.info("Removed " + car + " from monitor list due to timeout");
