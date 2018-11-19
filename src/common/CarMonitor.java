@@ -71,33 +71,13 @@ public class CarMonitor implements MotionObserver{
 	 * @return true if it was updated, false if its not in range and removed from the list
 	 */
 	public boolean update(StNode car) {
-		if(cars.containsKey(car)) {
-			if(!isInRange(car)) {
-				cars.remove(car);
-				return false;
-			}else {
-				cars.remove(car);
-				cars.put(car, Instant.now());
-				return true;
-			}
-		}else {
+		cars.remove(car);
+		if(isInRange(car)){
 			cars.put(car, Instant.now());
 			return true;
+		} else {
+			return false;
 		}
-		/*synchronized(cars) {
-		
-			int i = cars.indexOf(car);
-			if(!isInRange(car)) {
-				if(i!=-1)
-					cars.remove(i);
-				return false;
-			}			
-			if(i != -1) 
-				cars.set(i, car);
-			else
-				cars.add(car);
-			return true;
-		}	*/	
 	}
 		
 	/**
