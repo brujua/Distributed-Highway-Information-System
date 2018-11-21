@@ -15,16 +15,16 @@ import common.StNode;
 import highway.HighWay;
 
 class IntegrationTest {
-	static final Double coordXOrigin = 0.0;
-	static final Double coordYOrigin = 0.0;
+	private static final Double coordXOrigin = 0.0;
+	private static final Double coordYOrigin = 0.0;
 	
-	static HighWay hwNode;
-	static List<StNode> hwNodes;
+	private static HighWay hwNode;
+	private static List<StNode> hwNodes;
 
 	@BeforeAll
 	static void initializeHWNode() {
 		hwNode = new HighWay(new ArrayList<>(), new Position(coordXOrigin, coordYOrigin));
-		hwNodes = new ArrayList<StNode>();
+		hwNodes = new ArrayList<>();
 		hwNodes.add(hwNode.getStNode());
 	}
 	
@@ -107,6 +107,25 @@ class IntegrationTest {
 		}
 	}
 
-
+	/**
+	 * Checks if a car that does not emit pulses gets removed from the list of neighbours of the other car
+	 */
+	@Test
+	void testCarTimeOutsInactivesNeighsbours(){
+		try {
+			Car car1 = new Car(new Position(coordXOrigin+2, coordYOrigin+2),2,hwNodes);
+			car1.registerInNetwork();
+			Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
+			car2.registerInNetwork().emitPulses();
+			assert (car2.getNeighs().contains(car1.getStNode()));
+			Thread.sleep(10001);
+			assert(car2.getNeighs().isEmpty());
+		} catch (NoPeersFoundException e) {
+			fail("NoPeersFoundException");
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
 
 }
