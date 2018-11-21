@@ -65,10 +65,6 @@ public class Car implements MsgListener, MotionObservable{
 
 		pulseEmiter = new PulseEmiter(this,primaryMonitor,msgHandler, getStNode());
 
-		registerInNetwork();
-
-		emitPulses();
-		monitorFarCars();
 	}
 
 	public Car(Position position, double velocity, List<StNode> highwayNodes, String name) throws NoPeersFoundException {
@@ -88,7 +84,7 @@ public class Car implements MsgListener, MotionObservable{
 		return avPort;
 	}	
 
-	private void registerInNetwork() throws NoPeersFoundException {
+	public Car registerInNetwork() throws NoPeersFoundException {
 		boolean registered = false;
 		StNode highwNode;
 		Iterator<StNode> nodIterator = highWayNodes.iterator();	
@@ -105,6 +101,7 @@ public class Car implements MsgListener, MotionObservable{
 		}
 		logger.info("Registered in node:" + selectedHWNode);
 		//System.out.println("Registered in node:" + selectedHWNode);
+		return this;
 	}
 	
 	
@@ -186,8 +183,9 @@ public class Car implements MsgListener, MotionObservable{
 
 
 
-	private void emitPulses() {
+	public Car emitPulses() {
 		pulseScheduler.scheduleWithFixedDelay(pulseEmiter, 0, pulseRefreshTime, pRefreshTimeUnit);
+		return this;
 	}
 	
 	private void monitorFarCars() {
