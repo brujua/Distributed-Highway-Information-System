@@ -18,8 +18,9 @@ import network.MsgType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 public class HighWay implements MsgListener{
-	private static final Logger logger = LoggerFactory.getLogger(CarMonitor.class);
+	private Logger logger;
 
 	public static final String ip = "localhost";
 	
@@ -53,10 +54,11 @@ public class HighWay implements MsgListener{
 		this.position= position;
 		this.neighs = neighs;
 		id = UUID.randomUUID().toString();
+		logger = LoggerFactory.getLogger(getName());
 		portCars = Util.getAvailablePort(tentativePortCars);
 		portCoordinator = Util.getAvailablePort(tentativePortCoordinator);
 		neighs = new ArrayList<>();
-		//carNodes = new ArrayList<>();
+
 	
 		carMonitor = new CarMonitor(MAX_RANGE,null, getName());
 		
@@ -120,27 +122,7 @@ public class HighWay implements MsgListener{
 	
 	
 	
-	public static void main(String[] args) {
-		try {
-			/*byte[] packetBuffer = new byte[1024];
-			DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
-			DatagramSocket socket = new DatagramSocket(9000);
-			socket.receive(receiverPacket);
-			ByteArrayInputStream baos = new ByteArrayInputStream(packetBuffer);
-		      ObjectInputStream oos = new ObjectInputStream(baos);
-		      Message m = (Message)oos.readObject();
-		      System.out.println(m.getType());
-		      Pulse p =(Pulse) m.getData();
-		      System.out.println(p.getMsgID());*/
-			
-			HighWay hw = new HighWay(new ArrayList<>(), new Position(0.0, 0.0));
-			System.out.println(hw.getStNode());
-		      
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 
-	}
 	
 	
 	private String getIp() {
