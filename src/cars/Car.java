@@ -25,7 +25,7 @@ public class Car implements MsgListener, MotionObservable{
 
 	// -- temporary constants --
 	public final String ip = "localhost";
-	public final int tentativePort = 5555;	
+	public final int tentativePort = 5555;
 	// range for the monitors
 	public final double PRIMARY_RANGE = 200;
 	public final double SECONDARY_RANGE = Double.MAX_VALUE;
@@ -34,6 +34,7 @@ public class Car implements MsgListener, MotionObservable{
 	public final TimeUnit pRefreshTimeUnit = TimeUnit.MILLISECONDS;
 
 	private String id;
+	private String name = null;
 	private int port;
 	private Position position;
 	private double velocity;
@@ -51,13 +52,13 @@ public class Car implements MsgListener, MotionObservable{
 	public Car(Position position, double velocity, List<StNode> highwayNodes) throws NoPeersFoundException {
 		super();
 		id = UUID.randomUUID().toString();
-		logger = LoggerFactory.getLogger(id.substring(0,5));
+		logger = LoggerFactory.getLogger(getName());
 		this.position = position;
 		this.velocity = velocity;
 		this.port = getAvailablePort();
-		highWayNodes = new ArrayList<StNode>(highwayNodes);
-		primaryMonitor = new CarMonitor(PRIMARY_RANGE, this);
-		secondaryMonitor = new CarMonitor(SECONDARY_RANGE, this);
+		highWayNodes = new ArrayList<>(highwayNodes);
+		primaryMonitor = new CarMonitor(PRIMARY_RANGE, this, getName());
+		secondaryMonitor = new CarMonitor(SECONDARY_RANGE, this, getName());
 
 		//initialize the MsgHandler
 		msgHandler = new MsgHandler(this.port);
@@ -67,8 +68,13 @@ public class Car implements MsgListener, MotionObservable{
 
 	}
 
+	private String getName() {
+		return (name != null)? name : this.id.substring(0,5);
+	}
+
 	public Car(Position position, double velocity, List<StNode> highwayNodes, String name) throws NoPeersFoundException {
 		this(position,velocity,highwayNodes);
+		this.name = name;
 		this.logger = LoggerFactory.getLogger(name);
 	}
 
@@ -362,6 +368,8 @@ public class Car implements MsgListener, MotionObservable{
 	 */
 	public void shutdown(){
 		pulseScheduler.shutdown();
+		primaryMonitor.shutdown();
+		secondaryMonitor.shutdown();
 		msgHandler.close();
 	}
 
