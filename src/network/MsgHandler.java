@@ -156,7 +156,7 @@ public class MsgHandler implements MsgObservable{
 				
 				} catch(Exception e) {
 					System.out.println("Problemas enviando mensaje");
-					//TODO log
+
 					e.printStackTrace();
 				}
 					

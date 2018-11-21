@@ -19,4 +19,12 @@ public class Util {
 	        return true;
 	    }
 	}
+
+	public static int getAvailablePort(int tentativePort) {
+		int avPort = tentativePort;
+		while(Util.isUDPPortOccupied(avPort)) {
+			avPort++;
+		}
+		return avPort;
+	}
 }

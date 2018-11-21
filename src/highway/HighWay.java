@@ -5,11 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import common.CarMonitor;
-import common.Position;
+import common.*;
 
-import common.Pulse;
-import common.StNode;
 import network.CorruptDataException;
 import network.MT_HelloResponse;
 import network.MT_Redirect;
@@ -24,28 +21,23 @@ import org.slf4j.LoggerFactory;
 public class HighWay implements MsgListener{
 	private static final Logger logger = LoggerFactory.getLogger(CarMonitor.class);
 
-	public final String ip = "localhost";
+	public static final String ip = "localhost";
 	
-	//listening port for cars
-	public final int portCars = 5007;
+	public static final int tentativePortCars = 5007;
+
+	public static final int tentativePortCoordinator = 8000;
 	
+	private static final double MAX_RANGE = 0;
 	
-	//listening port for Coordinator
-	public final int portCoordinator = 8000;
-	
-	private final double MAX_RANGE = 0;
-	
-	//node identificator
 	private String id;
 	
-	// Postion node datas
 	private Position position;
 	
-	//Thi StNode
-	private StNode stNode; 
+	private StNode stNode;
+	private int portCars;
+	private int portCoordinator;
 	
 	//MSG tools
-	private BigInteger msgCounter;
 	private MsgHandler msgHandler;
 	private MsgHandler msgHandlerCoordinator;
 	
@@ -60,19 +52,21 @@ public class HighWay implements MsgListener{
 		super();
 		this.position= position;
 		this.neighs = neighs;
-		this.id = UUID.randomUUID().toString();
+		id = UUID.randomUUID().toString();
+		portCars = Util.getAvailablePort(tentativePortCars);
+		portCoordinator = Util.getAvailablePort(tentativePortCoordinator);
 		neighs = new ArrayList<>();
 		//carNodes = new ArrayList<>();
 	
 		carMonitor = new CarMonitor(MAX_RANGE);
 		
 		
-		msgHandler = new MsgHandler(this.portCars);		
-		msgHandlerCoordinator = new MsgHandler(this.portCoordinator);
+		msgHandler = new MsgHandler(portCars);
+		msgHandlerCoordinator = new MsgHandler(portCoordinator);
 		msgHandler.addListener(this);
 		msgHandlerCoordinator.addListener(this);
 		
-		stNode = new StNode(this.id,this.ip,this.portCars,position);
+		stNode = new StNode(id,ip,portCars,position);
 		
 	}
 

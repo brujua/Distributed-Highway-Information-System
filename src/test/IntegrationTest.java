@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import cars.Car;
@@ -21,8 +22,8 @@ class IntegrationTest {
 	private static HighWay hwNode;
 	private static List<StNode> hwNodes;
 
-	@BeforeAll
-	static void initializeHWNode() {
+	@BeforeEach
+	void initializeHWNode() {
 		hwNode = new HighWay(new ArrayList<>(), new Position(coordXOrigin, coordYOrigin));
 		hwNodes = new ArrayList<>();
 		hwNodes.add(hwNode.getStNode());
@@ -49,9 +50,10 @@ class IntegrationTest {
 			Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
 			car2.registerInNetwork();
 			List<StNode> car2Neighs = car2.getNeighs();
-			assert(car2Neighs.contains(car1.getStNode()));		
+			assert(car2Neighs.contains(car1.getStNode()));
+			car1.shutdown();
+			car2.shutdown();
 
-			
 		} catch (NoPeersFoundException e) {
 			// TODO Auto-generated catch block
 			fail("NoPeersFoundException");
@@ -78,6 +80,8 @@ class IntegrationTest {
 			Position car1Pos = car1.getStNode().getPosition();
 			Position car12Pos = car2Neighs.get(0).getPosition();
 			assertEquals(car1Pos, car12Pos);
+			car1.shutdown();
+			car2.shutdown();
 		} catch (NoPeersFoundException e) {
 			fail("NoPeersFoundException");
 			e.printStackTrace();
@@ -97,6 +101,8 @@ class IntegrationTest {
 			Thread.sleep(10001);
 			List<StNode> car2Neighs = car2.getNeighs();
 			assert(!car2Neighs.isEmpty());
+			car1.shutdown();
+			car2.shutdown();
 		} catch (NoPeersFoundException e) {
 			// TODO Auto-generated catch block
 			fail("NoPeersFoundException");
@@ -120,6 +126,8 @@ class IntegrationTest {
 			assert (car2.getNeighs().contains(car1.getStNode()));
 			Thread.sleep(10001);
 			assert(car2.getNeighs().isEmpty());
+			car1.shutdown();
+			car2.shutdown();
 		} catch (NoPeersFoundException e) {
 			fail("NoPeersFoundException");
 			e.printStackTrace();

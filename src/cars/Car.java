@@ -19,6 +19,8 @@ import network.MsgHandler;
 import network.MsgListener;
 import network.MsgType;
 
+import static common.Util.getAvailablePort;
+
 public class Car implements MsgListener, MotionObservable{
 
 	private Logger logger;
@@ -49,13 +51,13 @@ public class Car implements MsgListener, MotionObservable{
 	private ScheduledExecutorService pulseScheduler = Executors.newSingleThreadScheduledExecutor();
 	private ExecutorService threadService = Executors.newCachedThreadPool();
 
-	public Car(Position position, double velocity, List<StNode> highwayNodes) throws NoPeersFoundException {
+	public Car(Position position, double velocity, List<StNode> highwayNodes){
 		super();
 		id = UUID.randomUUID().toString();
 		logger = LoggerFactory.getLogger(getName());
 		this.position = position;
 		this.velocity = velocity;
-		this.port = getAvailablePort();
+		this.port = Util.getAvailablePort(tentativePort);
 		highWayNodes = new ArrayList<>(highwayNodes);
 		primaryMonitor = new CarMonitor(PRIMARY_RANGE, this, getName());
 		secondaryMonitor = new CarMonitor(SECONDARY_RANGE, this, getName());
@@ -68,27 +70,17 @@ public class Car implements MsgListener, MotionObservable{
 
 	}
 
-	private String getName() {
-		return (name != null)? name : this.id.substring(0,5);
-	}
-
-	public Car(Position position, double velocity, List<StNode> highwayNodes, String name) throws NoPeersFoundException {
+	public Car(Position position, double velocity, List<StNode> highwayNodes, String name){
 		this(position,velocity,highwayNodes);
 		this.name = name;
 		this.logger = LoggerFactory.getLogger(name);
 	}
 
-	public Car (Position position, double velocity) throws NoPeersFoundException {
+	public Car (Position position, double velocity) {
 		this(position, velocity, new ArrayList<>());
 	}
 		
-	private int getAvailablePort() {
-		int avPort = this.tentativePort;
-		while(Util.isUDPPortOccupied(avPort)) {
-			avPort++;
-		}
-		return avPort;
-	}	
+
 
 	public Car registerInNetwork() throws NoPeersFoundException {
 		boolean registered = false;
@@ -201,6 +193,10 @@ public class Car implements MsgListener, MotionObservable{
 
 	public Pulse getPulse() {
 		return new Pulse(position, velocity, Instant.now());
+	}
+
+	private String getName() {
+		return (name != null)? name : this.id.substring(0,5);
 	}
 	
 	@Override
