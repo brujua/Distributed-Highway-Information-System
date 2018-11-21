@@ -58,11 +58,11 @@ public class HighWay implements MsgListener{
 		neighs = new ArrayList<>();
 		//carNodes = new ArrayList<>();
 	
-		carMonitor = new CarMonitor(MAX_RANGE);
+		carMonitor = new CarMonitor(MAX_RANGE,null, getName());
 		
 		
-		msgHandler = new MsgHandler(portCars);
-		msgHandlerCoordinator = new MsgHandler(portCoordinator);
+		msgHandler = new MsgHandler(portCars,getName());
+		msgHandlerCoordinator = new MsgHandler(portCoordinator,getName());
 		msgHandler.addListener(this);
 		msgHandlerCoordinator.addListener(this);
 		
@@ -70,7 +70,11 @@ public class HighWay implements MsgListener{
 		
 	}
 
-	
+	private String getName() {
+		return "HW"+ id.substring(0,5);
+	}
+
+
 	public List<StNode> getCarNodes(){
 		
 		return carMonitor.getList();
