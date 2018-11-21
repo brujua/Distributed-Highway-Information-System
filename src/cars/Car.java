@@ -21,7 +21,7 @@ import network.MsgType;
 
 public class Car implements MsgListener, MotionObservable{
 
-	private static final Logger logger = LoggerFactory.getLogger(Car.class);
+	private Logger logger;
 
 	// -- temporary constants --
 	public final String ip = "localhost";
@@ -32,7 +32,7 @@ public class Car implements MsgListener, MotionObservable{
 
 	public final int pulseRefreshTime = 1000;
 	public final TimeUnit pRefreshTimeUnit = TimeUnit.MILLISECONDS;
-	
+
 	private String id;
 	private int port;
 	private Position position;
@@ -48,30 +48,34 @@ public class Car implements MsgListener, MotionObservable{
 	private ScheduledExecutorService pulseScheduler = Executors.newSingleThreadScheduledExecutor();
 	private ExecutorService threadService = Executors.newCachedThreadPool();
 
-	
-	
 	public Car(Position position, double velocity, List<StNode> highwayNodes) throws NoPeersFoundException {
 		super();
 		id = UUID.randomUUID().toString();
+		logger = LoggerFactory.getLogger(id.substring(0,5));
 		this.position = position;
 		this.velocity = velocity;
 		this.port = getAvailablePort();
 		highWayNodes = new ArrayList<StNode>(highwayNodes);
 		primaryMonitor = new CarMonitor(PRIMARY_RANGE, this);
 		secondaryMonitor = new CarMonitor(SECONDARY_RANGE, this);
-		
+
 		//initialize the MsgHandler
 		msgHandler = new MsgHandler(this.port);
 		msgHandler.addListener(this);
 
 		pulseEmiter = new PulseEmiter(this,primaryMonitor,msgHandler, getStNode());
-		//register in the highway network
+
 		registerInNetwork();
-		
+
 		emitPulses();
 		monitorFarCars();
 	}
-	
+
+	public Car(Position position, double velocity, List<StNode> highwayNodes, String name) throws NoPeersFoundException {
+		this(position,velocity,highwayNodes);
+		this.logger = LoggerFactory.getLogger(name);
+	}
+
 	public Car (Position position, double velocity) throws NoPeersFoundException {
 		this(position, velocity, new ArrayList<>());
 	}
@@ -355,5 +359,12 @@ public class Car implements MsgListener, MotionObservable{
 		
 	}
 
+	/**
+	 * Disconects car from the network, stopping all the threads
+	 */
+	public void shutdown(){
+		pulseScheduler.shutdown();
+		msgHandler.close();
+	}
 
 }
