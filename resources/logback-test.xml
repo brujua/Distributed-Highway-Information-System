@@ -12,9 +12,9 @@
     <logger name="org.hibernate.SQL" level="DEBUG"/>
     <logger name="org.hibernate.type.descriptor" level="TRACE"/>-->
     <appender name="MyCustomAppender" class="app.MyStaticOutputStreamAppender">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+       <!-- <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>ERROR</level>
-        </filter>
+        </filter>-->
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{5} - %msg%n</pattern>
         </encoder>
