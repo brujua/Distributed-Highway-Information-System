@@ -57,7 +57,7 @@ public class HighWay implements MsgListener{
 		logger = LoggerFactory.getLogger(getName());
 		portCars = Util.getAvailablePort(tentativePortCars);
 		portCoordinator = Util.getAvailablePort(tentativePortCoordinator);
-		neighs = new ArrayList<>();
+		this.neighs = new ArrayList<>(neighs);
 
 	
 		carMonitor = new CarMonitor(MAX_RANGE,null, getName());
@@ -76,13 +76,16 @@ public class HighWay implements MsgListener{
 		return "HW"+ id.substring(0,5);
 	}
 
+	public HighWay registerInNetwork(){
+		//TODO
+
+		return this; // fluent api
+	}
 
 	public List<StNode> getCarNodes(){
 		
 		return carMonitor.getList();
 		//return this.carNodes;
-		
-		
 	}
 	
 	private void addCarNode (StNode car){
