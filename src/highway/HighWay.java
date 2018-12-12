@@ -52,7 +52,7 @@ public class HighWay implements MsgListener{
 	//private SerializableList<StNode>
 
 	private CarMonitor carMonitor;
-	
+
 	public HighWay (ArrayList<StNode> neighs , Position position) {
 		super();
 		this.position= position;
@@ -264,11 +264,12 @@ public class HighWay implements MsgListener{
 
 		StNode hwRedirect = searchRedirect(((Position) m.getData()));
 		MT_Redirect redirect = new MT_Redirect(m.getId(), hwRedirect);
-		Message msg = new Message(MsgType.REDIRECT,getIp(),getPort(),redirect);
+		Message msg = new Message(MsgType.REDIRECT,getIp(),portCars,redirect);
 
 		StNode carst = new StNode(m.getId(),m.getIp(),m.getPort(),this.getPosition());
-		//carNodes.add(carst); 
-		carMonitor.update(carst);
+
+		//carMonitor.update(carst);
+		// wait until carmonitor removes the car because of timeout
 		msgHandler.sendMsg(carst, msg);
 	}
 
