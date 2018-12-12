@@ -14,27 +14,44 @@ public class PulseEmiter implements Runnable, MotionObserver{
 	private CarMonitor carMonitor;
 	private MsgHandler msgHandler;
 	private StNode source;
-	
+
+	private StNode highwayNode;
+
 	public PulseEmiter(MotionObservable pulseSource, CarMonitor monitor, MsgHandler msgHandler, StNode source) {
 		this.carMonitor = monitor;
 		this.msgHandler = msgHandler;
 		this.source = source;
+		this.highwayNode = null;
 		pulseSource.addObserver(this);
+	}
+
+	public void setHighwayNode(StNode highwayNode) {
+		synchronized (highwayNode){
+			this.highwayNode = highwayNode;
+		}
 	}
 
 	@Override
 	public void run() {
+		Message msg;
 		List<StNode> nodes = carMonitor.getList();
-		Message msg = new Message(MsgType.PULSE,source.getId(),source.getPort(),source);
+		synchronized (source){
+			 msg = new Message(MsgType.PULSE,source.getId(),source.getPort(),source);
+		}
 		for (StNode node : nodes) {
 			msgHandler.sendMsg(node, msg);
 		}
-		
+		synchronized (highwayNode){
+			if(highwayNode != null)
+				msgHandler.sendMsg(highwayNode,msg);
+		}
 	}
 
 	@Override
 	public void notify(Pulse pulse) {
-		source = source.changePulse(pulse);
+		synchronized (source){
+			source = source.changePulse(pulse);
+		}
 	}
 	
 }

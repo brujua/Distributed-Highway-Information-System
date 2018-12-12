@@ -1,61 +1,53 @@
 package highway;
 
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.math.BigInteger;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import common.CarMonitor;
-import common.HWNodeList;
-import common.Position;
-import common.Pulse;
-import common.StNode;
+import common.*;
+
 import network.CorruptDataException;
 import network.MT_HelloResponse;
 import network.MT_Redirect;
 import network.Message;
-import network.Messageable;
+
 import network.MsgHandler;
 import network.MsgListener;
 import network.MsgType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class HighWay implements MsgListener{
+	private Logger logger;
 
-	public final String ip = "localhost";
+	public static final String ip = "localhost";
 	
-	//listening port for cars
-	public final int portCars = 5007;
+	public static final int tentativePortCars = 5007;
+
+	public static final int tentativePortCoordinator = 8000;
 	
-	
-	//listening port for Coordinator
-	public final int portCoordinator = 8000;
-	
-	private final double MAX_RANGE = 0;
-	
-	//node identificator
+	private static final double MAX_RANGE = 0;
+
 	private String id;
 	
 	// Postion node datas
 	private Position position;
 	
-	//Thi StNode
-	private StNode stNode; 
+	private StNode stNode;
+	private int portCars;
+	private int portCoordinator;
 	
 	//MSG tools
-	private BigInteger msgCounter;
 	private MsgHandler msgHandler;
 	private MsgHandler msgHandlerCoordinator;
 	
 	//Negighs HW nodes
 	private ArrayList<StNode> neighs; //othrs node highway tolking to me 
-	
+
 	private HWNodeList HWneighs;
-	
+
 	//private ArrayList<StNode> carNodes; //cars in my zone to shared
 	//private SerializableList<StNode>
 
@@ -65,23 +57,30 @@ public class HighWay implements MsgListener{
 		super();
 		this.position= position;
 		this.neighs = neighs;
-		this.id = UUID.randomUUID().toString();
+		id = UUID.randomUUID().toString();
+		logger = LoggerFactory.getLogger(getName());
+		portCars = Util.getAvailablePort(tentativePortCars);
+		portCoordinator = Util.getAvailablePort(tentativePortCoordinator);
 		//neighs = new ArrayList<>();
-		//carNodes = new ArrayList<>();
+
 	
-		carMonitor = new CarMonitor(MAX_RANGE);
+		carMonitor = new CarMonitor(MAX_RANGE,null, getName());
 		
 		HWneighs = new HWNodeList(position);
-		HWneighs.addAll(neighs);
-		
-		
-		msgHandler = new MsgHandler(this.portCars);		
-		msgHandlerCoordinator = new MsgHandler(this.portCoordinator);
+		//HWneighs.addAll(neighs);
+
+
+		msgHandler = new MsgHandler(portCars,getName());
+		msgHandlerCoordinator = new MsgHandler(portCoordinator,getName());
 		msgHandler.addListener(this);
 		msgHandlerCoordinator.addListener(this);
 		
-		stNode = new StNode(this.id,this.ip,this.portCars,position);
+		stNode = new StNode(id,ip,portCars,position);
 		
+	}
+
+	private String getName() {
+		return "HW"+ id.substring(0,5);
 	}
 
 	
@@ -129,28 +128,8 @@ public class HighWay implements MsgListener{
 	
 	
 	
-	
-	public static void main(String[] args) {
-		try {
-			/*byte[] packetBuffer = new byte[1024];
-			DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
-			DatagramSocket socket = new DatagramSocket(9000);
-			socket.receive(receiverPacket);
-			ByteArrayInputStream baos = new ByteArrayInputStream(packetBuffer);
-		      ObjectInputStream oos = new ObjectInputStream(baos);
-		      Message m = (Message)oos.readObject();
-		      System.out.println(m.getType());
-		      Pulse p =(Pulse) m.getData();
-		      System.out.println(p.getMsgID());*/
-			
-			HighWay hw = new HighWay(new ArrayList<>(), new Position(0.0, 0.0));
-			System.out.println(hw.getStNode());
-		      
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 
-	}
+
 	
 	
 	private String getIp() {
@@ -191,7 +170,7 @@ public class HighWay implements MsgListener{
 						break;
 					}
 					case PULSE: {
-						pulseRecive((Pulse) m.getData());
+						handlePulse(m);
 						break;
 					}
 					case REDIRECT: {
@@ -220,13 +199,13 @@ public class HighWay implements MsgListener{
 				StNode node = (StNode) m.getData() ;
 				if(carMonitor.isInRange(node))
 					msgHandler.sendMsg(node, ackMssg());
-				
+
 			}
 
 			private Message ackMssg() {
-				
+
 				return new Message(MsgType.ACK,getIp(),getPort(),carMonitor.getList());
-			}	
+			}
 		});
 		
 		thread.start();
@@ -263,15 +242,30 @@ public class HighWay implements MsgListener{
 	}
 
 	
-	private void pulseRecive(Pulse pulse) {
-		
+	private void handlePulse(Message msg) throws CorruptDataException {
+		if(msg.getType() != MsgType.PULSE || ! (msg.getData() instanceof StNode )){
+			throw new CorruptDataException();
+		}
+		StNode car = (StNode) msg.getData();
+		logger.info("Pulse received on node: " + getStNode()+" from node: "+car);
+		if(isInZone(car.getPosition()))
+			updateCar(car);
+		else
+			redirect(msg);
+
+	}
+
+	private void updateCar(StNode car) {
+		carMonitor.update(car);
 	}
 
 	private void redirect(Message m) {
 		// TODO redirecccionar a hw correspondiente
-		StNode hwRedirect = serchRedirect(((Position) m.getData()));
+
+		StNode hwRedirect = searchRedirect(((Position) m.getData()));
 		MT_Redirect redirect = new MT_Redirect(m.getId(), hwRedirect);
 		Message msg = new Message(MsgType.REDIRECT,getIp(),getPort(),redirect);
+
 		StNode carst = new StNode(m.getId(),m.getIp(),m.getPort(),this.getPosition());
 		//carNodes.add(carst); 
 		carMonitor.update(carst);
@@ -279,7 +273,7 @@ public class HighWay implements MsgListener{
 	}
 
 
-	private StNode serchRedirect(Position position) {
+	private StNode searchRedirect(Position position) {
 	// TODO Auto-generated method stub
 		Double minDistance = this.position.distance(position);
 		Position pos = this.position;

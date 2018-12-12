@@ -21,7 +21,7 @@ public class Message implements Serializable{
 		super();
 		this.type = type;
 		this.data = data;
-		this.id = UUID.randomUUID().toString();;
+		this.id = UUID.randomUUID().toString();
 		this.origIp = ip;
 		this.origPort = port;
 	}

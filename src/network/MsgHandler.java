@@ -6,7 +6,7 @@ import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -14,6 +14,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MsgHandler implements MsgObservable{
 
@@ -25,21 +28,22 @@ public class MsgHandler implements MsgObservable{
 	private boolean listen;
 	private ExecutorService threadService = Executors.newCachedThreadPool();
 	private ResponseMonitor respMonitor;
-	
-	public MsgHandler(int port) {
-		this(port, DEFAULT_MAX_RETRIES);
-	}
-	
-	public MsgHandler(int port, int maxRetries) {
+	private Logger logger;
+
+	public MsgHandler(int port, String name) {
 		super();
+		this.logger = LoggerFactory.getLogger(this.getClass().getName() + name);
 		this.port = port;
 		listen = true;
-		listeners = new ArrayList<MsgListener>();
-			
-		// create the Response monitor that will track if an expected response was receive
+		listeners = new ArrayList<>();
+		// create the Response monitor that will track if an expected response was received
 		respMonitor = new ResponseMonitor();
 		//start listening thread
 		listenForMsgs();
+	}
+
+	public MsgHandler (int port) {
+		this(port,"");
 	}
 
 	/*
@@ -48,43 +52,31 @@ public class MsgHandler implements MsgObservable{
 	 * unless notify(), on the listener side, starts a thread to process the msg and doesn't block
 	*/
 	private void listenForMsgs() {
-		threadService.execute(new Runnable() {			
-			@Override
-			public void run() {
-				try {
-					DatagramSocket receiveS = new DatagramSocket(port);
-					
-			      	
-					while(listen) {
-						if(Thread.currentThread().isInterrupted()) {
-							//TODO log
-		                    System.out.println("Listening thread interrupted");
-		                    break;
-		                }
-						byte[] packetBuffer = new byte[4096];
-						DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
-						ByteArrayInputStream bais = new ByteArrayInputStream(packetBuffer);
-						receiveS.receive(receiverPacket);
-						ObjectInputStream ois = new ObjectInputStream(bais);
-						Message m = (Message)ois.readObject();
-						ois.close();
-						if(!respMonitor.check(m))
-							for (MsgListener listener : listeners) {
-								listener.notify(m);
-							}
-					}
-				} catch(IOException | ClassNotFoundException e) {
-					e.printStackTrace();
-					System.out.println("problemas thread escucha puerto " + port);
+		threadService.execute(() -> {
+			try {
+				DatagramSocket receiveS = new DatagramSocket(port);
+				while(listen) {
+					if(Thread.currentThread().isInterrupted()) {
+	                    logger.info("Listening thread interrupted");
+	                    break;
+	                }
+					byte[] packetBuffer = new byte[4096];
+					DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
+					ByteArrayInputStream bais = new ByteArrayInputStream(packetBuffer);
+					receiveS.receive(receiverPacket);
+					ObjectInputStream ois = new ObjectInputStream(bais);
+					Message m = (Message)ois.readObject();
+					ois.close();
+					if(!respMonitor.check(m))
+						for (MsgListener listener : listeners) {
+							listener.notify(m);
+						}
 				}
-				
-				/*catch (Exception e) {
-					//TODO log
-					System.out.println("Problemas en el thread de escucha");
-					e.printStackTrace();
-				}*/
+			} catch(IOException | ClassNotFoundException e) {
+				e.printStackTrace();
+				logger.error("Unkown error on listening thread");
 			}
-		});		
+		});
 	}
 
 	@Override
@@ -109,19 +101,16 @@ public class MsgHandler implements MsgObservable{
 	
 	public void sendMsg(Messageable dest, Message msg) {
 		
-		try(DatagramSocket sendSocket = new DatagramSocket();) {
+		try(DatagramSocket sendSocket = new DatagramSocket()) {
 			
 			byte[] serializedHello = msg.toByteArr();
 			DatagramPacket helloPckt;
 			helloPckt = new DatagramPacket(serializedHello, serializedHello.length, InetAddress.getByName(dest.getIP()) , dest.getPort());
 			sendSocket.send(helloPckt);
-			sendSocket.close();
-		} catch (Exception e) {
-			// TODO log
-			System.out.println("Err Mensaje no enviado");
-			e.printStackTrace();
+		}  catch (IOException e) {
+			logger.error("IOException Error while sending msg to: "+ dest);
 		}
-		
+
 	}
 	
 	/**
@@ -136,30 +125,23 @@ public class MsgHandler implements MsgObservable{
 	public CompletableFuture<Message> sendMsgWithResponse(Messageable dest, Message msg, int timeout, int maxtries){
 		CompletableFuture<Message> response = new CompletableFuture<Message>();
 		respMonitor.addMsg(msg, response);
-		threadService.execute(new Runnable() {
-			
-			@Override
-			public void run() {
-				try {
-					boolean receivedResp = false;
-					for(int tries = 0;tries<maxtries && !receivedResp; tries++) {
-						sendMsg(dest, msg);
-						Thread.sleep(timeout);
-						receivedResp = response.isDone();
-					}
-					if(!receivedResp) {
-						response.completeExceptionally(new TimeoutException("retries exceeded"));
-					}
-					// sleep some in case a duplicate response arrives and then remove from monitor
-					Thread.sleep(DEFAULT_TIMEOUT);
-					respMonitor.remove(msg);
-				
-				} catch(Exception e) {
-					System.out.println("Problemas enviando mensaje");
-					//TODO log
-					e.printStackTrace();
+		threadService.execute(() -> {
+			try {
+				boolean receivedResp = false;
+				for(int tries = 0;tries<maxtries && !receivedResp; tries++) {
+					sendMsg(dest, msg);
+					Thread.sleep(timeout);
+					receivedResp = response.isDone();
 				}
-					
+				if(!receivedResp) {
+					response.completeExceptionally(new TimeoutException("retries exceeded"));
+				}
+				// sleep some in case a duplicate response arrives and then remove from monitor
+				Thread.sleep(DEFAULT_TIMEOUT);
+				respMonitor.remove(msg);
+
+			} catch (InterruptedException e) {
+				logger.info("Interrupted while sleeping in sendMsgWithResponse()");
 			}
 		});
 		
