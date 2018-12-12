@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 import common.CarMonitor;
+import common.HWNodeList;
 import common.Position;
 import common.Pulse;
 import common.StNode;
@@ -52,6 +53,9 @@ public class HighWay implements MsgListener{
 	
 	//Negighs HW nodes
 	private ArrayList<StNode> neighs; //othrs node highway tolking to me 
+	
+	private HWNodeList HWneighs;
+	
 	//private ArrayList<StNode> carNodes; //cars in my zone to shared
 	//private SerializableList<StNode>
 
@@ -62,10 +66,13 @@ public class HighWay implements MsgListener{
 		this.position= position;
 		this.neighs = neighs;
 		this.id = UUID.randomUUID().toString();
-		neighs = new ArrayList<>();
+		//neighs = new ArrayList<>();
 		//carNodes = new ArrayList<>();
 	
 		carMonitor = new CarMonitor(MAX_RANGE);
+		
+		HWneighs = new HWNodeList(position);
+		HWneighs.addAll(neighs);
 		
 		
 		msgHandler = new MsgHandler(this.portCars);		
@@ -194,6 +201,7 @@ public class HighWay implements MsgListener{
 						break;
 					}
 					case ACK: {
+						responseACK(m);
 						break;
 					}
 					default: {
@@ -206,6 +214,18 @@ public class HighWay implements MsgListener{
 					//TODO log
 					System.out.println("corrupt data on hw-node response");
 				}
+			}
+
+			private void responseACK(Message m) {
+				StNode node = (StNode) m.getData() ;
+				if(carMonitor.isInRange(node))
+					msgHandler.sendMsg(node, ackMssg());
+				
+			}
+
+			private Message ackMssg() {
+				
+				return new Message(MsgType.ACK,getIp(),getPort(),carMonitor.getList());
 			}	
 		});
 		
