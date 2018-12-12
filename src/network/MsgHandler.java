@@ -69,6 +69,8 @@ public class MsgHandler implements MsgObservable{
 					ois.close();
 					if(!respMonitor.check(m))
 						for (MsgListener listener : listeners) {
+							//before notify, update ip in msg to the real ip from which the msg was received
+							m.setIp(receiveS.getInetAddress().toString());
 							listener.notify(m);
 						}
 				}
@@ -123,7 +125,7 @@ public class MsgHandler implements MsgObservable{
 	}
 	
 	public CompletableFuture<Message> sendMsgWithResponse(Messageable dest, Message msg, int timeout, int maxtries){
-		CompletableFuture<Message> response = new CompletableFuture<Message>();
+		CompletableFuture<Message> response = new CompletableFuture<>();
 		respMonitor.addMsg(msg, response);
 		threadService.execute(() -> {
 			try {
