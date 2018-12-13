@@ -110,8 +110,7 @@ public class Car implements MsgListener, MotionObservable{
         	switch(responseMsg.getType()) {
             	case HELLO_RESPONSE:{
             		handleHelloResponse(responseMsg,true);
-		            selectedHWNode = ((MT_HelloResponse)responseMsg.getData()).getStNode();
-		            pulseEmiter.setHighwayNode(selectedHWNode);
+		            updateHWNode(((MT_HelloResponse) responseMsg.getData()).getStNode());
 		            return true;
         			}      	
             	case REDIRECT: {
@@ -126,26 +125,28 @@ public class Car implements MsgListener, MotionObservable{
         }
 		catch (CorruptDataException e) {
 			logger.error("corrupt data on hw-node response");
-			//System.out.println("corrupt data on hw-node response");
 			return false;
 		} 
         catch (ExecutionException  e) {
         	try {
         		throw e.getCause();
         	} catch(TimeoutException toe) {
-        		System.out.println("node doesn't respond");
-        		//if it doesn't respond in time, try the next one
+		        logger.info("Node did not respond");
             	return false;
         		
         	} catch (Throwable e1) {
-				e1.printStackTrace();
+		        logger.error("Error while waiting for highway response");
 				return false;
 			}       	
         } catch (InterruptedException e) {
-			System.out.println("Interrupted while trying to register and waiting response");
+			logger.info("Interrupted while trying to register and waiting response");
 			return false;
-			
 		}
+	}
+
+	private void updateHWNode(StNode hwNode) {
+		selectedHWNode = hwNode;
+		pulseEmiter.setHighwayNode(hwNode);
 	}
 
 
@@ -214,7 +215,7 @@ public class Car implements MsgListener, MotionObservable{
 							break;
 						}
 						default: {
-							//TODO log message of unknown type
+							logger.error("Received message of wrong type");
 						}
 					}
 				}catch(CorruptDataException cde){
@@ -234,18 +235,22 @@ public class Car implements MsgListener, MotionObservable{
 
 	}
 
-	private boolean handleRedirect(Message redirectMsg) throws CorruptDataException{
-		Object data = redirectMsg.getData();
-		MT_Redirect redi = null;
-		if(!(data instanceof MT_Redirect))
+	/**
+	 * @param redirectMsg - message containing the redirect information
+	 * @return boolean - if the redirect was successful
+	 * @throws CorruptDataException when the message its of wrong type, or the containing data isn´t of type MT_Redirect
+	 */
+	private boolean handleRedirect(Message redirectMsg) throws CorruptDataException {
+		if (redirectMsg.getType() != MsgType.REDIRECT || !(redirectMsg.getData() instanceof MT_Redirect) )
 			throw new CorruptDataException();
-		redi = (MT_Redirect) data;
-		logger.info("Redirected received on node: " + getStNode());
+		MT_Redirect redi = (MT_Redirect) redirectMsg.getData();
+		logger.info("Redirected received to: " + redi.getRedirectedNode());
 		return tryRegister(redi.getRedirectedNode());
 	}
 
 	/**
-	 * @param responseMsg
+	 * @param responseMsg - message received
+	 * @param isHWNode - flag that marks if it is a conversation with a HWNode
 	 * @throws CorruptDataException when the message its of wrong type, or the containing data isn´t of type MT_HelloResponse
 	 */
 	private void handleHelloResponse(Message responseMsg, boolean isHWNode) throws CorruptDataException {
@@ -273,11 +278,11 @@ public class Car implements MsgListener, MotionObservable{
 		}
 		StNode car = (StNode) m.getData();
 		updateNeigh(car);
-		logger.info("Pulse received on node: " + getStNode()+" from node: "+car);
+		logger.info("Pulse received on node: " + getStNode()+" from node: " + car);
 	}
 
-	private boolean sendHello(StNode car, boolean isHWNode) throws CorruptDataException{
-		CompletableFuture<Message> msgHelloRsp = msgHandler.sendUDPWithResponse(car, new Message(MsgType.HELLO, ip, port, getStNode()));
+	private boolean sendHello(StNode node, boolean isHWNode) throws CorruptDataException {
+		CompletableFuture<Message> msgHelloRsp = msgHandler.sendUDPWithResponse(node, new Message(MsgType.HELLO, ip, port, getStNode()));
 		try {
 			handleHelloResponse(msgHelloRsp.get(), isHWNode);
 			return true;
@@ -285,8 +290,8 @@ public class Car implements MsgListener, MotionObservable{
 			logger.error("Interrupted while waiting hello response");
 			return false;
 		} catch (ExecutionException e) {
-			if(e.getCause() instanceof TimeoutException){
-				logger.error("Car does not respond to Hello. Car: "+ car );
+			if(e.getCause() instanceof TimeoutException) {
+				logger.error("Node" + node + " does not respond to Hello");
 			}
 			return false;
 		}
@@ -343,7 +348,7 @@ public class Car implements MsgListener, MotionObservable{
 	@Override
 	public void addObserver(MotionObserver mo) {
 		motionObservers.add(mo);
-		//immediately msgReceived of current pulse
+		//immediately notify of current pulse
 		mo.notify(this.getPulse());
 		
 	}
@@ -351,7 +356,6 @@ public class Car implements MsgListener, MotionObservable{
 	@Override
 	public void removeObserver(MotionObserver mo) {
 		motionObservers.remove(mo);
-		
 	}
 
 	/**
