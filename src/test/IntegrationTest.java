@@ -4,7 +4,9 @@ import cars.Car;
 import common.NoPeersFoundException;
 import common.Position;
 import common.StNode;
+import highway.HWCoordinator;
 import highway.HWNode;
+import highway.Segment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class IntegrationTest {
+
+	private static final int NUMBER_OF_SEGMENTS = 10;
+	private static final int DEFAULT_SEGMENT_SIDE_SIZE = 5;
+	private static HWCoordinator coordinator;
+	private List<Segment> segments;
+
 	private static final Double coordXOrigin = 0.0;
 	private static final Double coordYOrigin = 0.0;
 
@@ -23,7 +31,18 @@ class IntegrationTest {
 
 	@BeforeEach
 	void initializeHWNode() {
-		hwNode = new HWNode(new ArrayList<>(), new Position(coordXOrigin, coordYOrigin));
+
+		// initiaize segments as rectangles in a straight line
+		segments = new ArrayList<>();
+		for (int i = 0; i < NUMBER_OF_SEGMENTS; i++) {
+			double begin = i * DEFAULT_SEGMENT_SIDE_SIZE;
+			double end = begin + DEFAULT_SEGMENT_SIDE_SIZE;
+			segments.add(new Segment(begin, end, 0, DEFAULT_SEGMENT_SIDE_SIZE, i));
+		}
+		coordinator = new HWCoordinator(segments);
+		coordinator.listenForMsgs();
+
+		hwNode = new HWNode(new ArrayList<>());
 		hwNodes = new ArrayList<>();
 		hwNodes.add(hwNode.getStNode());
 	}
