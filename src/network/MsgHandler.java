@@ -1,22 +1,22 @@
 package network;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
-
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class MsgHandler implements MsgObservable{
 
@@ -46,10 +46,21 @@ public class MsgHandler implements MsgObservable{
 		this(port,"");
 	}
 
+	public static boolean sendTCPMsg(Messageable dest, Message msg) {
+		try (Socket connection = new Socket(dest.getIP(), dest.getPort())) {
+			ObjectOutputStream oos = new ObjectOutputStream(connection.getOutputStream());
+			oos.flush();
+			oos.writeObject(msg);
+			return true;
+		} catch (IOException e) {
+			return false;
+		}
+	}
+
 	/*
 	 * Starts a thread and listen for msgs
 	 * this will need refactor if we doesn't want to lose incoming messages while processing one
-	 * unless notify(), on the listener side, starts a thread to process the msg and doesn't block
+	 * unless msgReceived(), on the listener side, starts a thread to process the msg and doesn't block
 	*/
 	private void listenForMsgs() {
 		threadService.execute(() -> {
@@ -69,9 +80,9 @@ public class MsgHandler implements MsgObservable{
 					ois.close();
 					if(!respMonitor.check(m))
 						for (MsgListener listener : listeners) {
-							//before notify, update ip in msg to the real ip from which the msg was received
+							//before msgReceived, update ip in msg to the real ip from which the msg was received
 							m.setIp(receiveS.getInetAddress().toString());
-							listener.notify(m);
+							listener.msgReceived(m);
 						}
 				}
 			} catch(IOException | ClassNotFoundException e) {
@@ -82,25 +93,16 @@ public class MsgHandler implements MsgObservable{
 	}
 
 	@Override
-	public void addListener(MsgListener l) {
-		listeners.add(l);
-		
-	}
-
-	@Override
 	public void removeListener(MsgListener l) {
 		listeners.remove(l);
 	}
-	
-	/*
-	 * Emits the msg to each of the targets on the list	
-	*/
-	public void emitMessage(List<Messageable> dest, Message msg) {
-		for (Messageable messageable : dest) {
-			this.sendMsg(messageable, msg);
-		}
-	};
-	
+
+	@Override
+	public void addMsgListener(MsgListener l) {
+		listeners.add(l);
+
+	}
+
 	public void sendMsg(Messageable dest, Message msg) {
 		
 		try(DatagramSocket sendSocket = new DatagramSocket()) {
@@ -155,5 +157,14 @@ public class MsgHandler implements MsgObservable{
 	 */
 	public void close() {
 		threadService.shutdownNow();
+	}
+
+	/*
+	 * Emits the msg to each of the targets on the list
+	 */
+	public void emitMessage(List<Messageable> dest, Message msg) {
+		for (Messageable messageable : dest) {
+			this.sendMsg(messageable, msg);
+		}
 	}
 }

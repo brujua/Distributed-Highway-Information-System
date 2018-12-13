@@ -1,25 +1,19 @@
 package highway;
 
-import java.math.BigInteger;
+import common.CarMonitor;
+import common.Position;
+import common.StNode;
+import common.Util;
+import network.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import common.*;
 
-import network.CorruptDataException;
-import network.MT_HelloResponse;
-import network.MT_Redirect;
-import network.Message;
-
-import network.MsgHandler;
-import network.MsgListener;
-import network.MsgType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-
-public class HighWay implements MsgListener{
+public class HWNode implements MsgListener {
 	private Logger logger;
 
 	public static final String ip = "localhost";
@@ -31,51 +25,34 @@ public class HighWay implements MsgListener{
 	private static final double MAX_RANGE = 0;
 
 	private String id;
-	
-	// Postion node datas
-	private Position position;
-	
 	private StNode stNode;
 	private int portCars;
 	private int portCoordinator;
+	private List<Messageable> posibleCoordinator;
 	
 	//MSG tools
 	private MsgHandler msgHandler;
-	private MsgHandler msgHandlerCoordinator;
-	
-	//Negighs HW nodes
-	private ArrayList<StNode> neighs; //othrs node highway tolking to me 
 
-	private HWNodeList HWneighs;
-
-	//private ArrayList<StNode> carNodes; //cars in my zone to shared
-	//private SerializableList<StNode>
-
+	private List<HWStNode> hwlist; //other highway nodes
 	private CarMonitor carMonitor;
+	private List<Segment> segments;
 
-	public HighWay (ArrayList<StNode> neighs , Position position) {
+	public HWNode(ArrayList<Messageable> posibleCoordinator) {
 		super();
-		this.position= position;
-		this.neighs = neighs;
+		this.posibleCoordinator = posibleCoordinator;
 		id = UUID.randomUUID().toString();
 		logger = LoggerFactory.getLogger(getName());
 		portCars = Util.getAvailablePort(tentativePortCars);
 		portCoordinator = Util.getAvailablePort(tentativePortCoordinator);
-		//neighs = new ArrayList<>();
 
 	
 		carMonitor = new CarMonitor(MAX_RANGE,null, getName());
-		
-		HWneighs = new HWNodeList(position);
-		//HWneighs.addAll(neighs);
 
 
 		msgHandler = new MsgHandler(portCars,getName());
-		msgHandlerCoordinator = new MsgHandler(portCoordinator,getName());
-		msgHandler.addListener(this);
-		msgHandlerCoordinator.addListener(this);
-		
-		stNode = new StNode(id,ip,portCars,position);
+		msgHandler.addMsgListener(this);
+
+		stNode = new StNode(id, ip, portCars);
 		
 	}
 
@@ -83,7 +60,11 @@ public class HighWay implements MsgListener{
 		return "HW"+ id.substring(0,5);
 	}
 
-	
+	public HWNode registerInNetwork() {
+
+		return this;
+	}
+
 	public List<StNode> getCarNodes(){
 		
 		return carMonitor.getList();
@@ -100,38 +81,7 @@ public class HighWay implements MsgListener{
 		
 		}*/
 	}
-//	private String nextIdMsg() {
-//		msgCounter=msgCounter.add(BigInteger.ONE); //increment msgCounter
-//		return id+msgCounter;
-//	}
 
-	
-	private void removeCarNode (StNode car){
-		/*
-		synchronized (this.carNodes) {
-			ArrayList<StNode> auxlist = new ArrayList<StNode>();
-			
-			for(StNode carNode: this.carNodes) {
-				if (carNode.getId() != car.getId()) {
-					auxlist.add(carNode);
-				}
-			}
-			
-			this.carNodes = auxlist;
-		}*/
-	}
-	
-	public void startHighWay() {
-		
-	}
-	
-	
-	
-	
-
-
-	
-	
 	private String getIp() {
 		return ip;
 	}
@@ -142,22 +92,11 @@ public class HighWay implements MsgListener{
 	}
 	
 	public StNode getStNode() {
-		return new StNode(id, ip, portCars, position);
+		return new StNode(id, ip, portCars);
 	}
-
-
-	private ArrayList<StNode> getNeighs() {
-		return neighs;
-	}
-
-
-	public Position getPosition() {
-		return position;
-	}
-
 	
 	@Override
-	public void notify(Message m) {
+	public void msgReceived(Message m) {
 
 		// The logic of the received msg will be handled on a different thread
 		Thread thread = new Thread( new Runnable() {
@@ -209,7 +148,6 @@ public class HighWay implements MsgListener{
 		});
 		
 		thread.start();
-		return;	
 	}
 	
 
@@ -266,7 +204,7 @@ public class HighWay implements MsgListener{
 		MT_Redirect redirect = new MT_Redirect(m.getId(), hwRedirect);
 		Message msg = new Message(MsgType.REDIRECT,getIp(),portCars,redirect);
 
-		StNode carst = new StNode(m.getId(),m.getIp(),m.getPort(),this.getPosition());
+		StNode carst = new StNode(m.getId(), m.getIp(), m.getPort());
 
 		//carMonitor.update(carst);
 		// wait until carmonitor removes the car because of timeout
@@ -275,23 +213,9 @@ public class HighWay implements MsgListener{
 
 
 	private StNode searchRedirect(Position position) {
-	// TODO Auto-generated method stub
-		Double minDistance = this.position.distance(position);
-		Position pos = this.position;
-		//StNode nearHwNode = new StNode(this.id,this.ip,this.port);
-		StNode nearHwNode = stNode;
-		for(StNode hwNode : this.getNeighs()) {
-			if(minDistance > (position.distance(hwNode.getPosition()))) {
-				minDistance = position.distance(hwNode.getPosition());
-				nearHwNode = hwNode;
-			}
-		}
-		
-		return nearHwNode;
+		// TODO Auto-generated method stub
+		return null;
 	}
-
-
-
 
 	private void ack(Message m) {
 		
@@ -299,5 +223,8 @@ public class HighWay implements MsgListener{
 		
 		//msgHandler.sendMsg((Messageable) m.getOrigin(), msg);
 	}
-	
+
+	public List<Segment> getSegments() {
+		return segments;
+	}
 }

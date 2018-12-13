@@ -1,10 +1,10 @@
 package common;
 
+import network.Messageable;
+
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
-
-import network.Messageable;
 
 /**
  * This class its the minimal model of a Node
@@ -41,14 +41,13 @@ public final class StNode implements Serializable, Messageable {
 
 
 	/**
-	 * Constructor for static nodes, velocity and timestamp are set to 0 and now() respectively
+	 * Constructor for HWNodes, pulse its set to null
 	 * @param id
 	 * @param ip
 	 * @param port
-	 * @param position
 	 */
-	public StNode(String id, String ip, int port, Position position) {
-		this(id,ip,port,new Pulse(position, 0, Instant.now()));
+	public StNode(String id, String ip, int port) {
+		this(id, ip, port, new Pulse(null, 0, Instant.now()));
 	}
 
 	public Position getPosition() {
@@ -109,11 +108,8 @@ public final class StNode implements Serializable, Messageable {
 			return false;
 		StNode other = (StNode) obj;
 		if (id == null) {
-			if (other.id != null)
-				return false;
-		} else if (!id.equals(other.id))
-			return false;
-		return true;
+			return other.id == null;
+		} else return id.equals(other.id);
 	}
 
 	@Override
@@ -122,9 +118,12 @@ public final class StNode implements Serializable, Messageable {
 	}
 
 	public StNode changePulse(Pulse pulse) {
-		return new StNode(id, ip, port, pulse.getPosition());
+		return new StNode(id, ip, port, pulse);
 	}
 
+	public StNode changeIp(String ip) {
+		return new StNode(id, ip, port, pulse);
+	}
 	public Pulse getPulse() {
 		return pulse;
 	}

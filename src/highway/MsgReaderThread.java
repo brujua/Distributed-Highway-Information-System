@@ -1,6 +1,7 @@
 package highway;
 
 import network.Message;
+import network.MsgListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,15 +9,15 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 
-public class HWCoordinatorMsgHandler implements Runnable {
+public class MsgReaderThread implements Runnable {
 
 	private final static Logger logger = LoggerFactory.getLogger("Coordinator");
 
-	HWCoordinator coord;
+	MsgListener listener;
 	Socket connection;
 
-	public HWCoordinatorMsgHandler(HWCoordinator coord, Socket connection) {
-		this.coord = coord;
+	public MsgReaderThread(MsgListener listener, Socket connection) {
+		this.listener = listener;
 		this.connection = connection;
 	}
 
@@ -26,8 +27,8 @@ public class HWCoordinatorMsgHandler implements Runnable {
 			ObjectInputStream ois = new ObjectInputStream(connection.getInputStream());
 			Message msg = (Message) ois.readObject();
 			msg.setIp(connection.getInetAddress().toString());
-			coord.msgReceived(msg);
-
+			listener.msgReceived(msg);
+			ois.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {

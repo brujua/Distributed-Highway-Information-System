@@ -1,30 +1,29 @@
 package test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import java.util.ArrayList;
-import java.util.List;
-
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import cars.Car;
 import common.NoPeersFoundException;
 import common.Position;
 import common.StNode;
-import highway.HighWay;
+import highway.HWNode;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class IntegrationTest {
 	private static final Double coordXOrigin = 0.0;
 	private static final Double coordYOrigin = 0.0;
-	
-	private static HighWay hwNode;
+
+	private static HWNode hwNode;
 	private static List<StNode> hwNodes;
 
 	@BeforeEach
 	void initializeHWNode() {
-		hwNode = new HighWay(new ArrayList<>(), new Position(coordXOrigin, coordYOrigin));
+		hwNode = new HWNode(new ArrayList<>(), new Position(coordXOrigin, coordYOrigin));
 		hwNodes = new ArrayList<>();
 		hwNodes.add(hwNode.getStNode());
 	}

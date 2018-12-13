@@ -1,5 +1,7 @@
 package cars;
 
+import common.*;
+import network.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,17 +11,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.*;
-
-import common.*;
-import network.CorruptDataException;
-import network.MT_HelloResponse;
-import network.MT_Redirect;
-import network.Message;
-import network.MsgHandler;
-import network.MsgListener;
-import network.MsgType;
-
-import static common.Util.getAvailablePort;
 
 public class Car implements MsgListener, MotionObservable{
 
@@ -64,7 +55,7 @@ public class Car implements MsgListener, MotionObservable{
 
 		//initialize the MsgHandler
 		msgHandler = new MsgHandler(this.port);
-		msgHandler.addListener(this);
+		msgHandler.addMsgListener(this);
 
 		pulseEmiter = new PulseEmiter(this,primaryMonitor,msgHandler, getStNode());
 
@@ -200,7 +191,7 @@ public class Car implements MsgListener, MotionObservable{
 	}
 	
 	@Override
-	public void notify(Message m) {
+	public void msgReceived(Message m) {
 		// The logic of the received msg will be handled on a different thread
 		threadService.execute( new Runnable() {
 			public void run() {
@@ -251,7 +242,7 @@ public class Car implements MsgListener, MotionObservable{
 
 	/**
 	 * @param responseMsg
-	 * @throws CorruptDataException
+	 * @throws CorruptDataException when the message its of wrong type, or the containing data isn´t of type MT_HelloResponse
 	 */
 	private void handleHelloResponse(Message responseMsg, boolean isHWNode) throws CorruptDataException {
 		if(responseMsg.getType() != MsgType.HELLO_RESPONSE || ! (responseMsg.getData() instanceof MT_HelloResponse) )
@@ -342,13 +333,13 @@ public class Car implements MsgListener, MotionObservable{
 	}
 	
 	public StNode getStNode() {
-		return new StNode(id, ip, port, position);
+		return new StNode(id, ip, port, new Pulse(position, velocity, Instant.now()));
 	}
 
 	@Override
 	public void addObserver(MotionObserver mo) {
 		motionObservers.add(mo);
-		//immediately notify of current pulse
+		//immediately msgReceived of current pulse
 		mo.notify(this.getPulse());
 		
 	}
