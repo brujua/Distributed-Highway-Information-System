@@ -1,7 +1,5 @@
-package highway;
+package network;
 
-import network.Message;
-import network.MsgListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,14 +7,14 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 
-public class MsgReaderThread implements Runnable {
+public class TCPMsgReaderThread implements Runnable {
 
 	private final static Logger logger = LoggerFactory.getLogger("Coordinator");
 
 	MsgListener listener;
 	Socket connection;
 
-	public MsgReaderThread(MsgListener listener, Socket connection) {
+	public TCPMsgReaderThread(MsgListener listener, Socket connection) {
 		this.listener = listener;
 		this.connection = connection;
 	}

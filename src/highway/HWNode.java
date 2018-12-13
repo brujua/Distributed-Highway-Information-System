@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 public class HWNode implements MsgListener {
@@ -19,22 +21,25 @@ public class HWNode implements MsgListener {
 	
 	public static final int tentativePortCars = 5007;
 
-	public static final int tentativePortCoordinator = 8000;
+	public static final int tentativePortHighway = 8000;
 	
 	private static final double MAX_RANGE = 0;
 
 	private String id;
 	private StNode stNode;
 	private int portCars;
-	private int portCoordinator;
+	private int portHighway;
 	private List<Messageable> posibleCoordinator;
-	
-	//MSG tools
-	private MsgHandler msgHandler;
+	private ExecutorService threadService = Executors.newCachedThreadPool();
+
+
+	private MsgHandler carMsgHandler;
+	private MsgHandler hwMsgHandler;
 
 	private List<HWStNode> hwlist; //other highway nodes
 	private CarMonitor carMonitor;
 	private List<Segment> segments;
+	private Messageable coordinator;
 
 	public HWNode(List<Messageable> posibleCoordinator) {
 		super();
@@ -42,17 +47,26 @@ public class HWNode implements MsgListener {
 		id = UUID.randomUUID().toString();
 		logger = LoggerFactory.getLogger(getName());
 		portCars = Util.getAvailablePort(tentativePortCars);
-		portCoordinator = Util.getAvailablePort(tentativePortCoordinator);
-
-	
-		carMonitor = new CarMonitor(MAX_RANGE,null, getName());
-
-
-		msgHandler = new MsgHandler(portCars,getName());
-		msgHandler.addMsgListener(this);
-
+		portHighway = Util.getAvailablePort(tentativePortHighway);
+		carMonitor = new CarMonitor(MAX_RANGE, null, getName()); //TODO maxrange?WTF
+		carMsgHandler = new MsgHandler(portCars, getName());
+		carMsgHandler.addMsgListener(this);
 		stNode = new StNode(id, ip, portCars);
 		
+	}
+
+	public HWNode listenForMsgs() {
+		portCars = Util.getAvailablePort(tentativePortCars);
+		portHighway = Util.getAvailablePort(tentativePortHighway);
+		carMsgHandler = new MsgHandler(portCars, getName());
+		carMsgHandler.addMsgListener(this);
+		hwMsgHandler = new MsgHandler(portHighway, getName());
+		hwMsgHandler.addMsgListener(this);
+
+		carMsgHandler.listenForUDPMsgs();
+		hwMsgHandler.listenForTCPMsgs();
+
+		return this; // fluent
 	}
 
 	private String getName() {
@@ -60,7 +74,14 @@ public class HWNode implements MsgListener {
 	}
 
 	public HWNode registerInNetwork() {
+		Message msg = new Message(MsgType.REGISTER, ip, portHighway, getStNode());
 
+		for (Messageable coordAux : posibleCoordinator) {
+			if (MsgHandler.sendTCPMsg(coordAux, msg)) {
+				this.coordinator = coordAux;
+				break;
+			}
+		}
 		return this;
 	}
 
@@ -136,7 +157,7 @@ public class HWNode implements MsgListener {
 			private void responseACK(Message m) {
 				StNode node = (StNode) m.getData() ;
 				if(carMonitor.isInRange(node))
-					msgHandler.sendMsg(node, ackMssg());
+					carMsgHandler.sendUDP(node, ackMssg());
 
 			}
 
@@ -161,7 +182,7 @@ public class HWNode implements MsgListener {
 			Message msg = new Message(MsgType.HELLO_RESPONSE, getIp(),getPort(), new MT_HelloResponse(m.getId(), stNode, carMonitor.getList()));
 			carMonitor.update(node);
 
-			msgHandler.sendMsg(node, msg);
+			carMsgHandler.sendUDP(node, msg);
 
 		}else {
 			redirect(m);
@@ -207,7 +228,7 @@ public class HWNode implements MsgListener {
 
 		//carMonitor.update(carst);
 		// wait until carmonitor removes the car because of timeout
-		msgHandler.sendMsg(carst, msg);
+		carMsgHandler.sendUDP(carst, msg);
 	}
 
 
@@ -219,8 +240,8 @@ public class HWNode implements MsgListener {
 	private void ack(Message m) {
 		
 		//Message msg = new Message(MsgType.ACK,getIp(),getPort(),m.getId());
-		
-		//msgHandler.sendMsg((Messageable) m.getOrigin(), msg);
+
+		//carMsgHandler.sendUDP((Messageable) m.getOrigin(), msg);
 	}
 
 	public List<Segment> getSegments() {

@@ -81,15 +81,12 @@ public class Car implements MsgListener, MotionObservable{
 			if(nodIterator.hasNext()) {
 				highwNode = nodIterator.next();
 				logger.info("Intentando registro en nodo: " + highwNode);
-				//System.out.println("Intentando registro en nodo");
-				//System.out.println(highwNode);
-				
+
 				registered = tryRegister(highwNode);
 			} else 
 				throw new NoPeersFoundException(); 
 		}
 		logger.info("Registered in node:" + selectedHWNode);
-		//System.out.println("Registered in node:" + selectedHWNode);
 		return this;
 	}
 	
@@ -107,7 +104,7 @@ public class Car implements MsgListener, MotionObservable{
 				return false;
 			// send hello and wait for response			
 			Message msg = new Message(MsgType.HELLO,this.ip,this.port, getStNode());
-			response=msgHandler.sendMsgWithResponse(hwNode, msg);
+			response = msgHandler.sendUDPWithResponse(hwNode, msg);
 			responseMsg = response.get();
 			
         	switch(responseMsg.getType()) {
@@ -150,8 +147,15 @@ public class Car implements MsgListener, MotionObservable{
 			
 		}
 	}
-	
 
+
+	public Car listenForMsgs() {
+		port = Util.getAvailablePort(tentativePort);
+		msgHandler = new MsgHandler(port, getName());
+		msgHandler.addMsgListener(this);
+		msgHandler.listenForUDPMsgs();
+		return this;
+	}
 	
 
 	/**
@@ -273,7 +277,7 @@ public class Car implements MsgListener, MotionObservable{
 	}
 
 	private boolean sendHello(StNode car, boolean isHWNode) throws CorruptDataException{
-		CompletableFuture<Message> msgHelloRsp = msgHandler.sendMsgWithResponse(car, new Message(MsgType.HELLO, ip, port, getStNode()));
+		CompletableFuture<Message> msgHelloRsp = msgHandler.sendUDPWithResponse(car, new Message(MsgType.HELLO, ip, port, getStNode()));
 		try {
 			handleHelloResponse(msgHelloRsp.get(), isHWNode);
 			return true;
@@ -295,7 +299,7 @@ public class Car implements MsgListener, MotionObservable{
 		StNode car = (StNode) m.getData();
 		MT_HelloResponse response = new MT_HelloResponse(m.getId(),getStNode(),primaryMonitor.getList());
 		Message msg = new Message(MsgType.HELLO_RESPONSE,ip,port, response);
-		msgHandler.sendMsg(car,msg);
+		msgHandler.sendUDP(car, msg);
 	}
 
 
@@ -354,7 +358,7 @@ public class Car implements MsgListener, MotionObservable{
 	 * Disconects car from the network, stopping all the threads
 	 */
 	public void shutdown(){
-		pulseScheduler.shutdown();
+		pulseScheduler.shutdownNow();
 		primaryMonitor.shutdown();
 		secondaryMonitor.shutdown();
 		msgHandler.close();

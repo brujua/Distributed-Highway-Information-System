@@ -2,17 +2,14 @@ package network;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.plugin.dom.exception.InvalidStateException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.Socket;
+import java.net.*;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,7 +22,7 @@ public class MsgHandler implements MsgObservable{
 	
 	private int port;
 	private ArrayList<MsgListener> listeners;
-	private boolean listen;
+	private boolean listening;
 	private ExecutorService threadService = Executors.newCachedThreadPool();
 	private ResponseMonitor respMonitor;
 	private Logger logger;
@@ -34,17 +31,15 @@ public class MsgHandler implements MsgObservable{
 		super();
 		this.logger = LoggerFactory.getLogger(this.getClass().getName() + name);
 		this.port = port;
-		listen = true;
+		listening = false;
 		listeners = new ArrayList<>();
-		// create the Response monitor that will track if an expected response was received
-		respMonitor = new ResponseMonitor();
-		//start listening thread
-		listenForMsgs();
+		respMonitor = null; // will be instantiated only when listening for UDP
 	}
 
 	public MsgHandler (int port) {
 		this(port,"");
 	}
+
 
 	public static boolean sendTCPMsg(Messageable dest, Message msg) {
 		try (Socket connection = new Socket(dest.getIP(), dest.getPort())) {
@@ -57,16 +52,46 @@ public class MsgHandler implements MsgObservable{
 		}
 	}
 
+	public void listenForTCPMsgs() {
+		if (listening)
+			throw new InvalidStateException("Already listening");
+		listening = true;
+		threadService.execute(() -> {
+			try (ServerSocket serverSocket = new ServerSocket(port)) {
+				while (listening) {
+					if (Thread.currentThread().isInterrupted()) {
+						logger.info("Listening thread interrupted");
+						break;
+					}
+					Socket connection = serverSocket.accept();
+					TCPMsgReaderThread msgReaderT = new TCPMsgReaderThread((message) -> {
+						for (MsgListener listener : listeners) {
+							listener.msgReceived(message);
+						}
+					}, connection);
+					threadService.execute(msgReaderT);
+				}
+			} catch (IOException e) {
+				logger.error("Problems opening TCP listening socket: " + e.getMessage());
+			}
+		});
+	}
+
 	/*
-	 * Starts a thread and listen for msgs
+	 * Starts a thread and listening for msgs
 	 * this will need refactor if we doesn't want to lose incoming messages while processing one
 	 * unless msgReceived(), on the listener side, starts a thread to process the msg and doesn't block
 	*/
-	private void listenForMsgs() {
+	public void listenForUDPMsgs() {
+		// create the Response monitor that will track if an expected response was received
+		if (listening)
+			throw new InvalidStateException("Already listening");
+		listening = true;
+		respMonitor = new ResponseMonitor();
 		threadService.execute(() -> {
 			try {
 				DatagramSocket receiveS = new DatagramSocket(port);
-				while(listen) {
+				while (listening) {
 					if(Thread.currentThread().isInterrupted()) {
 	                    logger.info("Listening thread interrupted");
 	                    break;
@@ -86,8 +111,7 @@ public class MsgHandler implements MsgObservable{
 						}
 				}
 			} catch(IOException | ClassNotFoundException e) {
-				e.printStackTrace();
-				logger.error("Unkown error on listening thread");
+				logger.error("Unkown error on listening thread: " + e.getMessage());
 			}
 		});
 	}
@@ -103,7 +127,7 @@ public class MsgHandler implements MsgObservable{
 
 	}
 
-	public void sendMsg(Messageable dest, Message msg) {
+	public void sendUDP(Messageable dest, Message msg) {
 		
 		try(DatagramSocket sendSocket = new DatagramSocket()) {
 			
@@ -122,18 +146,18 @@ public class MsgHandler implements MsgObservable{
 	 * @param msg
 	 * @return
 	 */
-	public CompletableFuture<Message> sendMsgWithResponse(Messageable dest, Message msg){
-		return sendMsgWithResponse(dest, msg, DEFAULT_TIMEOUT, DEFAULT_MAX_RETRIES);
+	public CompletableFuture<Message> sendUDPWithResponse(Messageable dest, Message msg) {
+		return sendUDPWithResponse(dest, msg, DEFAULT_TIMEOUT, DEFAULT_MAX_RETRIES);
 	}
-	
-	public CompletableFuture<Message> sendMsgWithResponse(Messageable dest, Message msg, int timeout, int maxtries){
+
+	public CompletableFuture<Message> sendUDPWithResponse(Messageable dest, Message msg, int timeout, int maxtries) {
 		CompletableFuture<Message> response = new CompletableFuture<>();
 		respMonitor.addMsg(msg, response);
 		threadService.execute(() -> {
 			try {
 				boolean receivedResp = false;
 				for(int tries = 0;tries<maxtries && !receivedResp; tries++) {
-					sendMsg(dest, msg);
+					sendUDP(dest, msg);
 					Thread.sleep(timeout);
 					receivedResp = response.isDone();
 				}
@@ -145,7 +169,7 @@ public class MsgHandler implements MsgObservable{
 				respMonitor.remove(msg);
 
 			} catch (InterruptedException e) {
-				logger.info("Interrupted while sleeping in sendMsgWithResponse()");
+				logger.info("Interrupted while sleeping in sendUDPWithResponse()");
 			}
 		});
 		
@@ -157,14 +181,5 @@ public class MsgHandler implements MsgObservable{
 	 */
 	public void close() {
 		threadService.shutdownNow();
-	}
-
-	/*
-	 * Emits the msg to each of the targets on the list
-	 */
-	public void emitMessage(List<Messageable> dest, Message msg) {
-		for (Messageable messageable : dest) {
-			this.sendMsg(messageable, msg);
-		}
 	}
 }

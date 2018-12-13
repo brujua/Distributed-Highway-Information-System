@@ -121,6 +121,7 @@ public class HWListManager {
 		if (listsize == 1) { //removing only node
 			list.remove(node);
 			logger.error("FATAL ERROR : NO NODES IN NETWORK");
+			return;
 		}
 		int indexRemoved = list.indexOf(node);
 		// on default the segments are added to the node on the right
@@ -137,7 +138,7 @@ public class HWListManager {
 			for (HWStNode node : list) {
 				if (!MsgHandler.sendTCPMsg(node, updateMsg)) {
 					remove(node);
-					break;
+					break; // !important if removed stop sending this version of the list, remove will take care of call notify again.
 				}
 			}
 		}

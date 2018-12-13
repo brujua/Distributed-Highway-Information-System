@@ -1,13 +1,19 @@
 package common;
 
-import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.*;
-
 import cars.MotionObservable;
 import cars.MotionObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 //import sun.rmi.runtime.Log;
 
 public class CarMonitor implements MotionObserver{
@@ -110,6 +116,6 @@ public class CarMonitor implements MotionObserver{
 	}
 
 	public void shutdown(){
-		timeoutScheduler.shutdown();
+		timeoutScheduler.shutdownNow();
 	}
 }

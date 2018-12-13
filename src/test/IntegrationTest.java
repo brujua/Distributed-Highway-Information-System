@@ -7,6 +7,7 @@ import common.StNode;
 import highway.HWCoordinator;
 import highway.HWNode;
 import highway.Segment;
+import network.Messageable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +22,7 @@ class IntegrationTest {
 	private static final int NUMBER_OF_SEGMENTS = 10;
 	private static final int DEFAULT_SEGMENT_SIDE_SIZE = 5;
 	private static HWCoordinator coordinator;
+	private List<Messageable> posibleCoordinators;
 	private List<Segment> segments;
 
 	private static final Double coordXOrigin = 0.0;
@@ -41,20 +43,23 @@ class IntegrationTest {
 		}
 		coordinator = new HWCoordinator(segments);
 		coordinator.listenForMsgs();
+		posibleCoordinators = new ArrayList<>();
+		posibleCoordinators.add(coordinator);
 
-		hwNode = new HWNode(new ArrayList<>());
+		hwNode = new HWNode(posibleCoordinators).listenForMsgs();
 		hwNodes = new ArrayList<>();
 		hwNodes.add(hwNode.getStNode());
+		HWNode hwNode2 = new HWNode(posibleCoordinators).listenForMsgs();
+		hwNodes.add(hwNode2.getStNode());
 	}
 	
 	@Test
 	void testRegister() {		
 		try {
 			Car car = new Car(new Position(0.0, 0.0),0,hwNodes);
-			car.registerInNetwork();
+			car.listenForMsgs().registerInNetwork();
 			assert(car.getSelectedHWnode().equals(hwNode.getStNode()));
 		} catch (NoPeersFoundException e) {
-			// TODO Auto-generated catch block
 			fail("NoPeersFoundException");
 			e.printStackTrace();
 		}		
@@ -64,22 +69,18 @@ class IntegrationTest {
 	void testNeighbourGivenByHwOnRegister() {
 		try {
 			Car car1 = new Car(new Position(coordXOrigin+2, coordYOrigin+2),2,hwNodes);
-			car1.registerInNetwork();
+			car1.listenForMsgs().registerInNetwork();
 			Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
-			car2.registerInNetwork();
+			car2.listenForMsgs().registerInNetwork();
 			List<StNode> car2Neighs = car2.getNeighs();
 			assert(car2Neighs.contains(car1.getStNode()));
 			car1.shutdown();
 			car2.shutdown();
 
 		} catch (NoPeersFoundException e) {
-			// TODO Auto-generated catch block
 			fail("NoPeersFoundException");
 			e.printStackTrace();
-		} /*catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
+		}
 	}
 	
 	@Test
@@ -87,11 +88,11 @@ class IntegrationTest {
 		try {
 			double velocityCar1 = 2;
 			Car car1 = new Car(new Position(coordXOrigin+2, coordYOrigin+2),velocityCar1,hwNodes);
-			car1.registerInNetwork().emitPulses();
+			car1.listenForMsgs().registerInNetwork().emitPulses();
 			car1.move();
 			//Thread.sleep(500);
 			Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
-			car2.registerInNetwork().emitPulses();
+			car2.listenForMsgs().registerInNetwork().emitPulses();
 			Thread.sleep(3500);
 			List<StNode> car2Neighs = car2.getNeighs();
 			assert (!car2Neighs.isEmpty());
@@ -112,21 +113,19 @@ class IntegrationTest {
 	void testCarMonitorKeepCars() {
 		try {
 			Car car1 = new Car(new Position(coordXOrigin+2, coordYOrigin+2),2,hwNodes);
-			car1.registerInNetwork().emitPulses();
+			car1.listenForMsgs().registerInNetwork().emitPulses();
 			Thread.sleep(1000);
 			Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
-			car2.registerInNetwork().emitPulses();
+			car2.listenForMsgs().registerInNetwork().emitPulses();
 			Thread.sleep(10001);
 			List<StNode> car2Neighs = car2.getNeighs();
 			assert(!car2Neighs.isEmpty());
 			car1.shutdown();
 			car2.shutdown();
 		} catch (NoPeersFoundException e) {
-			// TODO Auto-generated catch block
 			fail("NoPeersFoundException");
 			e.printStackTrace();
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -138,9 +137,9 @@ class IntegrationTest {
 	void testCarTimeOutsInactivesNeighsbours(){
 		try {
 			Car car1 = new Car(new Position(coordXOrigin+2, coordYOrigin+2),2,hwNodes);
-			car1.registerInNetwork();
+			car1.listenForMsgs().registerInNetwork(); //doesn't emit pulses on purpose
 			Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
-			car2.registerInNetwork().emitPulses();
+			car2.listenForMsgs().registerInNetwork().emitPulses();
 			assert (car2.getNeighs().contains(car1.getStNode()));
 			Thread.sleep(10001);
 			assert(car2.getNeighs().isEmpty());

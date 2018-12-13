@@ -6,9 +6,6 @@ import network.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,18 +18,15 @@ public class HWCoordinator implements Messageable, MsgListener {
 	private final static Logger logger = LoggerFactory.getLogger(HWCoordinator.class);
 
 	public static final String ip = "localhost";
-	private final List<Segment> segments;
 	public static final int tentativePort = 5007;
 	private final HWListManager hwlist;
 	private String id = "0";
 	private int port= 0;
 
 	private ExecutorService threadService = Executors.newCachedThreadPool();
-	private ServerSocket serverSocket;
-	private boolean listening;
+	private MsgHandler msgHandler;
 
 	public HWCoordinator(List<Segment> segments) {
-		this.segments = segments;
 		hwlist = new HWListManager(segments);
 	}
 
@@ -44,33 +38,21 @@ public class HWCoordinator implements Messageable, MsgListener {
 	 */
 	public HWCoordinator listenForMsgs() {
 		port = Util.getAvailablePort(tentativePort);
-		listening = true;
-		threadService.execute(() -> {
-			try {
-				serverSocket = new ServerSocket(port);
-				while (listening) {
-					Socket connection = serverSocket.accept();
-					MsgReaderThread msgReaderT = new MsgReaderThread(this, connection);
-					threadService.execute(msgReaderT);
-				}
-			} catch (IOException e) {
-				logger.error("Problems opening listening socket: " + e.getMessage());
-			}
-		});
-
+		msgHandler = new MsgHandler(port, "Coordinator");
+		msgHandler.addMsgListener(this);
+		msgHandler.listenForTCPMsgs();
 		return this;
 	}
 
 	public void shutDown(){
 		//TODO
 		try {
-			listening = false;
+			msgHandler.close();
 			hwlist.shutDown();
-			threadService.shutdown();
+			threadService.shutdownNow();
 			Thread.sleep(3000); //sleep in case a message its being attended.
-			serverSocket.close();
-		} catch (IOException | InterruptedException e) {
-			e.printStackTrace();
+		} catch (InterruptedException e) {
+			logger.error("error shutting down");
 		}
 	}
 
