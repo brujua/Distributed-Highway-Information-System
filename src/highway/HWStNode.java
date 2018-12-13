@@ -7,6 +7,9 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Lightweight representation of a highway node. Fulfills the purpose of identifying it and storing the data to send messages to it.
+ */
 public class HWStNode implements Messageable, Serializable {
 	private StNode stNode;
 	private List<Segment> segments;

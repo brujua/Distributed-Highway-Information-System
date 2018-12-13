@@ -7,7 +7,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * This class its the minimal model of a Node
+ *  Lightweight representation of a node. Fulfills the purpose of identifying it and storing the data to send messages to it.
  * 
  * @implSpec This class is immutable and thread-safe.
 */
