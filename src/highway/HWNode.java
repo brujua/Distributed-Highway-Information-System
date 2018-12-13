@@ -8,7 +8,6 @@ import network.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,7 +36,7 @@ public class HWNode implements MsgListener {
 	private CarMonitor carMonitor;
 	private List<Segment> segments;
 
-	public HWNode(ArrayList<Messageable> posibleCoordinator) {
+	public HWNode(List<Messageable> posibleCoordinator) {
 		super();
 		this.posibleCoordinator = posibleCoordinator;
 		id = UUID.randomUUID().toString();
