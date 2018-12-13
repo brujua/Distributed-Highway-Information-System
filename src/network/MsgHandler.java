@@ -77,11 +77,11 @@ public class MsgHandler implements MsgObservable{
 					receiveS.receive(receiverPacket);
 					ObjectInputStream ois = new ObjectInputStream(bais);
 					Message m = (Message)ois.readObject();
+					//before msgReceived, update ip in msg to the real ip from which the msg was received
+					m.setIp(receiverPacket.getAddress().toString());
 					ois.close();
 					if(!respMonitor.check(m))
 						for (MsgListener listener : listeners) {
-							//before msgReceived, update ip in msg to the real ip from which the msg was received
-							m.setIp(receiveS.getInetAddress().toString());
 							listener.msgReceived(m);
 						}
 				}

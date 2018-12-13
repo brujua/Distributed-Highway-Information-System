@@ -38,7 +38,7 @@ class HighWayTest {
 	}
 
 	@Test
-	public void firstNodeRegistersAndReceivesAllSegments() {
+	void firstNodeRegistersAndReceivesAllSegments() {
 		try {
 			HWNode hwNode = new HWNode(posibleCoordinators);
 			hwNode.registerInNetwork();
@@ -53,7 +53,7 @@ class HighWayTest {
 	}
 
 	@Test
-	public void Coordinator_Segments_EvenDistributionBetweenTwoNodes() {
+	void Coordinator_Segments_EvenDistributionBetweenTwoNodes() {
 		try {
 			HWNode node1 = new HWNode(posibleCoordinators);
 			node1.registerInNetwork();
@@ -73,7 +73,6 @@ class HighWayTest {
 		} catch (Exception e) {
 			fail(e.getMessage());
 		}
-
 	}
 
 
