@@ -7,8 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+
 
 /**
  *  Class responsible of maintain
@@ -23,7 +22,6 @@ public class HWCoordinator implements Messageable, MsgListener {
 	private String id = "0";
 	private int port= 0;
 
-	private ExecutorService threadService = Executors.newCachedThreadPool();
 	private MsgHandler msgHandler;
 
 	public HWCoordinator(List<Segment> segments) {
@@ -49,7 +47,6 @@ public class HWCoordinator implements Messageable, MsgListener {
 		try {
 			msgHandler.close();
 			hwlist.shutDown();
-			threadService.shutdownNow();
 			Thread.sleep(3000); //sleep in case a message its being attended.
 		} catch (InterruptedException e) {
 			logger.error("error shutting down");
