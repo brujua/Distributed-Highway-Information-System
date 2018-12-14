@@ -1,10 +1,7 @@
 package highway;
 
 import common.StNode;
-import network.Message;
-import network.Messageable;
-import network.MsgHandler;
-import network.MsgType;
+import network.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,15 +22,14 @@ public class HWListManager {
 	public static final long ALIVE_REFRESH_TIME = 5000;
 	private static final Logger logger = LoggerFactory.getLogger(HWListManager.class);
 	private static final int MIN_SEGMENTS_PER_NODE = 1;
-	private List<HWStNode> list;
-	private List<Segment> segments;
+	private final List<HWStNode> list;
+	private final List<Segment> segments;
 	private ScheduledExecutorService timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
 
 	public HWListManager(List<Segment> segments) {
 		if (segments.isEmpty() || segments.size() < MIN_SEGMENTS_PER_NODE)
 			throw new InvalidParameterException();
-		list = new ArrayList<>();
-		list = Collections.synchronizedList(list);
+		list = Collections.synchronizedList(new ArrayList<>());
 		this.segments = segments;
 		Collections.sort(this.segments);
 		checkAlives();
@@ -133,8 +129,9 @@ public class HWListManager {
 	}
 
 	private void notifyUpdate() {
-		Message updateMsg = new Message(MsgType.UPDATE, null, 0, list);
 		synchronized (list) {
+			MT_Update listUpdate = new MT_Update(list);
+			Message updateMsg = new Message(MsgType.UPDATE, null, 0, listUpdate);
 			for (HWStNode node : list) {
 				if (!MsgHandler.sendTCPMsg(node, updateMsg)) {
 					remove(node);

@@ -8,6 +8,7 @@ import network.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -37,9 +38,11 @@ public class HWNode implements MsgListener {
 	private MsgHandler hwMsgHandler;
 
 	private List<HWStNode> hwlist; //other highway nodes
+	private final Object hwlistLock = new Object();
 	private CarMonitor carMonitor;
 	private List<Segment> segments;
 	private Messageable coordinator;
+	private Instant lastHWUpdate;
 
 	public HWNode(List<Messageable> posibleCoordinator) {
 		super();
@@ -107,24 +110,30 @@ public class HWNode implements MsgListener {
 	}
 
 
-	private int getPort() {
+	private int getPortCars() {
 		return portCars;
 	}
 	
 	public StNode getStNode() {
 		return new StNode(id, ip, portCars);
 	}
-	
+
+	public StNode getStNodeForHW() {
+		return new StNode(id, ip, portHighway);
+	}
+
 	@Override
 	public void msgReceived(Message m) {
-
 		// The logic of the received msg will be handled on a different thread
-		Thread thread = new Thread( new Runnable() {
-			public void run() {
-				try {
-					switch(m.getType()) {
+
+		threadService.execute(() -> {
+			try {
+				switch (m.getType()) {
+					case UPDATE: {
+						handleUpdate(m);
+						break;
+					}
 					case HELLO: {
-						
 						handleHello(m);
 						break;
 					}
@@ -142,44 +151,65 @@ public class HWNode implements MsgListener {
 						responseACK(m);
 						break;
 					}
+
 					default: {
-						//TODO log message of unknown type
+						logger.error("Received message of wrong type");
 					}
-				}		
-			
-				} catch(CorruptDataException cde) {
-					cde.printStackTrace();
-					//TODO log
-					System.out.println("corrupt data on hw-node response");
 				}
-			}
 
-			private void responseACK(Message m) {
-				StNode node = (StNode) m.getData() ;
-				if(carMonitor.isInRange(node))
-					carMsgHandler.sendUDP(node, ackMssg());
+			} catch (CorruptDataException cde) {
+				logger.error("Corrupt data exception on message: " + m + " /n exception msg: " + cde.getMessage());
 
-			}
-
-			private Message ackMssg() {
-
-				return new Message(MsgType.ACK,getIp(),getPort(),carMonitor.getList());
 			}
 		});
-		
-		thread.start();
 	}
-	
+
+	private void handleUpdate(Message msg) throws CorruptDataException {
+		if (msg.getType() != MsgType.UPDATE || !(msg.getData() instanceof MT_Update)) {
+			throw new CorruptDataException();
+		}
+		MT_Update update = (MT_Update) msg.getData();
+		//check timestamp
+		if (update.getTimestamp().isBefore(lastHWUpdate)) {
+			logger.info("Received an old update");
+			return;
+		}
+		updateHWList(update.getList());
+		lastHWUpdate = update.getTimestamp();
+	}
+
+	private void updateHWList(List<HWStNode> list) {
+		//TODO
+		synchronized (hwlistLock) {
+			//update hwlist
+
+			//update my segments
+
+			//update next node in highway
+		}
+	}
+
+	private void responseACK(Message m) {
+		StNode node = (StNode) m.getData();
+		if (carMonitor.isInRange(node))
+			carMsgHandler.sendUDP(node, ackMssg());
+
+	}
+
+	private Message ackMssg() {
+
+		return new Message(MsgType.ACK, getIp(), getPortCars(), carMonitor.getList());
+	}
 
 	private void handleHello(Message m) throws CorruptDataException {
 		if(!(m.getData() instanceof StNode))
 			throw new CorruptDataException();
 		StNode node = (StNode) m.getData();
 		if (isInZone( node.getPosition() ) ) {
-//			Message msg = new Message(MsgType.HELLO_RESPONSE, getIp(),getPort(), new MT_HelloResponse(m.getId(), stNode, carNodes));
+//			Message msg = new Message(MsgType.HELLO_RESPONSE, getIp(),getPortCars(), new MT_HelloResponse(m.getId(), stNode, carNodes));
 	//		carNodes.add(node); 
-		
-			Message msg = new Message(MsgType.HELLO_RESPONSE, getIp(),getPort(), new MT_HelloResponse(m.getId(), stNode, carMonitor.getList()));
+
+			Message msg = new Message(MsgType.HELLO_RESPONSE, getIp(), getPortCars(), new MT_HelloResponse(m.getId(), stNode, carMonitor.getList()));
 			carMonitor.update(node);
 
 			carMsgHandler.sendUDP(node, msg);
@@ -238,8 +268,8 @@ public class HWNode implements MsgListener {
 	}
 
 	private void ack(Message m) {
-		
-		//Message msg = new Message(MsgType.ACK,getIp(),getPort(),m.getId());
+
+		//Message msg = new Message(MsgType.ACK,getIp(),getPortCars(),m.getId());
 
 		//carMsgHandler.sendUDP((Messageable) m.getOrigin(), msg);
 	}
