@@ -41,9 +41,10 @@ public class HWNode implements MsgListener {
 	private final Object hwlistLock = new Object();
 	private CarMonitor carMonitor;
 	private List<Segment> segments;
-	private Messageable coordinator;
-	private Instant lastHWUpdate;
 
+	private Messageable coordinator;
+
+	private Instant lastHWUpdate;
 	public HWNode(List<Messageable> posibleCoordinator) {
 		super();
 		this.posibleCoordinator = posibleCoordinator;
@@ -55,7 +56,7 @@ public class HWNode implements MsgListener {
 		carMsgHandler = new MsgHandler(portCars, getName());
 		carMsgHandler.addMsgListener(this);
 		stNode = new StNode(id, ip, portCars);
-		
+
 	}
 
 	public HWNode listenForMsgs() {
@@ -89,19 +90,19 @@ public class HWNode implements MsgListener {
 	}
 
 	public List<StNode> getCarNodes(){
-		
+
 		return carMonitor.getList();
 		//return this.carNodes;
-		
-		
+
+
 	}
-	
+
 	private void addCarNode (StNode car){
-		
+
 		carMonitor.update(car);
 	/*	synchronized (this.carNodes) {
 			this.carNodes.add(car);
-		
+
 		}*/
 	}
 
@@ -113,13 +114,17 @@ public class HWNode implements MsgListener {
 	private int getPortCars() {
 		return portCars;
 	}
-	
+
 	public StNode getStNode() {
 		return new StNode(id, ip, portCars);
 	}
 
 	public StNode getStNodeForHW() {
 		return new StNode(id, ip, portHighway);
+	}
+
+	public Messageable getCoordinator() {
+		return coordinator;
 	}
 
 	@Override
