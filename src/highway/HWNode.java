@@ -77,7 +77,7 @@ public class HWNode implements MsgListener {
 	}
 
 	public HWNode registerInNetwork() {
-		Message msg = new Message(MsgType.REGISTER, ip, portHighway, getStNode());
+		Message msg = new Message(MsgType.REGISTER, ip, portHighway, getStNodeForHW());
 
 		for (Messageable coordAux : posibleCoordinator) {
 			if (MsgHandler.sendTCPMsg(coordAux, msg)) {
