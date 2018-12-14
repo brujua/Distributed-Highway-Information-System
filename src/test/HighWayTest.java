@@ -41,7 +41,7 @@ class HighWayTest {
 	void firstNodeRegistersAndReceivesAllSegments() {
 		try {
 			HWNode hwNode = new HWNode(posibleCoordinators);
-			hwNode.registerInNetwork();
+			hwNode.listenForMsgs().registerInNetwork();
 			List<Segment> hwList = hwNode.getSegments();
 
 			for (Segment seg : segments)
@@ -56,10 +56,10 @@ class HighWayTest {
 	void Coordinator_Segments_EvenDistributionBetweenTwoNodes() {
 		try {
 			HWNode node1 = new HWNode(posibleCoordinators);
-			node1.registerInNetwork();
+			node1.listenForMsgs().registerInNetwork();
 			Thread.sleep(500);
 			HWNode node2 = new HWNode(posibleCoordinators);
-			node2.registerInNetwork();
+			node2.listenForMsgs().registerInNetwork();
 			Thread.sleep(1000);
 
 			//if even number of segments
