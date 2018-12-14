@@ -37,13 +37,19 @@ class HighWayTest {
 		posibleCoordinators.add(coordinator);
 	}
 
+
 	@Test
 	void firstNodeRegistersAndReceivesAllSegments() {
 		try {
 			HWNode hwNode = new HWNode(posibleCoordinators);
 			hwNode.listenForMsgs().registerInNetwork();
-			List<Segment> hwList = hwNode.getSegments();
 
+			Thread.sleep(1000);
+
+			Messageable nodeCoordinator = hwNode.getCoordinator();
+			assertEquals(coordinator.getId(), nodeCoordinator.getId());
+			assertEquals(coordinator.getPort(), nodeCoordinator.getPort());
+			List<Segment> hwList = hwNode.getSegments();
 			for (Segment seg : segments)
 				assert (hwList.contains(seg));
 
