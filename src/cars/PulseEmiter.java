@@ -13,11 +13,11 @@ public class PulseEmiter implements Runnable, MotionObserver{
 	
 	private CarMonitor carMonitor;
 	private MsgHandler msgHandler;
-	private StNode source;
+	private CarStNode source;
 
 	private StNode highwayNode;
 
-	public PulseEmiter(MotionObservable pulseSource, CarMonitor monitor, MsgHandler msgHandler, StNode source) {
+	public PulseEmiter(MotionObservable pulseSource, CarMonitor monitor, MsgHandler msgHandler, CarStNode source) {
 		this.carMonitor = monitor;
 		this.msgHandler = msgHandler;
 		this.source = source;

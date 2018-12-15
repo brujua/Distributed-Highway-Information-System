@@ -3,7 +3,6 @@ package common;
 import network.Messageable;
 
 import java.io.Serializable;
-import java.time.Instant;
 import java.util.Objects;
 
 /**
@@ -30,24 +29,12 @@ public final class StNode implements Serializable, Messageable {
 //	}
 
 
-	public StNode(String id, String ip, int port, Pulse pulse) {
+	public StNode(String id, String ip, int port) {
 		super();
 
 		this.id = id;
 		this.ip = ip;
 		this.port = port;
-		//this.pulse = pulse;
-	}
-
-
-	/**
-	 * Constructor for HWNodes, pulse its set to null
-	 * @param id
-	 * @param ip
-	 * @param port
-	 */
-	public StNode(String id, String ip, int port) {
-		this(id, ip, port, new Pulse(null, 0, Instant.now()));
 	}
 
 	@Override
@@ -55,22 +42,7 @@ public final class StNode implements Serializable, Messageable {
 		return this.ip;
 	}
 
-	/*public Position getPosition() {
-		return pulse.getPosition();
-	}
 
-	public Instant getTimestamp() {
-		return this.pulse.getTimestamp();
-	}
-
-	public double getVelocity() {
-		return this.pulse.getVelocity();
-	}
-
-	public StNode updatePulse(Pulse pulse) {
-		return new StNode(id, ip, port, pulse);
-	}
-*/
 	@Override
 	public int getPort() {
 		return this.port;
@@ -117,9 +89,6 @@ public final class StNode implements Serializable, Messageable {
 		return "StNode[id=" + id.substring(0, 5)+"]";
 	}
 
-	public StNode changePulse(Pulse pulse) {
-		return new StNode(id, ip, port, pulse);
-	}
 
 	public StNode changeIp(String ip) {
 		return new StNode(id, ip, port);

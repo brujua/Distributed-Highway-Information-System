@@ -57,7 +57,7 @@ public class Car implements MsgListener, MotionObservable{
 		msgHandler = new MsgHandler(this.port);
 		msgHandler.addMsgListener(this);
 
-		pulseEmiter = new PulseEmiter(this,primaryMonitor,msgHandler, getStNode());
+		pulseEmiter = new PulseEmiter(this, primaryMonitor, msgHandler, getCarStNode());
 
 	}
 
@@ -312,10 +312,16 @@ public class Car implements MsgListener, MotionObservable{
 		//move with current velocity
 		move(velocity);
 	}
-	
+
+	/**
+	 * Method provided to do simple simulation, in a real environment the position of the car must be read from gps.
+	 *
+	 * @param newVelocity - current velocity, represented as a single value for simplicity
+	 */
 	public void move(double newVelocity) {
+		// moves only on the x axis for simplicity
 		velocity = newVelocity;
-		position = new Position(position.getCordx()+velocity, position.getCordy()+velocity);
+		position = new Position(position.getCordx() + velocity, position.getCordy());
 		notifyMotionObservers();
 	}
 	
@@ -323,10 +329,10 @@ public class Car implements MsgListener, MotionObservable{
 		for (MotionObserver obs : motionObservers) {
 			obs.notify(this.getPulse());
 		}
-		
+
 	}
 
-	public List<StNode> getNeighs(){
+	public List<CarStNode> getNeighs(){
 		return primaryMonitor.getList();
 	}
 	
@@ -340,9 +346,17 @@ public class Car implements MsgListener, MotionObservable{
 	public StNode getSelectedHWnode() {
 		return selectedHWNode;
 	}
-	
+
+	public CarStNode getCarStNode() {
+		return new CarStNode(id, ip, port, new Pulse(position, velocity, Instant.now()));
+	}
+
 	public StNode getStNode() {
-		return new StNode(id, ip, port, new Pulse(position, velocity, Instant.now()));
+		return new StNode(id, ip, port);
+	}
+
+	public String getID() {
+		return id;
 	}
 
 	@Override
