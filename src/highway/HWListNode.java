@@ -6,7 +6,6 @@ import java.io.Serializable;
 
 /**
  * Immutable
- *
  */
 public class HWListNode implements Serializable {
 	private final double start;

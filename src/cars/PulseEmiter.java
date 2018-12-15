@@ -14,6 +14,7 @@ public class PulseEmiter implements Runnable, MotionObserver{
 	private CarMonitor carMonitor;
 	private MsgHandler msgHandler;
 	private CarStNode source;
+	private final Object lock = new Object();
 
 	private StNode highwayNode;
 
@@ -26,7 +27,7 @@ public class PulseEmiter implements Runnable, MotionObserver{
 	}
 
 	public void setHighwayNode(StNode highwayNode) {
-		synchronized (highwayNode){
+		synchronized (lock) {
 			this.highwayNode = highwayNode;
 		}
 	}
@@ -34,14 +35,14 @@ public class PulseEmiter implements Runnable, MotionObserver{
 	@Override
 	public void run() {
 		Message msg;
-		List<StNode> nodes = carMonitor.getList();
-		synchronized (source){
+		List<CarStNode> nodes = carMonitor.getList();
+		synchronized (lock) {
 			 msg = new Message(MsgType.PULSE,source.getId(),source.getPort(),source);
 		}
-		for (StNode node : nodes) {
+		for (CarStNode node : nodes) {
 			msgHandler.sendUDP(node, msg);
 		}
-		synchronized (highwayNode){
+		synchronized (lock) {
 			if(highwayNode != null)
 				msgHandler.sendUDP(highwayNode, msg);
 		}
@@ -49,7 +50,7 @@ public class PulseEmiter implements Runnable, MotionObserver{
 
 	@Override
 	public void notify(Pulse pulse) {
-		synchronized (source){
+		synchronized (lock) {
 			source = source.changePulse(pulse);
 		}
 	}

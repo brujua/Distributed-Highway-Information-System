@@ -84,4 +84,8 @@ public class CarStNode implements Messageable {
 	public String getIP() {
 		return node.getIP();
 	}
+
+	public StNode getStNode() {
+		return node;
+	}
 }

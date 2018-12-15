@@ -3,7 +3,6 @@ package network;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -55,7 +54,7 @@ public class MsgHandler implements MsgObservable{
 	public void listenForTCPMsgs() {
 		if (listening)
 			throw new IllegalStateException("Already listening");
-			//throw new InvalidStateException("Already listening");
+		//throw new InvalidStateException("Already listening");
 		listening = true;
 		threadService.execute(() -> {
 			try (ServerSocket serverSocket = new ServerSocket(port)) {
@@ -82,7 +81,7 @@ public class MsgHandler implements MsgObservable{
 	 * Starts a thread and listening for msgs
 	 * this will need refactor if we doesn't want to lose incoming messages while processing one
 	 * unless msgReceived(), on the listener side, starts a thread to process the msg and doesn't block
-	*/
+	 */
 	public void listenForUDPMsgs() {
 		// create the Response monitor that will track if an expected response was received
 		if (listening)

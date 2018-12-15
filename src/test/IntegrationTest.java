@@ -23,13 +23,12 @@ class IntegrationTest {
 	private static final int NUMBER_OF_SEGMENTS = 10;
 	private static final int DEFAULT_SEGMENT_SIDE_SIZE = 5;
 	private static HWCoordinator coordinator;
+	private static HWNode hwNode;
 	private List<Messageable> posibleCoordinators;
-	private List<Segment> segments;
 
 	private static final Double coordXOrigin = 0.0;
 	private static final Double coordYOrigin = 0.0;
-
-	private static HWNode hwNode;
+	private List<Segment> segments;
 	private static List<StNode> hwNodes;
 
 	@BeforeEach

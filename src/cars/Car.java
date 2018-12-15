@@ -50,8 +50,8 @@ public class Car implements MsgListener, MotionObservable{
 		this.velocity = velocity;
 		this.port = Util.getAvailablePort(tentativePort);
 		highWayNodes = new ArrayList<>(highwayNodes);
-		primaryMonitor = new CarMonitor(PRIMARY_RANGE, this, getName());
-		secondaryMonitor = new CarMonitor(SECONDARY_RANGE, this, getName());
+		primaryMonitor = new CarMonitor(getName());
+		secondaryMonitor = new CarMonitor(getName());
 
 		//initialize the MsgHandler
 		msgHandler = new MsgHandler(this.port);
@@ -76,7 +76,7 @@ public class Car implements MsgListener, MotionObservable{
 	public Car registerInNetwork() throws NoPeersFoundException {
 		boolean registered = false;
 		StNode highwNode;
-		Iterator<StNode> nodIterator = highWayNodes.iterator();	
+		Iterator<StNode> nodIterator = highWayNodes.iterator();
 		while(!registered) {
 			if(nodIterator.hasNext()) {
 				highwNode = nodIterator.next();
@@ -169,7 +169,7 @@ public class Car implements MsgListener, MotionObservable{
 		
 	}
 
-	private void updateNeigh(StNode car){
+	private void updateNeigh(CarStNode car) {
 		boolean updated = primaryMonitor.update(car);
 		if(!updated)
 			secondaryMonitor.update(car);
@@ -241,7 +241,7 @@ public class Car implements MsgListener, MotionObservable{
 	 * @throws CorruptDataException when the message its of wrong type, or the containing data isn´t of type MT_Redirect
 	 */
 	private boolean handleRedirect(Message redirectMsg) throws CorruptDataException {
-		if (redirectMsg.getType() != MsgType.REDIRECT || !(redirectMsg.getData() instanceof MT_Redirect) )
+		if (redirectMsg.getType() != MsgType.REDIRECT || !(redirectMsg.getData() instanceof MT_Redirect))
 			throw new CorruptDataException();
 		MT_Redirect redi = (MT_Redirect) redirectMsg.getData();
 		logger.info("Redirected received to: " + redi.getRedirectedNode());
@@ -257,15 +257,13 @@ public class Car implements MsgListener, MotionObservable{
 		if(responseMsg.getType() != MsgType.HELLO_RESPONSE || ! (responseMsg.getData() instanceof MT_HelloResponse) )
 			throw new CorruptDataException();
 		MT_HelloResponse helloRsp = (MT_HelloResponse) responseMsg.getData();
-		if(!isHWNode)
-			updateNeigh(helloRsp.getStNode());
 		logger.info("Hello Response received on node: " + getStNode() + "from node: " + helloRsp.getStNode());
 		//check new cars that i dont know of, and send them a Hello msg
 		List<StNode> knownCars = primaryMonitor.getList();
 		knownCars.addAll(secondaryMonitor.getList());
-		for (StNode car: helloRsp.getCars()) {
+		for (CarStNode car : helloRsp.getCars()) {
 			if(! knownCars.contains(car)){
-				sendHello(car,false);
+				sendHello(car.getStNode(), false);
 			}
 		}
 	}
@@ -273,12 +271,19 @@ public class Car implements MsgListener, MotionObservable{
 
 
 	private void handlePulse(Message m) throws CorruptDataException {
-		if(m.getType() != MsgType.PULSE || ! (m.getData() instanceof StNode )){
+		if (m.getType() != MsgType.PULSE || !(m.getData() instanceof CarStNode)) {
 			throw new CorruptDataException();
 		}
-		StNode car = (StNode) m.getData();
-		updateNeigh(car);
-		logger.info("Pulse received on node: " + getStNode()+" from node: " + car);
+		CarStNode car = (CarStNode) m.getData();
+		if (isInRange(car)) {
+			updateNeigh(car);
+		}
+		logger.info("Pulse received on node: " + getStNode() + " from node: " + car);
+	}
+
+	private boolean isInRange(CarStNode car) {
+		Position pos = car.getPosition();
+		return pos.distance(this.position) <= PRIMARY_RANGE;
 	}
 
 	private boolean sendHello(StNode node, boolean isHWNode) throws CorruptDataException {
@@ -290,7 +295,7 @@ public class Car implements MsgListener, MotionObservable{
 			logger.error("Interrupted while waiting hello response");
 			return false;
 		} catch (ExecutionException e) {
-			if(e.getCause() instanceof TimeoutException) {
+			if (e.getCause() instanceof TimeoutException) {
 				logger.error("Node" + node + " does not respond to Hello");
 			}
 			return false;
@@ -336,13 +341,6 @@ public class Car implements MsgListener, MotionObservable{
 		return primaryMonitor.getList();
 	}
 	
-	public StNode getNearestNeigh() {
-		List<StNode> neighs = primaryMonitor.getList();
-		if(neighs.isEmpty())
-			return null;
-		return neighs.get(0);
-	}
-	
 	public StNode getSelectedHWnode() {
 		return selectedHWNode;
 	}
@@ -375,7 +373,7 @@ public class Car implements MsgListener, MotionObservable{
 	/**
 	 * Disconects car from the network, stopping all the threads
 	 */
-	public void shutdown(){
+	public void shutdown() {
 		pulseScheduler.shutdownNow();
 		primaryMonitor.shutdown();
 		secondaryMonitor.shutdown();

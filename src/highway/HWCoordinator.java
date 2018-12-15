@@ -10,17 +10,16 @@ import java.util.List;
 
 
 /**
- *  Class responsible of maintain
+ * Class responsible of maintain
  */
 public class HWCoordinator implements Messageable, MsgListener {
 
-	private final static Logger logger = LoggerFactory.getLogger(HWCoordinator.class);
-
 	public static final String ip = "localhost";
 	public static final int tentativePort = 5007;
+	private final static Logger logger = LoggerFactory.getLogger(HWCoordinator.class);
 	private final HWListManager hwlist;
 	private String id = "0";
-	private int port= 0;
+	private int port = 0;
 
 	private MsgHandler msgHandler;
 
@@ -42,7 +41,7 @@ public class HWCoordinator implements Messageable, MsgListener {
 		return this;
 	}
 
-	public void shutDown(){
+	public void shutDown() {
 		//TODO
 		try {
 			msgHandler.close();
@@ -55,12 +54,13 @@ public class HWCoordinator implements Messageable, MsgListener {
 
 	/**
 	 * This function its call by the listening thread to inform of incoming msgs
+	 *
 	 * @param msg - received message
 	 */
 	public void msgReceived(Message msg) {
-		try{
+		try {
 
-			switch(msg.getType()){
+			switch (msg.getType()) {
 				case REGISTER: {
 					handleRegister(msg);
 					break;
@@ -70,13 +70,13 @@ public class HWCoordinator implements Messageable, MsgListener {
 					break;
 				}
 			}
-		} catch (CorruptDataException e){
+		} catch (CorruptDataException e) {
 			logger.error("Corrupted msg received");
 		}
 	}
 
 	private void handleRegister(Message msg) throws CorruptDataException {
-		if(msg.getType() != MsgType.REGISTER || ! (msg.getData() instanceof StNode)){
+		if (msg.getType() != MsgType.REGISTER || !(msg.getData() instanceof StNode)) {
 			throw new CorruptDataException();
 		}
 		//update ip for the one received on the packet

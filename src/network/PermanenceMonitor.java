@@ -8,7 +8,6 @@ public class PermanenceMonitor {
 	public PermanenceMonitor() {
 
 
-				
 	}
 
 }
