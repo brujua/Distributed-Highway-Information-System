@@ -157,22 +157,9 @@ public class Car implements MsgListener, MotionObservable{
 		msgHandler.listenForUDPMsgs();
 		return this;
 	}
-	
-
-	/**
-	 * @param cars
-	 */
-	private void updateMultipleCars(Iterable<StNode> cars) {
-		for(StNode car : cars) {
-			updateNeigh(car);
-		}
-		
-	}
 
 	private void updateNeigh(CarStNode car) {
-		boolean updated = primaryMonitor.update(car);
-		if(!updated)
-			secondaryMonitor.update(car);
+		primaryMonitor.update(car);
 	}
 
 
@@ -259,7 +246,7 @@ public class Car implements MsgListener, MotionObservable{
 		MT_HelloResponse helloRsp = (MT_HelloResponse) responseMsg.getData();
 		logger.info("Hello Response received on node: " + getStNode() + "from node: " + helloRsp.getStNode());
 		//check new cars that i dont know of, and send them a Hello msg
-		List<StNode> knownCars = primaryMonitor.getList();
+		List<CarStNode> knownCars = primaryMonitor.getList();
 		knownCars.addAll(secondaryMonitor.getList());
 		for (CarStNode car : helloRsp.getCars()) {
 			if(! knownCars.contains(car)){
