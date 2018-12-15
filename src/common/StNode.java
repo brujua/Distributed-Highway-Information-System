@@ -16,7 +16,7 @@ public final class StNode implements Serializable, Messageable {
 	private final String ip;
 	private final int port;
 
-	private final Pulse pulse;
+	//private final Pulse pulse;
 
 
 
@@ -36,7 +36,7 @@ public final class StNode implements Serializable, Messageable {
 		this.id = id;
 		this.ip = ip;
 		this.port = port;
-		this.pulse = pulse;
+		//this.pulse = pulse;
 	}
 
 
@@ -50,7 +50,12 @@ public final class StNode implements Serializable, Messageable {
 		this(id, ip, port, new Pulse(null, 0, Instant.now()));
 	}
 
-	public Position getPosition() {
+	@Override
+	public String getIP() {
+		return this.ip;
+	}
+
+	/*public Position getPosition() {
 		return pulse.getPosition();
 	}
 
@@ -65,12 +70,7 @@ public final class StNode implements Serializable, Messageable {
 	public StNode updatePulse(Pulse pulse) {
 		return new StNode(id, ip, port, pulse);
 	}
-
-	@Override
-	public String getIP() {
-		return this.ip;
-	}
-
+*/
 	@Override
 	public int getPort() {
 		return this.port;
@@ -122,11 +122,11 @@ public final class StNode implements Serializable, Messageable {
 	}
 
 	public StNode changeIp(String ip) {
-		return new StNode(id, ip, port, pulse);
-	}
-	public Pulse getPulse() {
-		return pulse;
+		return new StNode(id, ip, port);
 	}
 
+/*	public Pulse getPulse() {
+		return pulse;
+	}*/
 
 }

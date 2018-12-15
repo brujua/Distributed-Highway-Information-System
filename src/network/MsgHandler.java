@@ -2,7 +2,7 @@ package network;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.plugin.dom.exception.InvalidStateException;
+
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -54,7 +54,8 @@ public class MsgHandler implements MsgObservable{
 
 	public void listenForTCPMsgs() {
 		if (listening)
-			throw new InvalidStateException("Already listening");
+			throw new IllegalStateException("Already listening");
+			//throw new InvalidStateException("Already listening");
 		listening = true;
 		threadService.execute(() -> {
 			try (ServerSocket serverSocket = new ServerSocket(port)) {
@@ -85,7 +86,7 @@ public class MsgHandler implements MsgObservable{
 	public void listenForUDPMsgs() {
 		// create the Response monitor that will track if an expected response was received
 		if (listening)
-			throw new InvalidStateException("Already listening");
+			throw new IllegalStateException("Already listening");
 		listening = true;
 		respMonitor = new ResponseMonitor();
 		threadService.execute(() -> {

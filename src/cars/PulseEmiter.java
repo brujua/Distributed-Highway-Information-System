@@ -1,6 +1,5 @@
 package cars;
 
-import common.CarMonitor;
 import common.Pulse;
 import common.StNode;
 import network.Message;

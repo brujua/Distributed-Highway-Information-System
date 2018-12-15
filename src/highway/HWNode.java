@@ -1,6 +1,6 @@
 package highway;
 
-import common.CarMonitor;
+import cars.CarMonitor;
 import common.Position;
 import common.StNode;
 import common.Util;
@@ -191,27 +191,16 @@ public class HWNode implements MsgListener {
 
 		for (HWStNode hwStNode: list ) {
 			boolean check = false;
-			hwLock.readLock().lock();
-			if(stNode.equals(hwStNode.getStNode()) && !check){
-				hwLock.writeLock().lock();
+			hwLock.writeLock().lock();
+			if(stNode.equals(hwStNode.getStNode())){
 				segments = hwStNode.getSegments();
 				nextStNode = list.get(list.indexOf(hwStNode)+1).getStNode();//get the next node in the list
-				check = false;
-				hwLock.writeLock().unlock();
+				break;
 			}
-			hwLock.readLock().unlock();
+			hwLock.writeLock().unlock();
 		}
 
 
-		//synchronized (hwlistLock) {
-			//update hwlist
-
-
-			//update my segments
-
-
-			//update next node in highway
-		//}
 	}
 
 	private void responseACK(Message m) {
