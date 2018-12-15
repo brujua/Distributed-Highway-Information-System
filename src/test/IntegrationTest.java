@@ -1,6 +1,7 @@
 package test;
 
 import cars.Car;
+import cars.CarStNode;
 import common.NoPeersFoundException;
 import common.Position;
 import common.StNode;
@@ -35,7 +36,7 @@ class IntegrationTest {
 	void initializeHWNode() {
 
 		// initiaize segments as rectangles in a straight line
-		segments = new ArrayList<>();
+		/*segments = new ArrayList<>();
 		for (int i = 0; i < NUMBER_OF_SEGMENTS; i++) {
 			double begin = i * DEFAULT_SEGMENT_SIDE_SIZE;
 			double end = begin + DEFAULT_SEGMENT_SIDE_SIZE;
@@ -44,7 +45,7 @@ class IntegrationTest {
 		coordinator = new HWCoordinator(segments);
 		coordinator.listenForMsgs();
 		posibleCoordinators = new ArrayList<>();
-		posibleCoordinators.add(coordinator);
+		posibleCoordinators.add(coordinator);*/
 
 		hwNode = new HWNode(posibleCoordinators).listenForMsgs();
 		hwNodes = new ArrayList<>();
@@ -72,7 +73,7 @@ class IntegrationTest {
 			car1.listenForMsgs().registerInNetwork();
 			Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
 			car2.listenForMsgs().registerInNetwork();
-			List<StNode> car2Neighs = car2.getNeighs();
+			List<CarStNode> car2Neighs = car2.getNeighs();
 			assert(car2Neighs.contains(car1.getStNode()));
 			car1.shutdown();
 			car2.shutdown();
@@ -94,9 +95,9 @@ class IntegrationTest {
 			Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
 			car2.listenForMsgs().registerInNetwork().emitPulses();
 			Thread.sleep(3500);
-			List<StNode> car2Neighs = car2.getNeighs();
+			List<CarStNode> car2Neighs = car2.getNeighs();
 			assert (!car2Neighs.isEmpty());
-			Position car1Pos = car1.getStNode().getPosition();
+			Position car1Pos = car1.getCarStNode().getPosition();
 			Position car12Pos = car2Neighs.get(0).getPosition();
 			assertEquals(car1Pos, car12Pos);
 			car1.shutdown();
@@ -118,7 +119,7 @@ class IntegrationTest {
 			Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
 			car2.listenForMsgs().registerInNetwork().emitPulses();
 			Thread.sleep(10001);
-			List<StNode> car2Neighs = car2.getNeighs();
+			List<CarStNode> car2Neighs = car2.getNeighs();
 			assert(!car2Neighs.isEmpty());
 			car1.shutdown();
 			car2.shutdown();
