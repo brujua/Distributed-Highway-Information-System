@@ -1,15 +1,13 @@
 package app;
 
 import common.Position;
-import highway.HighWay;
+import highway.HWNode;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.io.IOException;
+
 import java.io.OutputStream;
 import java.util.ArrayList;
 
@@ -19,12 +17,12 @@ public class HWNodeWindow {
 	private static final int DEFAULT_HEIGHT = 500;
 	private static final String TITLE = "Nodo Autopista";
 	Stage window;
-	private HighWay highWay;
+	private HWNode node;
 
 	public HWNodeWindow(){
 		window = new Stage();
 		window.setTitle(TITLE);
-		highWay = new HighWay(new ArrayList<>(), STARTING_POSITION);
+		node = new HWNode(new ArrayList<>());
 		// layout
 		GridPane grid = new GridPane();
 
@@ -32,7 +30,7 @@ public class HWNodeWindow {
 		Button btnRegister = new Button();
 		btnRegister.setText("Register");
 		btnRegister.setOnAction(a-> {
-			highWay.registerInNetwork();
+			node.registerInNetwork();
 		});
 
 		TextArea textArea = new TextArea();
@@ -59,7 +57,7 @@ public class HWNodeWindow {
 		}
 
 		@Override
-		public void write(int b) throws IOException {
+		public void write(int b) {
 			textArea.appendText(String.valueOf((char) b));
 		}
 	}

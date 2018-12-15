@@ -3,7 +3,6 @@ package highway;
 import cars.CarStNode;
 import common.CarMonitor;
 import common.Position;
-import cars.CarStNode;
 import common.StNode;
 import common.Util;
 import network.*;
@@ -74,6 +73,7 @@ public class HWNode implements MsgListener {
 
 		carMsgHandler.listenForUDPMsgs();
 		hwMsgHandler.listenForTCPMsgs();
+		logger.info("Escuchando a coordinador en puerto: " + hwMsgHandler.getPort());
 
 		return this; // fluent
 	}
@@ -180,6 +180,7 @@ public class HWNode implements MsgListener {
 			throw new CorruptDataException();
 		}
 		MT_Update update = (MT_Update) msg.getData();
+		logger.info("received update from coordinator");
 		//check timestamp
 		if (update.getTimestamp().isBefore(lastHWUpdate)) {
 			logger.info("Received an old update");
@@ -190,20 +191,21 @@ public class HWNode implements MsgListener {
 	}
 
 	private void updateHWList(List<HWStNode> list) {
-		//TODO
-
-		for (HWStNode hwStNode: list ) {
-			boolean check = false;
-			hwLock.writeLock().lock();
-			if(stNode.equals(hwStNode.getStNode())){
-				segments = hwStNode.getSegments();
-				nextStNode = list.get(list.indexOf(hwStNode)+1).getStNode();//get the next node in the list
+		hwLock.writeLock().lock();
+		for (int i = 0; i < list.size(); i++) {
+			HWStNode hwNode = list.get(i);
+			if (stNode.equals(hwNode.getStNode())) {
+				segments = hwNode.getSegments();
+				// if im not the last one
+				if (i + 1 <= list.size()) {
+					nextStNode = list.get(i + 1).getStNode();
+				} else {
+					nextStNode = null;
+				}
 				break;
 			}
-			hwLock.writeLock().unlock();
 		}
-
-
+		hwLock.writeLock().unlock();
 	}
 
 	private void responseACK(Message m) {

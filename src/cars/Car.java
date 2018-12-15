@@ -103,7 +103,7 @@ public class Car implements MsgListener, MotionObservable{
 			if(hwNode==null)
 				return false;
 			// send hello and wait for response			
-			Message msg = new Message(MsgType.HELLO,this.ip,this.port, getStNode());
+			Message msg = new Message(MsgType.HELLO, this.ip, this.port, getCarStNode());
 			response = msgHandler.sendUDPWithResponse(hwNode, msg);
 			responseMsg = response.get();
 			

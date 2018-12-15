@@ -47,6 +47,7 @@ public class MsgHandler implements MsgObservable{
 			oos.writeObject(msg);
 			return true;
 		} catch (IOException e) {
+			e.printStackTrace();
 			return false;
 		}
 	}
@@ -181,5 +182,9 @@ public class MsgHandler implements MsgObservable{
 	 */
 	public void close() {
 		threadService.shutdownNow();
+	}
+
+	public int getPort() {
+		return port;
 	}
 }

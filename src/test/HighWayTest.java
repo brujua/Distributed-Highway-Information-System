@@ -54,6 +54,7 @@ class HighWayTest {
 				assert (hwList.contains(seg));
 
 		} catch (Exception e) {
+			e.printStackTrace();
 			fail(e.getMessage());
 		}
 	}

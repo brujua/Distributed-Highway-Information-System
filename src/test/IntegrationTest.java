@@ -35,7 +35,7 @@ class IntegrationTest {
 	void initializeHWNode() {
 
 		// initiaize segments as rectangles in a straight line
-		/*segments = new ArrayList<>();
+		segments = new ArrayList<>();
 		for (int i = 0; i < NUMBER_OF_SEGMENTS; i++) {
 			double begin = i * DEFAULT_SEGMENT_SIDE_SIZE;
 			double end = begin + DEFAULT_SEGMENT_SIDE_SIZE;
@@ -44,13 +44,13 @@ class IntegrationTest {
 		coordinator = new HWCoordinator(segments);
 		coordinator.listenForMsgs();
 		posibleCoordinators = new ArrayList<>();
-		posibleCoordinators.add(coordinator);*/
+		posibleCoordinators.add(coordinator);
 
 		hwNode = new HWNode(posibleCoordinators).listenForMsgs();
 		hwNodes = new ArrayList<>();
 		hwNodes.add(hwNode.getStNode());
-		HWNode hwNode2 = new HWNode(posibleCoordinators).listenForMsgs();
-		hwNodes.add(hwNode2.getStNode());
+		/*HWNode hwNode2 = new HWNode(posibleCoordinators).listenForMsgs();
+		hwNodes.add(hwNode2.getStNode());*/
 	}
 	
 	@Test

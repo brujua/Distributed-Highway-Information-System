@@ -73,7 +73,9 @@ public class HWListManager {
 
 	public boolean add(StNode node) {
 		if (list.isEmpty()) {
+			logger.info("First hwnode added");
 			list.add(new HWStNode(node, new ArrayList<>(segments)));
+			notifyUpdate();
 			return true;
 		} else {
 			int mostLoadedIndex = findMostLoaded();
@@ -134,6 +136,7 @@ public class HWListManager {
 			Message updateMsg = new Message(MsgType.UPDATE, null, 0, listUpdate);
 			for (HWStNode node : list) {
 				if (!MsgHandler.sendTCPMsg(node, updateMsg)) {
+					logger.error("Node failed to respond to update on port: " + node.getPort());
 					remove(node);
 					break; // !important if removed stop sending this version of the list, remove will take care of call notify again.
 				}

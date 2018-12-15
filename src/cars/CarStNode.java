@@ -5,6 +5,7 @@ import common.Pulse;
 import common.StNode;
 import network.Messageable;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 
@@ -13,7 +14,7 @@ import java.util.Objects;
  *
  * @implSpec This class is immutable and thread-safe.
  */
-public class CarStNode implements Messageable {
+public class CarStNode implements Messageable, Serializable {
 
 	private final StNode node;
 	private final Pulse pulse;
