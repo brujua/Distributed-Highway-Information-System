@@ -1,5 +1,5 @@
 package network;
 
 public interface MsgListener {
-	public void notify(Message m);
+	void msgReceived(Message m);
 }

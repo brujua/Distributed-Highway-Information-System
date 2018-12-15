@@ -1,13 +1,12 @@
 package common;
 
-import java.io.Serializable;
-import java.time.Instant;
-import java.util.Objects;
-
 import network.Messageable;
 
+import java.io.Serializable;
+import java.util.Objects;
+
 /**
- * This class its the minimal model of a Node
+ *  Lightweight representation of a node. Fulfills the purpose of identifying it and storing the data to send messages to it.
  * 
  * @implSpec This class is immutable and thread-safe.
 */
@@ -16,7 +15,7 @@ public final class StNode implements Serializable, Messageable {
 	private final String ip;
 	private final int port;
 
-	private final Pulse pulse;
+	//private final Pulse pulse;
 
 
 
@@ -30,47 +29,19 @@ public final class StNode implements Serializable, Messageable {
 //	}
 
 
-	public StNode(String id, String ip, int port, Pulse pulse) {
+	public StNode(String id, String ip, int port) {
 		super();
 
 		this.id = id;
 		this.ip = ip;
 		this.port = port;
-		this.pulse = pulse;
-	}
-
-
-	/**
-	 * Constructor for static nodes, velocity and timestamp are set to 0 and now() respectively
-	 * @param id
-	 * @param ip
-	 * @param port
-	 * @param position
-	 */
-	public StNode(String id, String ip, int port, Position position) {
-		this(id,ip,port,new Pulse(position, 0, Instant.now()));
-	}
-
-	public Position getPosition() {
-		return pulse.getPosition();
-	}
-
-	public Instant getTimestamp() {
-		return this.pulse.getTimestamp();
-	}
-
-	public double getVelocity() {
-		return this.pulse.getVelocity();
-	}
-
-	public StNode updatePulse(Pulse pulse) {
-		return new StNode(id, ip, port, pulse);
 	}
 
 	@Override
 	public String getIP() {
 		return this.ip;
 	}
+
 
 	@Override
 	public int getPort() {
@@ -109,11 +80,8 @@ public final class StNode implements Serializable, Messageable {
 			return false;
 		StNode other = (StNode) obj;
 		if (id == null) {
-			if (other.id != null)
-				return false;
-		} else if (!id.equals(other.id))
-			return false;
-		return true;
+			return other.id == null;
+		} else return id.equals(other.id);
 	}
 
 	@Override
@@ -121,13 +89,13 @@ public final class StNode implements Serializable, Messageable {
 		return "StNode[id=" + id.substring(0, 5)+"]";
 	}
 
-	public StNode changePulse(Pulse pulse) {
-		return new StNode(id, ip, port, pulse.getPosition());
+
+	public StNode changeIp(String ip) {
+		return new StNode(id, ip, port);
 	}
 
-	public Pulse getPulse() {
+/*	public Pulse getPulse() {
 		return pulse;
-	}
-
+	}*/
 
 }

@@ -1,23 +1,22 @@
 package cars;
 
-import java.util.List;
-
-import common.CarMonitor;
 import common.Pulse;
 import common.StNode;
 import network.Message;
 import network.MsgHandler;
 import network.MsgType;
 
+import java.util.List;
+
 public class PulseEmiter implements Runnable, MotionObserver{
 	
 	private CarMonitor carMonitor;
 	private MsgHandler msgHandler;
-	private StNode source;
+	private CarStNode source;
 
 	private StNode highwayNode;
 
-	public PulseEmiter(MotionObservable pulseSource, CarMonitor monitor, MsgHandler msgHandler, StNode source) {
+	public PulseEmiter(MotionObservable pulseSource, CarMonitor monitor, MsgHandler msgHandler, CarStNode source) {
 		this.carMonitor = monitor;
 		this.msgHandler = msgHandler;
 		this.source = source;
@@ -39,11 +38,11 @@ public class PulseEmiter implements Runnable, MotionObserver{
 			 msg = new Message(MsgType.PULSE,source.getId(),source.getPort(),source);
 		}
 		for (StNode node : nodes) {
-			msgHandler.sendMsg(node, msg);
+			msgHandler.sendUDP(node, msg);
 		}
 		synchronized (highwayNode){
 			if(highwayNode != null)
-				msgHandler.sendMsg(highwayNode,msg);
+				msgHandler.sendUDP(highwayNode, msg);
 		}
 	}
 
