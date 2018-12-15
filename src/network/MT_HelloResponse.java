@@ -2,20 +2,21 @@ package network;
 
 import java.io.Serializable;
 
+import cars.CarStNode;
 import common.StNode;
 
 public class MT_HelloResponse implements Serializable{
 	
 	private String responseId;
 	private StNode stNode;
-	private Iterable<StNode> cars;
+	private Iterable<CarStNode> cars;
 	
 	/**
 	 * @param responseId
 	 * @param stNode
 	 * @param cars Must implement serializable
 	 */
-	public MT_HelloResponse(String responseId, StNode stNode, Iterable<StNode> cars) {
+	public MT_HelloResponse(String responseId, StNode stNode, Iterable<CarStNode> cars) {
 		super();
 		this.responseId = responseId;
 		this.stNode = stNode;
@@ -38,11 +39,11 @@ public class MT_HelloResponse implements Serializable{
 		this.stNode = stNode;
 	}
 
-	public Iterable<StNode> getCars() {
+	public Iterable<CarStNode> getCars() {
 		return cars;
 	}
 
-	public void setCars(Iterable<StNode> cars) {
+	public void setCars(Iterable<CarStNode> cars) {
 		this.cars = cars;
 	}
 	

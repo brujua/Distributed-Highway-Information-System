@@ -1,5 +1,6 @@
 package common;
 
+import cars.CarStNode;
 import cars.MotionObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +20,7 @@ public class CarMonitor implements MotionObserver {
 	private Logger logger;
 	private double range;
 	//private List<StNode> cars;
-	private final Map<StNode,Instant> cars ;
+	private final Map<CarStNode,Instant> cars ;
 	private ScheduledExecutorService timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
 
 	private Position position;
@@ -31,7 +32,7 @@ public class CarMonitor implements MotionObserver {
 	public CarMonitor( String name) {
 		super();
 		this.range = range;
-		cars = new ConcurrentHashMap<StNode, Instant>();
+		cars = new ConcurrentHashMap<CarStNode, Instant>();
 		// subscribe to the carrier of this monitor to be notified in changes of position
 /*		if(carrier!=null) {
 			carrier.addObserver(this);
@@ -74,7 +75,7 @@ public class CarMonitor implements MotionObserver {
 		return false;
 	}*/
 
-	public void update(StNode car){
+	public void update(CarStNode car){
 		cars.remove(car);
 		cars.put(car,Instant.now());
 	}
@@ -86,7 +87,7 @@ public class CarMonitor implements MotionObserver {
 		//make a copy of the list
 		List<CarStNode> list;
 		synchronized (cars) {
-			list = new ArrayList<StNode>(cars.size());
+			list = new ArrayList<>(cars.size());
 			list.addAll(cars.keySet());
 		}
 		return list;
@@ -107,9 +108,9 @@ public class CarMonitor implements MotionObserver {
 		private void checkTimeOut() {
 			long now = (Instant.now()).toEpochMilli() ;
 			synchronized (cars) {
-				Iterator<Map.Entry<StNode, Instant>> iterator = cars.entrySet().iterator();
+				Iterator<Map.Entry<CarStNode, Instant>> iterator = cars.entrySet().iterator();
 				while (iterator.hasNext()) {
-					Map.Entry<StNode,Instant> entry = iterator.next();
+					Map.Entry<CarStNode,Instant> entry = iterator.next();
 					if ((now - entry.getValue().toEpochMilli() >= MAX_TIMEOUT)) {
 						iterator.remove();
 						logger.info("Removed " + entry.getKey() + " from monitor list due to timeout");

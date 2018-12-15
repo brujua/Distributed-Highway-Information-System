@@ -3,6 +3,7 @@ package highway;
 import cars.CarStNode;
 import common.CarMonitor;
 import common.Position;
+import cars.CarStNode;
 import common.StNode;
 import common.Util;
 import network.*;
@@ -56,7 +57,7 @@ public class HWNode implements MsgListener {
 		logger = LoggerFactory.getLogger(getName());
 		portCars = Util.getAvailablePort(tentativePortCars);
 		portHighway = Util.getAvailablePort(tentativePortHighway);
-		carMonitor = new CarMonitor(MAX_RANGE, null, getName()); //TODO maxrange?WTF
+		carMonitor = new CarMonitor(getName()); //TODO maxrange?WTF
 		carMsgHandler = new MsgHandler(portCars, getName());
 		carMsgHandler.addMsgListener(this);
 		stNode = new StNode(id, ip, portCars);
@@ -93,7 +94,7 @@ public class HWNode implements MsgListener {
 		return this;
 	}
 
-	public List<StNode> getCarNodes(){
+	public List<CarStNode> getCarNodes(){
 
 		return carMonitor.getList();
 		//return this.carNodes;
@@ -101,11 +102,12 @@ public class HWNode implements MsgListener {
 
 	}
 
-	private void addCarNode (StNode car){
+	private void addCarNode (CarStNode car){
 
 		carMonitor.update(car);
 	/*	synchronized (this.carNodes) {
 			this.carNodes.add(car);
+
 
 		}*/
 	}
@@ -205,8 +207,8 @@ public class HWNode implements MsgListener {
 	}
 
 	private void responseACK(Message m) {
-		StNode node = (StNode) m.getData();
-		if (carMonitor.isInRange(node))
+		CarStNode node = (CarStNode) m.getData();
+		if (isInSegments(node.getPosition()))
 			carMsgHandler.sendUDP(node, ackMssg());
 
 	}
@@ -217,7 +219,7 @@ public class HWNode implements MsgListener {
 	}
 
 	private void handleHello(Message m) throws CorruptDataException {
-		if(!(m.getData() instanceof StNode))
+		if(!(m.getData() instanceof CarStNode))
 			throw new CorruptDataException();
 		CarStNode node = (CarStNode) m.getData();
 		if (isInSegments( node.getPosition() ) ) {
@@ -230,7 +232,12 @@ public class HWNode implements MsgListener {
 			carMsgHandler.sendUDP(node, msg);
 
 		}else {
-			redirect(m);
+			StNode nodeRedirect = searchRedirect(node.getPosition());
+			if (nodeRedirect!=null) {
+				redirect(m, nodeRedirect);
+			}else{
+				carMsgHandler.sendUDP(node,new Message(MsgType.ERROR,ip,portCars,null));
+			}
 		}
 	}
 	
@@ -249,7 +256,7 @@ public class HWNode implements MsgListener {
 
 	
 	private void handlePulse(Message msg) throws CorruptDataException {
-		if(msg.getType() != MsgType.PULSE || ! (msg.getData() instanceof StNode )){
+		if(msg.getType() != MsgType.PULSE || ! (msg.getData() instanceof CarStNode )){
 			throw new CorruptDataException();
 		}
 		CarStNode car = (CarStNode) msg.getData();
@@ -257,18 +264,18 @@ public class HWNode implements MsgListener {
 		if(isInSegments(car.getPosition()))
 			updateCar(car);
 		else
-			redirect(msg);
+			redirect(msg,nextStNode);
 
 	}
 
-	private void updateCar(StNode car) {
+	private void updateCar(CarStNode car) {
 		carMonitor.update(car);
 	}
 
-	private void redirect(Message m) {
+	private void redirect(Message m, StNode hwRedirect) {
 		// TODO redirecccionar a hw correspondiente
 
-		StNode hwRedirect = searchRedirect(((Position) m.getData()));
+		//StNode hwRedirect = searchRedirect(((Position) m.getData()));
 		MT_Redirect redirect = new MT_Redirect(m.getId(), hwRedirect);
 		Message msg = new Message(MsgType.REDIRECT,getIp(),portCars,redirect);
 
@@ -281,8 +288,12 @@ public class HWNode implements MsgListener {
 
 
 	private StNode searchRedirect(Position position) {
-		// TODO Auto-generated method stub
 
+		for (HWStNode node:hwlist) {
+			if(node.isInSegment(position)){
+				return node.getStNode();
+			}
+		}
 		return null;
 	}
 

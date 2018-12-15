@@ -1,5 +1,6 @@
 package highway;
 
+import common.Position;
 import common.StNode;
 import network.Messageable;
 
@@ -17,6 +18,17 @@ public class HWStNode implements Messageable, Serializable {
 	public HWStNode(StNode stNode, List<Segment> segments) {
 		this.stNode = stNode;
 		this.segments = segments;
+	}
+
+	public boolean isInSegment(Position pos) {
+		for (Segment seg : segments) {
+			if (seg.contains(pos)) {
+				return true;
+			}
+		}
+
+
+		return false;
 	}
 
 	public StNode getStNode() {
