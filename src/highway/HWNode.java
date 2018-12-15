@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 public class HWNode implements MsgListener {
@@ -33,6 +34,8 @@ public class HWNode implements MsgListener {
 	private List<Messageable> posibleCoordinator;
 	private ExecutorService threadService = Executors.newCachedThreadPool();
 
+	private ReentrantReadWriteLock hwLock = new ReentrantReadWriteLock();
+	private StNode nextStNode;
 
 	private MsgHandler carMsgHandler;
 	private MsgHandler hwMsgHandler;
@@ -185,13 +188,30 @@ public class HWNode implements MsgListener {
 
 	private void updateHWList(List<HWStNode> list) {
 		//TODO
-		synchronized (hwlistLock) {
+
+		for (HWStNode hwStNode: list ) {
+			boolean check = false;
+			hwLock.readLock().lock();
+			if(stNode.equals(hwStNode.getStNode()) && !check){
+				hwLock.writeLock().lock();
+				segments = hwStNode.getSegments();
+				nextStNode = list.get(list.indexOf(hwStNode)+1).getStNode();//get the next node in the list
+				check = false;
+				hwLock.writeLock().unlock();
+			}
+			hwLock.readLock().unlock();
+		}
+
+
+		//synchronized (hwlistLock) {
 			//update hwlist
+
 
 			//update my segments
 
+
 			//update next node in highway
-		}
+		//}
 	}
 
 	private void responseACK(Message m) {
