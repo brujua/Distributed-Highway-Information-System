@@ -1,6 +1,7 @@
 package highway;
 
-import cars.CarMonitor;
+import cars.CarStNode;
+import common.CarMonitor;
 import common.Position;
 import common.StNode;
 import common.Util;
@@ -218,8 +219,8 @@ public class HWNode implements MsgListener {
 	private void handleHello(Message m) throws CorruptDataException {
 		if(!(m.getData() instanceof StNode))
 			throw new CorruptDataException();
-		StNode node = (StNode) m.getData();
-		if (isInZone( node.getPosition() ) ) {
+		CarStNode node = (CarStNode) m.getData();
+		if (isInSegments( node.getPosition() ) ) {
 //			Message msg = new Message(MsgType.HELLO_RESPONSE, getIp(),getPortCars(), new MT_HelloResponse(m.getId(), stNode, carNodes));
 	//		carNodes.add(node); 
 
@@ -233,14 +234,17 @@ public class HWNode implements MsgListener {
 		}
 	}
 	
-	private boolean isInZone(Position pos) {
-		
-		/*if( (serchRedirect(pos)).equals(this.stNode)) {
-			return true;
+
+	private boolean isInSegments(Position pos) {
+
+		for (Segment seg:segments) {
+			if(seg.contains(pos)){
+				return true;
+			}
 		}
-		// TODO buscar si esta en la zona
-		return false;*/
-		return true;
+
+
+		return false;
 	}
 
 	
@@ -248,9 +252,9 @@ public class HWNode implements MsgListener {
 		if(msg.getType() != MsgType.PULSE || ! (msg.getData() instanceof StNode )){
 			throw new CorruptDataException();
 		}
-		StNode car = (StNode) msg.getData();
+		CarStNode car = (CarStNode) msg.getData();
 		logger.info("Pulse received on node: " + getStNode()+" from node: "+car);
-		if(isInZone(car.getPosition()))
+		if(isInSegments(car.getPosition()))
 			updateCar(car);
 		else
 			redirect(msg);
@@ -278,6 +282,7 @@ public class HWNode implements MsgListener {
 
 	private StNode searchRedirect(Position position) {
 		// TODO Auto-generated method stub
+
 		return null;
 	}
 
