@@ -4,7 +4,6 @@ import common.Position;
 
 import java.io.Serializable;
 import java.security.InvalidParameterException;
-import java.util.Objects;
 
 /**
  * Represents a piece of Highway. Shouldn't overlap with other segments
@@ -13,8 +12,15 @@ import java.util.Objects;
  */
 public class Segment implements Serializable, Comparable<Segment> {
 
-	private double beginX, endX, beginY, endY;
-	private int index;
+    private int index;
+    private double beginX;
+    private double endX;
+    private double beginY;
+    private double endY;
+
+    public Segment() {
+        super();
+    }
 
 	public Segment(double beginX, double endX, double beginY, double endY, int index) {
 		if (beginX >= endX || beginY >= endY)
@@ -49,11 +55,31 @@ public class Segment implements Serializable, Comparable<Segment> {
 	}
 
 
-	public boolean contains(Position pos) {
-		double posX = pos.getCordx();
-		double posY = pos.getCordy();
-		return !(posX >= endX) && !(posX < beginX) && !(posY >= endY) && !(posY < beginY);
-	}
+    public void setBeginX(double beginX) {
+        this.beginX = beginX;
+    }
+
+    public void setEndX(double endX) {
+        this.endX = endX;
+    }
+
+    public void setBeginY(double beginY) {
+        this.beginY = beginY;
+    }
+
+    public void setEndY(double endY) {
+        this.endY = endY;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
+
+    public boolean contains(Position pos) {
+        double posX = pos.getCordx();
+        double posY = pos.getCordy();
+        return !(posX >= endX) && !(posX < beginX) && !(posY >= endY) && !(posY < beginY);
+    }
 
 	@Override
 	public int compareTo(Segment s) {
@@ -68,8 +94,15 @@ public class Segment implements Serializable, Comparable<Segment> {
 		return index == segment.index;
 	}
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(index);
-	}
+
+    @Override
+    public String toString() {
+        return "Segment{" +
+                "index=" + index +
+                ", beginX=" + beginX +
+                ", endX=" + endX +
+                ", beginY=" + beginY +
+                ", endY=" + endY +
+                '}';
+    }
 }

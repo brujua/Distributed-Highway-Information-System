@@ -21,8 +21,8 @@ public class HWNode implements MsgListener {
 	private Logger logger;
 
 	public static final String ip = "localhost";
-	
-	public static final int tentativePortCars = 5007;
+
+    public static final int tentativePortCars = 7000;
 
 	public static final int tentativePortHighway = 8000;
 	

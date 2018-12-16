@@ -15,7 +15,7 @@ import java.util.List;
 public class HWCoordinator implements Messageable, MsgListener {
 
 	public static final String ip = "localhost";
-	public static final int tentativePort = 5007;
+    public int tentativePort = 5007;
 	private final static Logger logger = LoggerFactory.getLogger(HWCoordinator.class);
 	private final HWListManager hwlist;
 	private String id = "0";
@@ -23,9 +23,15 @@ public class HWCoordinator implements Messageable, MsgListener {
 
 	private MsgHandler msgHandler;
 
-	public HWCoordinator(List<Segment> segments) {
-		hwlist = new HWListManager(segments);
-	}
+
+    public HWCoordinator(List<Segment> segments, int port) {
+        hwlist = new HWListManager(segments);
+        this.tentativePort = port;
+    }
+
+    public HWCoordinator(List<Segment> segments) {
+        hwlist = new HWListManager(segments);
+    }
 
 	/**
 	 * starts a thread that listens for connections while the listening flag its on.
