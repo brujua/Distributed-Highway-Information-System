@@ -8,12 +8,20 @@ import java.security.InvalidParameterException;
 /**
  * Represents a piece of Highway. Shouldn't overlap with other segments
  *
+ * POJO
  * @implSpec This class is immutable and thread-safe.
  */
 public class Segment implements Serializable, Comparable<Segment> {
 
-	private double beginX, endX, beginY, endY;
-	private int index;
+    private int index;
+    private double beginX;
+    private double endX;
+    private double beginY;
+    private double endY;
+
+    public Segment() {
+        super();
+    }
 
 	public Segment(double beginX, double endX, double beginY, double endY, int index) {
 		if (beginX >= endX || beginY >= endY)
@@ -48,16 +56,45 @@ public class Segment implements Serializable, Comparable<Segment> {
 	}
 
 
-	public boolean contains(Position pos) {
-		double posX = pos.getCordx();
-		double posY = pos.getCordy();
-		return !(posX >= endX) && !(posX < beginX) && !(posY >= endY) && !(posY < beginY);
-	}
+    public void setBeginX(double beginX) {
+        this.beginX = beginX;
+    }
 
-	@Override
-	public int compareTo(Segment s) {
-		return this.index - s.getIndex();
-	}
+    public void setEndX(double endX) {
+        this.endX = endX;
+    }
 
+    public void setBeginY(double beginY) {
+        this.beginY = beginY;
+    }
 
+    public void setEndY(double endY) {
+        this.endY = endY;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
+
+    public boolean contains(Position pos) {
+        double posX = pos.getCordx();
+        double posY = pos.getCordy();
+        return !(posX >= endX) && !(posX < beginX) && !(posY >= endY) && !(posY < beginY);
+    }
+
+    @Override
+    public int compareTo(Segment s) {
+        return this.index - s.getIndex();
+    }
+
+    @Override
+    public String toString() {
+        return "Segment{" +
+                "index=" + index +
+                ", beginX=" + beginX +
+                ", endX=" + endX +
+                ", beginY=" + beginY +
+                ", endY=" + endY +
+                '}';
+    }
 }
