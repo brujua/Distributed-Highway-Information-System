@@ -88,8 +88,10 @@ public class HWListManager {
 			}
 
 			int startIndexSegmentsNewNode = sizeSegments / 2;
-			mostLoaded.setSegments(loadedSegments.subList(0, startIndexSegmentsNewNode));
-			List<Segment> segmentsNewNode = loadedSegments.subList(startIndexSegmentsNewNode, sizeSegments);
+
+			mostLoaded.setSegments(new ArrayList<>(loadedSegments.subList(0, startIndexSegmentsNewNode)));
+			//List<Segment> segmentsNewNode = loadedSegments.subList(startIndexSegmentsNewNode, sizeSegments);
+			List<Segment> segmentsNewNode = new ArrayList<>(loadedSegments.subList(startIndexSegmentsNewNode, sizeSegments));
 
 			//insert after the most loaded node
 			list.add(mostLoadedIndex + 1, new HWStNode(node, segmentsNewNode));

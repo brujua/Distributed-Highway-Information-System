@@ -156,6 +156,7 @@ public class HWNode implements MsgListener {
 						break;
 					}
 					case ALIVE: {
+						//TODO
 						break;
 					}
 					case ACK: {
@@ -182,9 +183,11 @@ public class HWNode implements MsgListener {
 		MT_Update update = (MT_Update) msg.getData();
 		logger.info("received update from coordinator");
 		//check timestamp
-		if (update.getTimestamp().isBefore(lastHWUpdate)) {
-			logger.info("Received an old update");
-			return;
+		if (lastHWUpdate !=null){
+			if (update.getTimestamp().isBefore(lastHWUpdate)) {
+				logger.info("Received an old update");
+				return;
+			}
 		}
 		updateHWList(update.getList());
 		lastHWUpdate = update.getTimestamp();
@@ -197,7 +200,7 @@ public class HWNode implements MsgListener {
 			if (stNode.equals(hwNode.getStNode())) {
 				segments = hwNode.getSegments();
 				// if im not the last one
-				if (i + 1 <= list.size()) {
+				if (i + 1 < list.size()) {
 					nextStNode = list.get(i + 1).getStNode();
 				} else {
 					nextStNode = null;

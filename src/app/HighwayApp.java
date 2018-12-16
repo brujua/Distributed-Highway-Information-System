@@ -1,10 +1,10 @@
+/*
 package app;
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
@@ -27,7 +27,8 @@ public class HighwayApp extends Application {
 		window = primaryStage;
 		window.setTitle(TITLE);
 
-		/*Button btn = new Button();
+		*/
+/*Button btn = new Button();
 		btn.setText("Log stuff");
 		btn.setOnAction(a-> {
 			LOG.info("This is some info");
@@ -36,7 +37,8 @@ public class HighwayApp extends Application {
 		TextArea textArea = new TextArea();
 		OutputStream os = new TextAreaOutputStream(textArea);
 		MyStaticOutputStreamAppender.setStaticOutputStream(os);
-		*/
+		*//*
+
 
 		Button btnNewCar = new Button();
 		btnNewCar.setText("Crear Auto");
@@ -80,3 +82,4 @@ public class HighwayApp extends Application {
 	}
 
 }
+*/

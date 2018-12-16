@@ -2,6 +2,7 @@ package app;
 
 import common.Position;
 import highway.HWNode;
+/*
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
@@ -62,3 +63,4 @@ public class HWNodeWindow {
 		}
 	}
 }
+*/

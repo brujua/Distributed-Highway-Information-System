@@ -24,7 +24,9 @@ public class TCPMsgReaderThread implements Runnable {
 		try {
 			ObjectInputStream ois = new ObjectInputStream(connection.getInputStream());
 			Message msg = (Message) ois.readObject();
-			msg.setIp(connection.getInetAddress().toString());
+			msg.setIp(connection.getInetAddress().getHostAddress());
+			//TODO change localhost
+			//msg.setIp("localhost");
 			listener.msgReceived(msg);
 			ois.close();
 		} catch (IOException e) {

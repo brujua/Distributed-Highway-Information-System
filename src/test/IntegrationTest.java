@@ -46,9 +46,15 @@ class IntegrationTest {
 		posibleCoordinators = new ArrayList<>();
 		posibleCoordinators.add(coordinator);
 
-		hwNode = new HWNode(posibleCoordinators).listenForMsgs();
+		hwNode = new HWNode(posibleCoordinators).listenForMsgs().registerInNetwork();
+
 		hwNodes = new ArrayList<>();
 		hwNodes.add(hwNode.getStNode());
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		/*HWNode hwNode2 = new HWNode(posibleCoordinators).listenForMsgs();
 		hwNodes.add(hwNode2.getStNode());*/
 	}
@@ -73,7 +79,7 @@ class IntegrationTest {
 			Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
 			car2.listenForMsgs().registerInNetwork();
 			List<CarStNode> car2Neighs = car2.getNeighs();
-			assert(car2Neighs.contains(car1.getStNode()));
+			assert(car2Neighs.contains(car1.getCarStNode()));
 			car1.shutdown();
 			car2.shutdown();
 
@@ -140,7 +146,7 @@ class IntegrationTest {
 			car1.listenForMsgs().registerInNetwork(); //doesn't emit pulses on purpose
 			Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
 			car2.listenForMsgs().registerInNetwork().emitPulses();
-			assert (car2.getNeighs().contains(car1.getStNode()));
+			assert (car2.getNeighs().contains(car1.getCarStNode()));
 			Thread.sleep(10001);
 			assert(car2.getNeighs().isEmpty());
 			car1.shutdown();

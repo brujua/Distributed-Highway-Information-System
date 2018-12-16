@@ -4,6 +4,7 @@ import common.Position;
 
 import java.io.Serializable;
 import java.security.InvalidParameterException;
+import java.util.Objects;
 
 /**
  * Represents a piece of Highway. Shouldn't overlap with other segments
@@ -59,5 +60,16 @@ public class Segment implements Serializable, Comparable<Segment> {
 		return this.index - s.getIndex();
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Segment segment = (Segment) o;
+		return index == segment.index;
+	}
 
+	@Override
+	public int hashCode() {
+		return Objects.hash(index);
+	}
 }

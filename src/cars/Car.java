@@ -245,6 +245,9 @@ public class Car implements MsgListener, MotionObservable{
 			throw new CorruptDataException();
 		MT_HelloResponse helloRsp = (MT_HelloResponse) responseMsg.getData();
 		logger.info("Hello Response received on node: " + getStNode() + "from node: " + helloRsp.getStNode());
+		if(!isHWNode){
+			primaryMonitor.update(new CarStNode(helloRsp.getStNode(),new Pulse(null,0,Instant.now())));
+		}
 		//check new cars that i dont know of, and send them a Hello msg
 		List<CarStNode> knownCars = primaryMonitor.getList();
 		knownCars.addAll(secondaryMonitor.getList());
