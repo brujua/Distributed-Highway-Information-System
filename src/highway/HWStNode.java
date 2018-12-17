@@ -82,4 +82,9 @@ public class HWStNode implements Messageable, Serializable {
 	public String getId() {
 		return stNode.getId();
 	}
+
+    @Override
+    public String toString() {
+        return stNode.toString();
+    }
 }
