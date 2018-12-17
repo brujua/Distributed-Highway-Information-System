@@ -50,7 +50,11 @@ public class HWListManager {
 	private boolean sendAlive(HWStNode node) {
 		Messageable dest = node.getStNode();
 		Message msg = new Message(MsgType.ALIVE, null, 0, null);
-		try (Socket socket = new Socket(dest.getIP(), dest.getPort())) {
+
+		return MsgHandler.sendTCPMsg(dest,new Message(MsgType.ALIVE,null,0,null));
+
+
+		/*try (Socket socket = new Socket(dest.getIP(), dest.getPort())) {
 			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
 			oos.flush();
 			oos.writeObject(msg);
@@ -61,13 +65,13 @@ public class HWListManager {
 			logger.error("Response to alive of wrong type");
 			return false;
 
-		} catch (IOException e) {
+		} catch (IOException e) {m
 			logger.error("Node down: " + node);
 			return false;
 		} catch (ClassNotFoundException e) {
 			logger.error("Corrupt message received from" + node);
 			return false;
-		}
+		}*/
 	}
 
 

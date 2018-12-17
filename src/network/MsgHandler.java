@@ -176,6 +176,38 @@ public class MsgHandler implements MsgObservable{
 		
 		return response;
 	}
+
+	public CompletableFuture<Message> sendTCPWithResponse(Messageable dest, Message msg) {
+		return sendTCPWithResponse(dest, msg, DEFAULT_TIMEOUT, DEFAULT_MAX_RETRIES);
+	}
+
+	public CompletableFuture<Message> sendTCPWithResponse(Messageable dest, Message msg, int timeout, int maxtries) {
+		CompletableFuture<Message> response = new CompletableFuture<>();
+		respMonitor.addMsg(msg, response);
+		threadService.execute(() -> {
+			try {
+				boolean receivedResp = false;
+				for(int tries = 0;tries<maxtries && !receivedResp; tries++) {
+					sendTCPMsg(dest, msg);
+					Thread.sleep(timeout);
+					receivedResp = response.isDone();
+				}
+				if(!receivedResp) {
+					response.completeExceptionally(new TimeoutException("retries exceeded"));
+				}
+				// sleep some in case a duplicate response arrives and then remove from monitor
+				Thread.sleep(DEFAULT_TIMEOUT);
+				respMonitor.remove(msg);
+
+			} catch (InterruptedException e) {
+				logger.info("Interrupted while sleeping in sendUDPWithResponse()");
+			}
+	});
+
+	return response;
+}
+
+
 	
 	/**
 	 * Stops listening and sending, interrupting all threads that are currently running 

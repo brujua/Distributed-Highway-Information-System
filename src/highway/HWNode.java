@@ -42,7 +42,7 @@ public class HWNode implements MsgListener {
 	private MsgHandler hwMsgHandler;
 
 	private List<HWStNode> hwlist; //other highway nodes
-	private final Object hwlistLock = new Object();
+	//private final Object hwlistLock = new Object();
 	private CarMonitor carMonitor;
 	private List<Segment> segments;
 
@@ -56,7 +56,7 @@ public class HWNode implements MsgListener {
 		logger = LoggerFactory.getLogger(getName());
 		portCars = Util.getAvailablePort(tentativePortCars);
 		portHighway = Util.getAvailablePort(tentativePortHighway);
-		carMonitor = new CarMonitor(getName()); //TODO maxrange?WTF
+		carMonitor = new CarMonitor(getName());
 		carMsgHandler = new MsgHandler(portCars, getName());
 		carMsgHandler.addMsgListener(this);
 		stNode = new StNode(id, ip, portCars);
@@ -152,11 +152,9 @@ public class HWNode implements MsgListener {
 						handlePulse(m);
 						break;
 					}
-					case REDIRECT: {
-						break;
-					}
+
 					case ALIVE: {
-						//TODO
+						responseAlive(m);
 						break;
 					}
 					case ACK: {
@@ -174,6 +172,10 @@ public class HWNode implements MsgListener {
 
 			}
 		});
+	}
+
+	private void responseAlive(Message msg) {
+		logger.info("Aive send from cordiator at:"+stNode.getPort());
 	}
 
 	private void handleUpdate(Message msg) throws CorruptDataException {
@@ -248,14 +250,15 @@ public class HWNode implements MsgListener {
 	
 
 	private boolean isInSegments(Position pos) {
-
+		hwLock.readLock().lock();
 		for (Segment seg:segments) {
 			if(seg.contains(pos)){
+				hwLock.readLock().unlock();
 				return true;
 			}
 		}
 
-
+		hwLock.readLock().unlock();
 		return false;
 	}
 
@@ -293,12 +296,15 @@ public class HWNode implements MsgListener {
 
 
 	private StNode searchRedirect(Position position) {
-
+		hwLock.readLock().lock();
 		for (HWStNode node:hwlist) {
 			if(node.isInSegment(position)){
-				return node.getStNode();
+				StNode response = node.getStNode();
+				hwLock.readLock().unlock();
+				return response;
 			}
 		}
+		hwLock.readLock().unlock();
 		return null;
 	}
 
@@ -310,6 +316,7 @@ public class HWNode implements MsgListener {
 	}
 
 	public List<Segment> getSegments() {
-		return segments;
+		List<Segment> response= segments;
+		return response;
 	}
 }
