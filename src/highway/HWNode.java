@@ -313,8 +313,6 @@ public class HWNode implements MsgListener {
 			}
 		}
 		hwLock.readLock().unlock();
-		System.out.println("position: "+position.toString()+"  ---  "+segments.get(0).getBeginX()+"-----"+segments.get(0).getEndX());
-		System.out.println("position: "+position.toString()+"  ---  "+segments.get(0).getBeginY()+"-----"+segments.get(0).getEndY());
 		return null;
 	}
 

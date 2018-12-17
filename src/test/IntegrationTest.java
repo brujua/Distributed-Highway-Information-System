@@ -176,7 +176,7 @@ class IntegrationTest {
             double possX = ((NUMBER_OF_SEGMENTS*DEFAULT_SEGMENT_SIDE_SIZE) /2)+DEFAULT_SEGMENT_SIDE_SIZE;
             double possY = DEFAULT_SEGMENT_SIDE_SIZE;
             Thread.sleep(500);
-            System.out.println("Change position");
+            //System.out.println("Change position");
             car1.setPosition(new Position(possX,possY));
             Thread.sleep(5000);
             assert(!car2.getSelectedHWnode().equals(car1.getSelectedHWnode()));
