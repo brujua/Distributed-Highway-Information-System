@@ -78,7 +78,7 @@ public class Segment implements Serializable, Comparable<Segment> {
     public boolean contains(Position pos) {
         double posX = pos.getCordx();
         double posY = pos.getCordy();
-        return !(posX >= endX) && !(posX < beginX) && !(posY >= endY) && !(posY < beginY);
+        return !(posX >= endX) && !(posX < beginX) && !(posY > endY) && !(posY < beginY);
     }
 
 	@Override

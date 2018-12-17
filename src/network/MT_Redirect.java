@@ -2,7 +2,9 @@ package network;
 
 import common.StNode;
 
-public class MT_Redirect {
+import java.io.Serializable;
+
+public class MT_Redirect implements Serializable {
 	private String responseId;
 	private StNode redirectedNode;
 	

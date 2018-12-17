@@ -24,6 +24,7 @@ class IntegrationTest {
 	private static final int DEFAULT_SEGMENT_SIDE_SIZE = 5;
 	private static HWCoordinator coordinator;
 	private static HWNode hwNode;
+	private static HWNode hwNode2;
 	private List<Messageable> posibleCoordinators;
 
 	private static final Double coordXOrigin = 0.0;
@@ -47,6 +48,12 @@ class IntegrationTest {
 		posibleCoordinators.add(coordinator);
 
 		hwNode = new HWNode(posibleCoordinators).listenForMsgs().registerInNetwork();
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        hwNode2 = new HWNode(posibleCoordinators).listenForMsgs().registerInNetwork();
 
 		hwNodes = new ArrayList<>();
 		hwNodes.add(hwNode.getStNode());
@@ -158,5 +165,25 @@ class IntegrationTest {
 			e.printStackTrace();
 		}
 	}
+
+	@Test
+	void Car_HWNode_RedirectWhenChangeSegment() {
+		try {
+            Car car1 = new Car(new Position(coordXOrigin+2, coordYOrigin+2),2,hwNodes);
+            car1.listenForMsgs().registerInNetwork().emitPulses();
+            Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
+            car2.listenForMsgs().registerInNetwork().emitPulses();
+            double possX = ((NUMBER_OF_SEGMENTS*DEFAULT_SEGMENT_SIDE_SIZE) /2)+DEFAULT_SEGMENT_SIDE_SIZE;
+            double possY = DEFAULT_SEGMENT_SIDE_SIZE;
+            Thread.sleep(500);
+            System.out.println("Change position");
+            car1.setPosition(new Position(possX,possY));
+            Thread.sleep(5000);
+            assert(!car2.getSelectedHWnode().equals(car1.getSelectedHWnode()));
+
+		} catch (NoPeersFoundException | InterruptedException e) {
+            e.printStackTrace();
+		}
+    }
 
 }

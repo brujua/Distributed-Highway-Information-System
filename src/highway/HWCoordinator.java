@@ -82,12 +82,11 @@ public class HWCoordinator implements Messageable, MsgListener {
 	}
 
 	private void handleRegister(Message msg) throws CorruptDataException {
-		if (msg.getType() != MsgType.REGISTER || !(msg.getData() instanceof StNode)) {
+		if (msg.getType() != MsgType.REGISTER || !(msg.getData() instanceof HWStNode)) {
 			throw new CorruptDataException();
 		}
 		//update ip for the one received on the packet
-		StNode node = ((StNode) msg.getData()).changeIp(msg.getIp());
-
+		HWStNode node = ((HWStNode) msg.getData());
 		logger.info("Register from node " + node);
 		hwlist.add(node);
 	}

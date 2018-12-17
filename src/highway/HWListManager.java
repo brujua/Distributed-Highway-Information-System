@@ -75,10 +75,10 @@ public class HWListManager {
 	}
 
 
-	public boolean add(StNode node) {
+	public boolean add(HWStNode node) {
 		if (list.isEmpty()) {
 			logger.info("First hwnode added");
-			list.add(new HWStNode(node, new ArrayList<>(segments)));
+			list.add(new HWStNode(node.getCarStNode(),node.getStNode(), new ArrayList<>(segments)));
 			notifyUpdate();
 			return true;
 		} else {
@@ -98,7 +98,7 @@ public class HWListManager {
 			List<Segment> segmentsNewNode = new ArrayList<>(loadedSegments.subList(startIndexSegmentsNewNode, sizeSegments));
 
 			//insert after the most loaded node
-			list.add(mostLoadedIndex + 1, new HWStNode(node, segmentsNewNode));
+			list.add(mostLoadedIndex + 1, new HWStNode(node.getCarStNode(),node.getStNode(), segmentsNewNode));
 			notifyUpdate();
 			return true;
 		}

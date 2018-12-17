@@ -125,8 +125,15 @@ public class HWNode implements MsgListener {
 		return new StNode(id, ip, portCars);
 	}
 
-	public StNode getStNodeForHW() {
-		return new StNode(id, ip, portHighway);
+	public HWStNode getStNodeForHW() {
+
+		StNode stNode = new StNode(id, ip, portHighway);
+
+		StNode carstNode = new StNode(id,ip,portCars);
+		//TODO sincro listsegments
+		HWStNode hwStNode = new HWStNode(carstNode, stNode,segments);
+		HWStNode response = hwStNode;
+		return response;
 	}
 
 	public Messageable getCoordinator() {
@@ -163,7 +170,7 @@ public class HWNode implements MsgListener {
 					}
 
 					default: {
-						logger.error("Received message of wrong type");
+						logger.error("Received message of wrong type: "+m.getType().toString());
 					}
 				}
 
@@ -201,9 +208,10 @@ public class HWNode implements MsgListener {
 			HWStNode hwNode = list.get(i);
 			if (stNode.equals(hwNode.getStNode())) {
 				segments = hwNode.getSegments();
+				hwlist = list;
 				// if im not the last one
 				if (i + 1 < list.size()) {
-					nextStNode = list.get(i + 1).getStNode();
+					nextStNode = list.get(i + 1).getCarStNode();
 				} else {
 					nextStNode = null;
 				}
@@ -299,12 +307,14 @@ public class HWNode implements MsgListener {
 		hwLock.readLock().lock();
 		for (HWStNode node:hwlist) {
 			if(node.isInSegment(position)){
-				StNode response = node.getStNode();
+				StNode response = node.getCarStNode();
 				hwLock.readLock().unlock();
 				return response;
 			}
 		}
 		hwLock.readLock().unlock();
+		System.out.println("position: "+position.toString()+"  ---  "+segments.get(0).getBeginX()+"-----"+segments.get(0).getEndX());
+		System.out.println("position: "+position.toString()+"  ---  "+segments.get(0).getBeginY()+"-----"+segments.get(0).getEndY());
 		return null;
 	}
 

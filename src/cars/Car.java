@@ -105,8 +105,9 @@ public class Car implements MsgListener, MotionObservable{
 			// send hello and wait for response			
 			Message msg = new Message(MsgType.HELLO, this.ip, this.port, getCarStNode());
 			response = msgHandler.sendUDPWithResponse(hwNode, msg);
+
 			responseMsg = response.get();
-			
+
         	switch(responseMsg.getType()) {
             	case HELLO_RESPONSE:{
             		handleHelloResponse(responseMsg,true);
@@ -131,7 +132,7 @@ public class Car implements MsgListener, MotionObservable{
         	try {
         		throw e.getCause();
         	} catch(TimeoutException toe) {
-		        logger.info("Node did not respond");
+		        logger.info("Node did not respond: "+hwNode.getPort());
             	return false;
         		
         	} catch (Throwable e1) {
@@ -202,7 +203,7 @@ public class Car implements MsgListener, MotionObservable{
 							break;
 						}
 						default: {
-							logger.error("Received message of wrong type");
+							logger.error("Received message of wrong type"+m.getType().toString()+" in car");
 						}
 					}
 				}catch(CorruptDataException cde){
@@ -319,7 +320,12 @@ public class Car implements MsgListener, MotionObservable{
 		position = new Position(position.getCordx() + velocity, position.getCordy());
 		notifyMotionObservers();
 	}
-	
+
+	public void setPosition(Position position) {
+		this.position = position;
+		notifyMotionObservers();
+	}
+
 	private void notifyMotionObservers() {
 		for (MotionObserver obs : motionObservers) {
 			obs.notify(this.getPulse());

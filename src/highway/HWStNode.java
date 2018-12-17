@@ -12,11 +12,14 @@ import java.util.Objects;
  * Lightweight representation of a highway node. Fulfills the purpose of identifying it and storing the data to send messages to it.
  */
 public class HWStNode implements Messageable, Serializable {
+
 	private StNode stNode;
+	private StNode carStNode;
 	private List<Segment> segments;
 
-	public HWStNode(StNode stNode, List<Segment> segments) {
+	public HWStNode(StNode carStNode, StNode stNode, List<Segment> segments) {
 		this.stNode = stNode;
+		this.carStNode= carStNode;
 		this.segments = segments;
 	}
 
@@ -30,6 +33,8 @@ public class HWStNode implements Messageable, Serializable {
 
 		return false;
 	}
+
+	public StNode getCarStNode() { return carStNode; }
 
 	public StNode getStNode() {
 		return stNode;
