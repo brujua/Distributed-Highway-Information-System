@@ -1,7 +1,6 @@
 package common;
 
 import cars.CarStNode;
-import cars.MotionObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,66 +13,28 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-//import sun.rmi.runtime.Log;
 
-public class CarMonitor implements MotionObserver {
+/**
+ * This class maintains a list of CarStNode, adding and updating them by CarMonitor.add().
+ * Starts a scheduled task that checks every  {@link CarMonitor}.TIMEOUT_CHECK_REFRESH_TIME
+ * if every car was updated at least once in MAX_TIMEOUT milliseconds, if not, removes the car.
+ */
+public class CarMonitor {
+
+    public static final long timeOutCheckRefreshTime = 2000;
+    public static final long MAX_TIMEOUT = 5000;
+
 	private Logger logger;
-	private double range;
-	//private List<StNode> cars;
 	private final Map<CarStNode,Instant> cars ;
 	private ScheduledExecutorService timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
 
-	private Position position;
-
-	private static final long timeOutCheckRefreshTime = 2000;
-	private static final long MAX_TIMEOUT = 5000;
-	//private final static double DEFAULT_RANGE = 800;
-	
 	public CarMonitor( String name) {
 		super();
-		this.range = range;
-		cars = new ConcurrentHashMap<CarStNode, Instant>();
-		// subscribe to the carrier of this monitor to be notified in changes of position
-/*		if(carrier!=null) {
-			carrier.addObserver(this);
-		}*/
-		logger = LoggerFactory.getLogger(CarMonitor.class.getName() + name);
+		cars = new ConcurrentHashMap<>();
+        logger = LoggerFactory.getLogger(CarMonitor.class.getName() + name);
 
 		timeoutScheduler.scheduleWithFixedDelay(new TimeOutChecker(), timeOutCheckRefreshTime, timeOutCheckRefreshTime, TimeUnit.MILLISECONDS);
 	}
-
-/*	public CarMonitor(double range, MotionObservable carrier){
-		this(range,carrier,"");
-	}*/
-
-/*	public CarMonitor(Double range) {
-		this(range,null);
-	}*/
-	
-	public void setRange(double range) {
-		this.range = range;
-	}
-	
-	public boolean isInRange(StNode node) {
-		/*
-		double distance = position.distance(node.getPosition());
-		return (distance <= range);
-		*/
-		return true;
-	}
-	
-	/**
-	 * @param car
-
-	 */
-/*	public boolean update(StNode car) {
-		cars.remove(car);
-		if(isInRange(car)){
-			cars.put(car,Instant.now());
-			return true;
-		}
-		return false;
-	}*/
 
 	public void update(CarStNode car){
 		cars.remove(car);
@@ -83,20 +44,14 @@ public class CarMonitor implements MotionObserver {
 	/**
 	 * @return the copy of the list of the cars being monitored
 	 */
-	public List<CarStNode> getList(){
-		//make a copy of the list
+	public List<CarStNode> getList() {
+        //make a copy of the list
 		List<CarStNode> list;
 		synchronized (cars) {
 			list = new ArrayList<>(cars.size());
 			list.addAll(cars.keySet());
 		}
 		return list;
-	}
-
-	@Override
-	public void notify(Pulse pulse) {
-		this.position = pulse.getPosition();
-		
 	}
 
 	private class TimeOutChecker implements Runnable {

@@ -89,4 +89,9 @@ public class CarStNode implements Messageable, Serializable {
 	public StNode getStNode() {
 		return node;
 	}
+
+    @Override
+    public String toString() {
+        return node.toString();
+    }
 }
