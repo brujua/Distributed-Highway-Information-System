@@ -289,7 +289,7 @@ public class HWNode implements MsgListener {
 	}
 
 	private void redirect(Message m, StNode hwRedirect) {
-		// TODO redirecccionar a hw correspondiente
+
 
 		//StNode hwRedirect = searchRedirect(((Position) m.getData()));
 		MT_Redirect redirect = new MT_Redirect(m.getId(), hwRedirect);
