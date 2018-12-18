@@ -4,11 +4,10 @@ import cars.Car;
 import cars.CarStNode;
 import common.NoPeersFoundException;
 import common.Position;
-import common.StNode;
 import highway.HWCoordinator;
 import highway.HWNode;
 import highway.Segment;
-import network.Messageable;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,19 +23,16 @@ class IntegrationTest {
 	private static final int DEFAULT_SEGMENT_SIDE_SIZE = 5;
 	private static HWCoordinator coordinator;
 	private static HWNode hwNode;
-	private static HWNode hwNode2;
-	private List<Messageable> posibleCoordinators;
+    private static HWNode hwNode2;
 
 	private static final Double coordXOrigin = 0.0;
 	private static final Double coordYOrigin = 0.0;
-	private List<Segment> segments;
-	private static List<StNode> hwNodes;
 
 	@BeforeEach
 	void initializeHWNode() {
 
 		// initiaize segments as rectangles in a straight line
-		segments = new ArrayList<>();
+        List<Segment> segments = new ArrayList<>();
 		for (int i = 0; i < NUMBER_OF_SEGMENTS; i++) {
 			double begin = i * DEFAULT_SEGMENT_SIDE_SIZE;
 			double end = begin + DEFAULT_SEGMENT_SIDE_SIZE;
@@ -44,32 +40,34 @@ class IntegrationTest {
 		}
 		coordinator = new HWCoordinator(segments);
 		coordinator.listenForMsgs();
-		posibleCoordinators = new ArrayList<>();
-		posibleCoordinators.add(coordinator);
 
-		hwNode = new HWNode(posibleCoordinators).listenForMsgs().registerInNetwork();
-        try {
-            Thread.sleep(2000);
+		try {
+            hwNode = new HWNode().listenForMsgs().registerInNetwork();
+            //sleep to give time for registration of the hwnode
+            Thread.sleep(500);
+            hwNode2 = new HWNode().listenForMsgs().registerInNetwork();
+            Thread.sleep(500);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        hwNode2 = new HWNode(posibleCoordinators).listenForMsgs().registerInNetwork();
+    }
 
-		hwNodes = new ArrayList<>();
-		hwNodes.add(hwNode.getStNode());
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		/*HWNode hwNode2 = new HWNode(posibleCoordinators).listenForMsgs();
-		hwNodes.add(hwNode2.getStNode());*/
-	}
+    @AfterEach
+    void shutdownNodes() {
+        coordinator.shutDown();
+        hwNode.shutdown();
+        hwNode2.shutdown();
+        try {
+            Thread.sleep(3500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 	
 	@Test
 	void testRegister() {		
 		try {
-			Car car = new Car(new Position(0.0, 0.0),0,hwNodes);
+            Car car = new Car(new Position(0.0, 0.0), 0);
 			car.listenForMsgs().registerInNetwork();
 			assert(car.getSelectedHWnode().equals(hwNode.getStNode()));
 		} catch (NoPeersFoundException e) {
@@ -81,9 +79,9 @@ class IntegrationTest {
 	@Test
 	void testNeighbourGivenByHwOnRegister() {
 		try {
-			Car car1 = new Car(new Position(coordXOrigin+2, coordYOrigin+2),2,hwNodes);
+            Car car1 = new Car(new Position(coordXOrigin + 2, coordYOrigin + 2), 2);
 			car1.listenForMsgs().registerInNetwork();
-			Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
+            Car car2 = new Car(new Position(coordXOrigin, coordYOrigin), 0);
 			car2.listenForMsgs().registerInNetwork();
 			List<CarStNode> car2Neighs = car2.getNeighs();
 			assert(car2Neighs.contains(car1.getCarStNode()));
@@ -100,11 +98,10 @@ class IntegrationTest {
 	void testPulsesUpdatePosition() {
 		try {
 			double velocityCar1 = 2;
-			Car car1 = new Car(new Position(coordXOrigin+2, coordYOrigin+2),velocityCar1,hwNodes);
+            Car car1 = new Car(new Position(coordXOrigin + 2, coordYOrigin + 2), velocityCar1);
 			car1.listenForMsgs().registerInNetwork().emitPulses();
 			car1.move();
-			//Thread.sleep(500);
-			Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
+            Car car2 = new Car(new Position(coordXOrigin, coordYOrigin), 0);
 			car2.listenForMsgs().registerInNetwork().emitPulses();
 			Thread.sleep(3500);
 			List<CarStNode> car2Neighs = car2.getNeighs();
@@ -125,10 +122,10 @@ class IntegrationTest {
 	@Test
 	void testCarMonitorKeepCars() {
 		try {
-			Car car1 = new Car(new Position(coordXOrigin+2, coordYOrigin+2),2,hwNodes);
+            Car car1 = new Car(new Position(coordXOrigin + 2, coordYOrigin + 2), 2);
 			car1.listenForMsgs().registerInNetwork().emitPulses();
 			Thread.sleep(1000);
-			Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
+            Car car2 = new Car(new Position(coordXOrigin, coordYOrigin), 0);
 			car2.listenForMsgs().registerInNetwork().emitPulses();
 			Thread.sleep(10001);
 			List<CarStNode> car2Neighs = car2.getNeighs();
@@ -147,11 +144,11 @@ class IntegrationTest {
 	 * Checks if a car that does not emit pulses gets removed from the list of neighbours of the other car
 	 */
 	@Test
-	void testCarTimeOutsInactivesNeighsbours(){
+    void testCarTimeOutsInactiveNeighbours() {
 		try {
-			Car car1 = new Car(new Position(coordXOrigin+2, coordYOrigin+2),2,hwNodes);
+            Car car1 = new Car(new Position(coordXOrigin + 2, coordYOrigin + 2), 2);
 			car1.listenForMsgs().registerInNetwork(); //doesn't emit pulses on purpose
-			Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
+            Car car2 = new Car(new Position(coordXOrigin, coordYOrigin), 0);
 			car2.listenForMsgs().registerInNetwork().emitPulses();
 			assert (car2.getNeighs().contains(car1.getCarStNode()));
 			Thread.sleep(10001);
@@ -169,14 +166,13 @@ class IntegrationTest {
 	@Test
 	void Car_HWNode_RedirectWhenChangeSegment() {
 		try {
-            Car car1 = new Car(new Position(coordXOrigin+2, coordYOrigin+2),2,hwNodes);
+            Car car1 = new Car(new Position(coordXOrigin + 2, coordYOrigin + 2), 2);
             car1.listenForMsgs().registerInNetwork().emitPulses();
-            Car car2 = new Car(new Position(coordXOrigin, coordYOrigin),0,hwNodes);
+            Car car2 = new Car(new Position(coordXOrigin, coordYOrigin), 0);
             car2.listenForMsgs().registerInNetwork().emitPulses();
             double possX = ((NUMBER_OF_SEGMENTS*DEFAULT_SEGMENT_SIDE_SIZE) /2)+DEFAULT_SEGMENT_SIDE_SIZE;
             double possY = DEFAULT_SEGMENT_SIDE_SIZE;
             Thread.sleep(500);
-            //System.out.println("Change position");
             car1.setPosition(new Position(possX,possY));
             Thread.sleep(5000);
             assert(!car2.getSelectedHWnode().equals(car1.getSelectedHWnode()));

@@ -18,7 +18,8 @@ public class Car implements MsgListener, MotionObservable{
 	public final String ip = "localhost";
 	public final int tentativePort = 5555;
     // resource bundle, used to read the config options for example
-    private static ResourceBundle resourceBundle = ResourceBundle.getBundle("config-cars");
+    //private static ResourceBundle resourceBundle = ResourceBundle.getBundle("config-cars");
+    public static final String CONFIG_NODES_PATH = "config-cars";
 	// range for the monitors
     public final double PRIMARY_RANGE = 200; //near cars
 
@@ -96,6 +97,7 @@ public class Car implements MsgListener, MotionObservable{
 		return this;
 	}
 
+
     /**
      * This method reads the configuration file for the cars, named 'config-cars.properties' under resources.
      * From there, extracts the list of possible locations (ip and range of ports) for HWNodes
@@ -105,16 +107,7 @@ public class Car implements MsgListener, MotionObservable{
     private List<StNode> readConfig() {
         List<StNode> nodes = new ArrayList<>();
         try {
-
-            int numberOfPossibleNodes = Integer.valueOf(resourceBundle.getString("nodenumber"));
-            for (int i = 0; i < numberOfPossibleNodes; i++) {
-                String ip = resourceBundle.getString("node" + i);
-                int port_start = Integer.valueOf(resourceBundle.getString("port_range_start" + i));
-                int port_end = Integer.valueOf(resourceBundle.getString("port_range_end" + i));
-                for (int port = port_start; port <= port_end; port++) {
-                    nodes.add(new StNode("0", ip, port));
-                }
-            }
+            nodes = Util.readNodeConfigFile(CONFIG_NODES_PATH);
         } catch (MissingResourceException e) {
             logger.error("Config file for car corrupted: " + e.getMessage());
         }
@@ -227,31 +220,38 @@ public class Car implements MsgListener, MotionObservable{
 	@Override
 	public void msgReceived(Message m) {
 		// The logic of the received msg will be handled on a different thread
-		threadService.execute( new Runnable() {
-			public void run() {
-				try {
-					switch (m.getType()) {
-						case HELLO: {
-							handleHello(m);
-							break;
-						}
-						case PULSE: {
-							handlePulse(m);
-							break;
-						}
-						case REDIRECT: {
-							handleRedirect(m);
-							break;
-						}
-						default: {
-							logger.error("Received message of wrong type"+m.getType().toString()+" in car");
-						}
-					}
-				}catch(CorruptDataException cde){
-					logger.error("Corrupt data exception on message: "+ m +" /n exception msg: "+cde.getMessage());
-				}
-			}
-		});
+        if (!threadService.isShutdown()) {
+            threadService.execute(new Runnable() {
+                public void run() {
+                    try {
+                        switch (m.getType()) {
+                            case HELLO: {
+                                handleHello(m);
+                                break;
+                            }
+                            case PULSE: {
+                                handlePulse(m);
+                                break;
+                            }
+                            case REDIRECT: {
+                                handleRedirect(m);
+                                break;
+                            }
+                            case ERROR: {
+                                logger.error("Received error message: " + m);
+                            }
+                            default: {
+                                logger.error("Received message of wrong type" + m.getType().toString() + " in car");
+                            }
+                        }
+                    } catch (CorruptDataException cde) {
+                        logger.error("Corrupt data exception on message: " + m + " /n exception msg: " + cde.getMessage());
+                    }
+                }
+            });
+        } else {
+            logger.info("Message receive while shut down");
+        }
 	}
 
 	private void handleHello(Message m) throws CorruptDataException {

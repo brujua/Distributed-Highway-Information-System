@@ -5,6 +5,9 @@ import java.net.BindException;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ResourceBundle;
 
 public class Util {
 	
@@ -34,4 +37,21 @@ public class Util {
 		}
 		return avPort;
 	}
+
+    public static List<StNode> readNodeConfigFile(String filename) {
+        ResourceBundle resourceBundle = ResourceBundle.getBundle(filename);
+        List<StNode> nodes = new ArrayList<>();
+        int numberOfPossibleNodes = Integer.valueOf(resourceBundle.getString("nodenumber"));
+        for (int i = 0; i < numberOfPossibleNodes; i++) {
+            String ip = resourceBundle.getString("node" + i);
+            int port_start = Integer.valueOf(resourceBundle.getString("port_range_start" + i));
+            int port_end = Integer.valueOf(resourceBundle.getString("port_range_end" + i));
+            for (int port = port_start; port <= port_end; port++) {
+                nodes.add(new StNode("0", ip, port));
+            }
+        }
+        return nodes;
+    }
 }
+
+

@@ -6,7 +6,6 @@ import common.StNode;
 import highway.HWCoordinator;
 import highway.HWNode;
 import highway.Segment;
-import network.Messageable;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,11 +61,9 @@ public class Instantiator {
             if (coord_inst.isCreate_Coordinator()) {
                 coord = new HWCoordinator(coord_inst.getSegments(), coord_inst.getPort());
             }
-            ArrayList<Messageable> posiblesCoord = new ArrayList<>();
-            posiblesCoord.add(coord);
             ArrayList<StNode> posibleshwnodes = new ArrayList<>();
             for (HWNodeInstantiator n : nodes_inst) {
-                HWNode node = new HWNode(posiblesCoord);
+                HWNode node = new HWNode();
                 hwnodes.add(node);
                 posibleshwnodes.add(node.getStNode());
             }

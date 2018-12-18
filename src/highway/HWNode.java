@@ -10,7 +10,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.MissingResourceException;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,14 +27,15 @@ public class HWNode implements MsgListener {
     public static final int tentativePortCars = 7000;
 
 	public static final int tentativePortHighway = 8000;
-	
+    public static final String CONFIG_COORDINATOR_PATH = "config-hwnodes";
+
 	private static final double MAX_RANGE = 0;
 
 	private String id;
 	private StNode stNode;
 	private int portCars;
 	private int portHighway;
-	private List<Messageable> posibleCoordinator;
+    private List<? extends Messageable> posibleCoordinator;
 	private ExecutorService threadService = Executors.newCachedThreadPool();
 
 	private ReentrantReadWriteLock hwLock = new ReentrantReadWriteLock();
@@ -49,9 +52,10 @@ public class HWNode implements MsgListener {
 	private Messageable coordinator;
 
 	private Instant lastHWUpdate;
-	public HWNode(List<Messageable> posibleCoordinator) {
+
+    public HWNode() {
 		super();
-		this.posibleCoordinator = posibleCoordinator;
+        this.posibleCoordinator = readConfig();
 		id = UUID.randomUUID().toString();
 		logger = LoggerFactory.getLogger(getName());
 		portCars = Util.getAvailablePort(tentativePortCars);
@@ -60,8 +64,29 @@ public class HWNode implements MsgListener {
 		carMsgHandler = new MsgHandler(portCars, getName());
 		carMsgHandler.addMsgListener(this);
 		stNode = new StNode(id, ip, portCars);
+        coordinator = null;
+    }
 
-	}
+    public HWNode(List<Messageable> possibleCoords) {
+        this();
+        this.posibleCoordinator = possibleCoords;
+    }
+
+    /**
+     * This method reads the configuration file for the hwnodes, named 'config-hwnodes.properties' under resources.
+     * From there, extracts the list of possible locations (ip and range of ports) for coordinators
+     *
+     * @return the list of possible coordinators
+     */
+    public List<StNode> readConfig() {
+        List<StNode> coords = new ArrayList<>();
+        try {
+            coords = Util.readNodeConfigFile(CONFIG_COORDINATOR_PATH);
+        } catch (MissingResourceException e) {
+            logger.error("Config file for HWNodes corrupted: " + e.getMessage());
+        }
+        return coords;
+    }
 
 	public HWNode listenForMsgs() {
 		portCars = Util.getAvailablePort(tentativePortCars);
@@ -87,10 +112,14 @@ public class HWNode implements MsgListener {
 
 		for (Messageable coordAux : posibleCoordinator) {
 			if (MsgHandler.sendTCPMsg(coordAux, msg)) {
+                logger.info("registered in coordinator: " + coordAux);
 				this.coordinator = coordAux;
 				break;
 			}
 		}
+        if (coordinator == null) {
+            logger.error("Could not register to coordinator");
+        }
 		return this;
 	}
 
@@ -143,46 +172,44 @@ public class HWNode implements MsgListener {
 	@Override
 	public void msgReceived(Message m) {
 		// The logic of the received msg will be handled on a different thread
+        if (!threadService.isShutdown())
+            threadService.execute(() -> {
+                try {
+                    switch (m.getType()) {
+                        case UPDATE: {
+                            handleUpdate(m);
+                            break;
+                        }
+                        case HELLO: {
+                            handleHello(m);
+                            break;
+                        }
+                        case PULSE: {
+                            handlePulse(m);
+                            break;
+                        }
 
-		threadService.execute(() -> {
-			try {
-				switch (m.getType()) {
-					case UPDATE: {
-						handleUpdate(m);
-						break;
-					}
-					case HELLO: {
-						handleHello(m);
-						break;
-					}
-					case PULSE: {
-						handlePulse(m);
-						break;
-					}
+                        case ALIVE: {
+                            handleAlive(m);
+                            break;
+                        }
+                        case ACK: {
+                            responseACK(m);
+                            break;
+                        }
+                        default: {
+                            logger.error("Received message of wrong type: " + m.getType().toString());
+                        }
+                    } //end switch
+                } catch (CorruptDataException cde) {
+                    logger.error("Corrupt data exception on message: " + m + " /n exception msg: " + cde.getMessage());
 
-					case ALIVE: {
-						responseAlive(m);
-						break;
-					}
-					case ACK: {
-						responseACK(m);
-						break;
-					}
+                }
+            });//end task
+    }
 
-					default: {
-						logger.error("Received message of wrong type: "+m.getType().toString());
-					}
-				}
-
-			} catch (CorruptDataException cde) {
-				logger.error("Corrupt data exception on message: " + m + " /n exception msg: " + cde.getMessage());
-
-			}
-		});
-	}
-
-	private void responseAlive(Message msg) {
-		logger.info("Aive send from cordiator at:"+stNode.getPort());
+    private void handleAlive(Message msg) {
+        logger.info("Alive received from coordinator");
 	}
 
 	private void handleUpdate(Message msg) throws CorruptDataException {
@@ -238,10 +265,7 @@ public class HWNode implements MsgListener {
 			throw new CorruptDataException();
 		CarStNode node = (CarStNode) m.getData();
 		if (isInSegments( node.getPosition() ) ) {
-//			Message msg = new Message(MsgType.HELLO_RESPONSE, getIp(),getPortCars(), new MT_HelloResponse(m.getId(), stNode, carNodes));
-	//		carNodes.add(node); 
-
-			Message msg = new Message(MsgType.HELLO_RESPONSE, getIp(), getPortCars(), new MT_HelloResponse(m.getId(), stNode, carMonitor.getList()));
+            Message msg = new Message(MsgType.HELLO_RESPONSE, getIp(), getPortCars(), new MT_HelloResponse(m.getId(), getStNode(), carMonitor.getList()));
 			carMonitor.update(node);
 
 			carMsgHandler.sendUDP(node, msg);
@@ -276,11 +300,11 @@ public class HWNode implements MsgListener {
 			throw new CorruptDataException();
 		}
 		CarStNode car = (CarStNode) msg.getData();
-		logger.info("Pulse received on node: " + getStNode()+" from node: "+car);
+        logger.info("Pulse received from node: " + car);
 		if(isInSegments(car.getPosition()))
 			updateCar(car);
 		else
-			redirect(msg,nextStNode);
+            redirect(msg, nextStNode); //TODO synchronize access to nextStNode
 
 	}
 
@@ -289,16 +313,13 @@ public class HWNode implements MsgListener {
 	}
 
 	private void redirect(Message m, StNode hwRedirect) {
-		// TODO redirecccionar a hw correspondiente
+
 
 		//StNode hwRedirect = searchRedirect(((Position) m.getData()));
 		MT_Redirect redirect = new MT_Redirect(m.getId(), hwRedirect);
 		Message msg = new Message(MsgType.REDIRECT,getIp(),portCars,redirect);
 
 		StNode carst = new StNode(m.getId(), m.getIp(), m.getPort());
-
-		//carMonitor.update(carst);
-		// wait until carmonitor removes the car because of timeout
 		carMsgHandler.sendUDP(carst, msg);
 	}
 
@@ -324,7 +345,16 @@ public class HWNode implements MsgListener {
 	}
 
 	public List<Segment> getSegments() {
+        //TODO synchronize access to segments (and copy them?)
 		List<Segment> response= segments;
 		return response;
 	}
+
+    public void shutdown() {
+        logger.info("Shutting down");
+        threadService.shutdown();
+        carMonitor.shutdown();
+        carMsgHandler.close();
+        hwMsgHandler.close();
+    }
 }

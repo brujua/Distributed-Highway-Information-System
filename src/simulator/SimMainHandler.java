@@ -15,7 +15,7 @@ public class SimMainHandler {
 
 	public SimMainHandler() {
 		//TODO temporary
-		HWNode hwNode = new HWNode(new ArrayList<>()).listenForMsgs();
+        HWNode hwNode = new HWNode().listenForMsgs();
 		hwNodes = new ArrayList<>();
 		hwNodes.add(hwNode.getStNode());
 	}

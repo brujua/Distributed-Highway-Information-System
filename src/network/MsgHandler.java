@@ -9,10 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.*;
 import java.util.ArrayList;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 public class MsgHandler implements MsgObservable{
 
@@ -47,7 +44,6 @@ public class MsgHandler implements MsgObservable{
 			oos.writeObject(msg);
 			return true;
 		} catch (IOException e) {
-			e.printStackTrace();
 			return false;
 		}
 	}
@@ -59,18 +55,26 @@ public class MsgHandler implements MsgObservable{
 		listening = true;
 		threadService.execute(() -> {
 			try (ServerSocket serverSocket = new ServerSocket(port)) {
+				// sets timeout to the socket.accept() so that this listening thread can be interrupted
+				serverSocket.setSoTimeout(2000);
 				while (listening) {
 					if (Thread.currentThread().isInterrupted()) {
 						logger.info("Listening thread interrupted");
 						break;
 					}
-					Socket connection = serverSocket.accept();
-					TCPMsgReaderThread msgReaderT = new TCPMsgReaderThread((message) -> {
-						for (MsgListener listener : listeners) {
-							listener.msgReceived(message);
-						}
-					}, connection);
-					threadService.execute(msgReaderT);
+					try {
+						Socket connection = serverSocket.accept();
+						TCPMsgReaderThread msgReaderT = new TCPMsgReaderThread((message) -> {
+							for (MsgListener listener : listeners) {
+								listener.msgReceived(message);
+							}
+						}, connection);
+
+						if (!threadService.isShutdown())
+							threadService.execute(msgReaderT);
+					} catch (SocketTimeoutException e) {
+						continue;
+					}
 				}
 			} catch (IOException e) {
 				logger.error("Problems opening TCP listening socket: " + e.getMessage());
@@ -92,6 +96,8 @@ public class MsgHandler implements MsgObservable{
 		threadService.execute(() -> {
 			try {
 				DatagramSocket receiveS = new DatagramSocket(port);
+				//sets timeout so that the listing thread can be interrupted
+				receiveS.setSoTimeout(2000);
 				while (listening) {
 					if(Thread.currentThread().isInterrupted()) {
 	                    logger.info("Listening thread interrupted");
@@ -100,16 +106,20 @@ public class MsgHandler implements MsgObservable{
 					byte[] packetBuffer = new byte[4096];
 					DatagramPacket receiverPacket = new DatagramPacket(packetBuffer, packetBuffer.length);
 					ByteArrayInputStream bais = new ByteArrayInputStream(packetBuffer);
-					receiveS.receive(receiverPacket);
-					ObjectInputStream ois = new ObjectInputStream(bais);
-					Message m = (Message)ois.readObject();
-					//before msgReceived, update ip in msg to the real ip from which the msg was received
-					m.setIp(receiverPacket.getAddress().getHostAddress());
-					ois.close();
-					if(!respMonitor.check(m))
-						for (MsgListener listener : listeners) {
-							listener.msgReceived(m);
-						}
+					try {
+						receiveS.receive(receiverPacket);
+						ObjectInputStream ois = new ObjectInputStream(bais);
+						Message m = (Message) ois.readObject();
+						//before msgReceived, update ip in msg to the real ip from which the msg was received
+						m.setIp(receiverPacket.getAddress().getHostAddress());
+						ois.close();
+						if (!respMonitor.check(m))
+							for (MsgListener listener : listeners) {
+								listener.msgReceived(m);
+							}
+					} catch (SocketTimeoutException e) {
+						continue;
+					}
 				}
 			} catch(IOException | ClassNotFoundException e) {
 				logger.error("Unkown error on listening thread: " + e.getMessage());
@@ -213,7 +223,14 @@ public class MsgHandler implements MsgObservable{
 	 * Stops listening and sending, interrupting all threads that are currently running 
 	 */
 	public void close() {
-		threadService.shutdownNow();
+		try {
+			threadService.shutdown();
+			threadService.awaitTermination(3200, TimeUnit.MILLISECONDS);
+			threadService.shutdownNow();
+
+		} catch (InterruptedException e) {
+			logger.error("Interrupted while awaiting termination of submitted tasks");
+		}
 	}
 
 	public int getPort() {
