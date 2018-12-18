@@ -20,29 +20,30 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 public class HWNode implements MsgListener {
-	private Logger logger;
+    private Logger logger;
 
-	public static final String ip = "localhost";
+    public static final String ip = "localhost";
 
     public static final int tentativePortCars = 7000;
 
-	public static final int tentativePortHighway = 8000;
+    public static final int tentativePortHighway = 8000;
     public static final String CONFIG_COORDINATOR_PATH = "config-hwnodes";
 
-	private static final double MAX_RANGE = 0;
+    private static final double MAX_RANGE = 0;
 
-	private String id;
-	private StNode stNode;
-	private int portCars;
-	private int portHighway;
+    private String id;
+    private StNode stNode;
+    private int portCars;
+    private int portHighway;
     private List<? extends Messageable> posibleCoordinator;
-	private ExecutorService threadService = Executors.newCachedThreadPool();
+    private ExecutorService threadService = Executors.newCachedThreadPool();
 
-	private ReentrantReadWriteLock hwLock = new ReentrantReadWriteLock();
-	private StNode nextStNode;
+    private ReentrantReadWriteLock hwLock = new ReentrantReadWriteLock();
 
-	private MsgHandler carMsgHandler;
-	private MsgHandler hwMsgHandler;
+    private StNode nextStNode;
+
+    private MsgHandler carMsgHandler;
+    private MsgHandler hwMsgHandler;
 
 	private List<HWStNode> hwlist; //other highway nodes
 	//private final Object hwlistLock = new Object();
@@ -159,8 +160,9 @@ public class HWNode implements MsgListener {
 		StNode stNode = new StNode(id, ip, portHighway);
 
 		StNode carstNode = new StNode(id,ip,portCars);
-		//TODO sincro listsegments
-		HWStNode hwStNode = new HWStNode(carstNode, stNode,segments);
+
+		HWStNode hwStNode = new HWStNode(carstNode, stNode,getSegments());
+
 		HWStNode response = hwStNode;
 		return response;
 	}
@@ -282,15 +284,15 @@ public class HWNode implements MsgListener {
 	
 
 	private boolean isInSegments(Position pos) {
-		hwLock.readLock().lock();
-		for (Segment seg:segments) {
+
+		for (Segment seg:getSegments()) {
 			if(seg.contains(pos)){
-				hwLock.readLock().unlock();
+				//hwLock.readLock().unlock();
 				return true;
 			}
 		}
 
-		hwLock.readLock().unlock();
+
 		return false;
 	}
 
@@ -304,11 +306,19 @@ public class HWNode implements MsgListener {
 		if(isInSegments(car.getPosition()))
 			updateCar(car);
 		else
-            redirect(msg, nextStNode); //TODO synchronize access to nextStNode
+
+            redirect(msg, getNextNode());
 
 	}
 
-	private void updateCar(CarStNode car) {
+    private StNode getNextNode() {
+        hwLock.readLock().lock();
+        StNode response = nextStNode;
+        hwLock.readLock().unlock();
+        return response;
+    }
+
+    private void updateCar(CarStNode car) {
 		carMonitor.update(car);
 	}
 
@@ -326,7 +336,7 @@ public class HWNode implements MsgListener {
 
 	private StNode searchRedirect(Position position) {
 		hwLock.readLock().lock();
-		for (HWStNode node:hwlist) {
+		for (HWStNode node:gethwlist()) {
 			if(node.isInSegment(position)){
 				StNode response = node.getCarStNode();
 				hwLock.readLock().unlock();
@@ -337,7 +347,14 @@ public class HWNode implements MsgListener {
 		return null;
 	}
 
-	private void ack(Message m) {
+    private List<HWStNode> gethwlist() {
+        hwLock.readLock().lock();
+        List<HWStNode> response = hwlist;
+        hwLock.readLock().unlock();
+        return response;
+    }
+
+    private void ack(Message m) {
 
 		//Message msg = new Message(MsgType.ACK,getIp(),getPortCars(),m.getId());
 
@@ -345,9 +362,11 @@ public class HWNode implements MsgListener {
 	}
 
 	public List<Segment> getSegments() {
-        //TODO synchronize access to segments (and copy them?)
-		List<Segment> response= segments;
-		return response;
+
+        hwLock.readLock().lock();
+        List<Segment> response= segments;
+        hwLock.readLock().unlock();
+        return response;
 	}
 
     public void shutdown() {
