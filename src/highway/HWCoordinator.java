@@ -1,6 +1,5 @@
 package highway;
 
-import common.StNode;
 import common.Util;
 import network.*;
 import org.slf4j.Logger;
@@ -15,7 +14,7 @@ import java.util.List;
 public class HWCoordinator implements Messageable, MsgListener {
 
 	public static final String ip = "localhost";
-    public int tentativePort = 5007;
+	public int tentativePort = 9000;
 	private final static Logger logger = LoggerFactory.getLogger(HWCoordinator.class);
 	private final HWListManager hwlist;
 	private String id = "0";
@@ -48,14 +47,9 @@ public class HWCoordinator implements Messageable, MsgListener {
 	}
 
 	public void shutDown() {
-		//TODO
-		try {
-			msgHandler.close();
-			hwlist.shutDown();
-			Thread.sleep(3000); //sleep in case a message its being attended.
-		} catch (InterruptedException e) {
-			logger.error("error shutting down");
-		}
+		logger.info("Shutting down coordinator");
+		msgHandler.close();
+		hwlist.shutDown();
 	}
 
 	/**

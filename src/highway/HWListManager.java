@@ -1,14 +1,9 @@
 package highway;
 
-import common.StNode;
 import network.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,8 +34,10 @@ public class HWListManager {
 		timeoutScheduler.scheduleWithFixedDelay(() -> {
 			synchronized (list) {
 				for (HWStNode node : list) {
-					if (!sendAlive(node))
+					if (!sendAlive(node)) {
 						remove(node);
+						logger.error("NODE DOWN: " + node);
+					}
 				}
 			}
 		}, ALIVE_REFRESH_TIME, ALIVE_REFRESH_TIME, TimeUnit.MILLISECONDS);
@@ -50,28 +47,8 @@ public class HWListManager {
 	private boolean sendAlive(HWStNode node) {
 		Messageable dest = node.getStNode();
 		Message msg = new Message(MsgType.ALIVE, null, 0, null);
+		return MsgHandler.sendTCPMsg(dest, msg);
 
-		return MsgHandler.sendTCPMsg(dest,new Message(MsgType.ALIVE,null,0,null));
-
-
-		/*try (Socket socket = new Socket(dest.getIP(), dest.getPort())) {
-			ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-			oos.flush();
-			oos.writeObject(msg);
-			ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-			Message response = (Message) ois.readObject();
-			if (response.getType() == MsgType.ACK)
-				return true;
-			logger.error("Response to alive of wrong type");
-			return false;
-
-		} catch (IOException e) {m
-			logger.error("Node down: " + node);
-			return false;
-		} catch (ClassNotFoundException e) {
-			logger.error("Corrupt message received from" + node);
-			return false;
-		}*/
 	}
 
 
@@ -151,6 +128,12 @@ public class HWListManager {
 	}
 
 	public void shutDown() {
-		timeoutScheduler.shutdown();
+		try {
+			timeoutScheduler.shutdown();
+			timeoutScheduler.awaitTermination(2000, TimeUnit.MILLISECONDS);
+			timeoutScheduler.shutdownNow();
+		} catch (InterruptedException e) {
+			logger.error("interrupted while shutting down and awaiting termination of pending tasks");
+		}
 	}
 }

@@ -1,16 +1,11 @@
 <configuration>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <withJansi>true</withJansi>
+        <!--<withJansi>true</withJansi>-->
         <encoder>
             <!--<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>-->
             <pattern>%d{HH:mm:ss.SSS} [%thread] %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
         </encoder>
     </appender>
-
-    <!--<logger name="ar.edu.unlu.cursos" level="DEBUG"/>
-    <logger name="org.springframework.jdbc.core.JdbcTemplate" level="DEBUG"/>
-    <logger name="org.hibernate.SQL" level="DEBUG"/>
-    <logger name="org.hibernate.type.descriptor" level="TRACE"/>-->
     <appender name="MyCustomAppender" class="app.MyStaticOutputStreamAppender">
        <!-- <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>ERROR</level>
