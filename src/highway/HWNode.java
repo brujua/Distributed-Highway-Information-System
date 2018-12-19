@@ -199,6 +199,10 @@ public class HWNode implements MsgListener {
                             responseACK(m);
                             break;
                         }
+						case BROADCAST: {
+							broadcasthandle(m);
+							break;
+						}
                         default: {
                             logger.error("Received message of wrong type: " + m.getType().toString());
                         }
@@ -210,7 +214,11 @@ public class HWNode implements MsgListener {
             });//end task
     }
 
-    private void handleAlive(Message msg) {
+	private void broadcasthandle(Message m) {
+
+    }
+
+	private void handleAlive(Message msg) {
         logger.info("Alive received from coordinator");
 	}
 

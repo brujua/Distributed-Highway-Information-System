@@ -200,6 +200,16 @@ public class Car implements MsgListener, MotionObservable{
 		pulseScheduler.scheduleWithFixedDelay(pulseEmiter, 0, pulseRefreshTime, pRefreshTimeUnit);
 		return this;
 	}
+
+	public Car sendBroadcaste(){
+		for (CarStNode node:primaryMonitor.getList()) {
+
+			msgHandler.sendUDP(node.getStNode(),new Message(MsgType.BROADCAST,ip,port,new MT_Broadcast(5)));
+		}
+		return this;
+	}
+
+
 	
 	private void monitorFarCars() {
 		// TODO Auto-generated method stub
