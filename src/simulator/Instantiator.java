@@ -2,7 +2,6 @@ package simulator;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import common.StNode;
 import highway.HWCoordinator;
 import highway.HWNode;
 import highway.Segment;
@@ -61,11 +60,9 @@ public class Instantiator {
             if (coord_inst.isCreate_Coordinator()) {
                 coord = new HWCoordinator(coord_inst.getSegments(), coord_inst.getPort());
             }
-            ArrayList<StNode> posibleshwnodes = new ArrayList<>();
             for (HWNodeInstantiator n : nodes_inst) {
                 HWNode node = new HWNode();
                 hwnodes.add(node);
-                posibleshwnodes.add(node.getStNode());
             }
             //TODO not finished, better to do the config files for the nodes first, so that their initialisation its easier
 

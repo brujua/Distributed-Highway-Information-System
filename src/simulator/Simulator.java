@@ -8,19 +8,19 @@ import java.awt.image.BufferStrategy;
  */
 public class Simulator extends Canvas implements Runnable {
 
-	public static final int WIDTH = 640, HEIGHT = WIDTH / 12 * 9;
+    public static final int WIDTH = 1200, HEIGHT = WIDTH / 12 * 9;
 	private static final long serialVersionUID = 1L;
-	private static final double TICKS_PER_SECOND = 1;
+    private static final double TICKS_PER_SECOND = 30;
 	private Thread thread;
 	private boolean running = false;
 	private SimMainHandler handler;
 
 	public Simulator() {
 		handler = new SimMainHandler();
-		new Window(WIDTH, HEIGHT, "Highway", this);
-		handler.addObject(new CarSim("prueba", 0.0, 1.5, handler));
-		handler.addObject(new CarSim("prueba2", 50, 10, handler));
-	}
+        handler.addObject(new CarSim("prueba", 0.0, 0.5, handler));
+        handler.addObject(new CarSim("prueba2", 50, 1, handler));
+        new Window(WIDTH, HEIGHT, "Highway", this);
+    }
 
 	public static void main(String[] args) {
 		new Simulator();

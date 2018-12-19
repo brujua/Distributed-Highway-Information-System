@@ -224,6 +224,7 @@ public class MsgHandler implements MsgObservable{
 	 */
 	public void close() {
 		try {
+            listening = false;
 			threadService.shutdown();
 			threadService.awaitTermination(3200, TimeUnit.MILLISECONDS);
 			threadService.shutdownNow();
