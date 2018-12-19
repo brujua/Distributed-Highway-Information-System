@@ -47,12 +47,6 @@ public class Car implements MsgListener, MotionObservable{
 	private ScheduledExecutorService pulseScheduler = Executors.newSingleThreadScheduledExecutor();
 	private ExecutorService threadService = Executors.newCachedThreadPool();
 
-	public Car(Position position, double velocity, List<StNode> highwayNodes){
-        this(position, velocity);
-        this.possibleHWNodes = highwayNodes;
-
-    }
-
     public Car(Position position, double velocity) {
         id = UUID.randomUUID().toString();
         logger = LoggerFactory.getLogger(getName());
@@ -70,10 +64,21 @@ public class Car implements MsgListener, MotionObservable{
         pulseEmiter = new PulseEmiter(this, primaryMonitor, msgHandler, getCarStNode());
     }
 
+    public Car(Position position, double velocity, String name) {
+        this(position, velocity);
+        this.name = name;
+        this.logger = LoggerFactory.getLogger(name);
+    }
+
+    public Car(Position position, double velocity, List<StNode> highwayNodes) {
+        this(position, velocity);
+        this.possibleHWNodes = highwayNodes;
+
+    }
+
 	public Car(Position position, double velocity, List<StNode> highwayNodes, String name){
-		this(position,velocity,highwayNodes);
-		this.name = name;
-		this.logger = LoggerFactory.getLogger(name);
+        this(position, velocity, name);
+        this.possibleHWNodes = highwayNodes;
 	}
 
     /**
