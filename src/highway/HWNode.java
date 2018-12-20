@@ -228,8 +228,8 @@ public class HWNode implements MsgListener {
 				hwLock.readLock().lock();
 				for (HWStNode node:hwlist) {
 					if(!msg.getId().equals(node.getId()))
-						carMsgHandler.sendUDP(node,msg);
-				}
+                        carMsgHandler.sendUDP(node,new Message(MsgType.BROADCAST,ip,portHighway,broadcast.setHw()));
+                }
 				hwLock.readLock().unlock();
 			}
 			//send msg to all Cars if is a HW
@@ -237,7 +237,7 @@ public class HWNode implements MsgListener {
 				hwLock.readLock().lock();
 				for (CarStNode node:carMonitor.getList()) {
 					if(!msg.getId().equals(node.getId()))
-						carMsgHandler.sendUDP(node,msg);
+                        carMsgHandler.sendUDP(node,new Message(MsgType.BROADCAST,ip,portCars,broadcast.setHw()));
 				}
 				hwLock.readLock().unlock();
 			}

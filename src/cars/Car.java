@@ -1,6 +1,7 @@
 package cars;
 
 import common.*;
+import highway.HWStNode;
 import network.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,8 +36,9 @@ public class Car implements MsgListener, MotionObservable{
 	private Position position;
 	private double velocity;
     private ReentrantReadWriteLock positionLock = new ReentrantReadWriteLock();
+	private ReentrantReadWriteLock neighsLock = new ReentrantReadWriteLock();
 
-
+	private List<MT_Broadcast> broadcastMsgs ;
     private MsgHandler msgHandler;
     private List<StNode> possibleHWNodes;
 	private StNode selectedHWNode;
@@ -318,6 +320,35 @@ public class Car implements MsgListener, MotionObservable{
 		CarStNode car = (CarStNode) m.getData();
         updateNeigh(car);
         logger.info("Pulse received from node: " + car);
+	}
+
+	public void handleBroadcastMsg(Message msg) throws CorruptDataException {
+		if (msg.getType() != MsgType.UPDATE || !(msg.getData() instanceof MT_Broadcast)) {
+			throw new CorruptDataException();
+		}
+		MT_Broadcast broadcast = (MT_Broadcast) msg.getData();
+		if (!broadcastMsgs.contains(broadcast)){
+			neighsLock.writeLock().lock();
+			broadcastMsgs.add(broadcast);
+			neighsLock.writeLock().unlock();
+			//send msg to all HwNode if is a car
+			if(broadcast.isCar()){
+
+				neighsLock.readLock().lock();
+				for (CarStNode node:getNeighs()) {
+					if(!msg.getId().equals(node.getId()))
+						msgHandler.sendUDP(node,new Message(MsgType.BROADCAST,ip,port,broadcast.setCar()));
+				}
+				msgHandler.sendUDP(selectedHWNode,new Message(MsgType.BROADCAST,ip,port,broadcast.setCar()));
+				neighsLock.readLock().unlock();
+			}
+			//send msg to all Cars if is a HW
+
+		}
+			/*hwLock.writeLock().lock();
+				broadcastMsgs.add(broadcast);
+			hwLock.writeLock().unlock();*/
+
 	}
 
 	private boolean sendHello(StNode node, boolean isHWNode) throws CorruptDataException {

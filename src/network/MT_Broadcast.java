@@ -47,4 +47,14 @@ public class MT_Broadcast {
     public boolean isCar(){
         return car;
     }
+
+    public MT_Broadcast setCar(){
+        car=true;
+        return this;
+    }
+
+    public MT_Broadcast setHw(){
+        car=false;
+        return this;
+    }
 }
