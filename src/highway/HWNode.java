@@ -10,10 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.MissingResourceException;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -48,6 +45,8 @@ public class HWNode implements MsgListener {
 	private List<HWStNode> hwlist; //other highway nodes
 	//private final Object hwlistLock = new Object();
 	private CarMonitor carMonitor;
+
+	private List<MT_Broadcast> broadcastMsgs ;
 	private List<Segment> segments;
 
 	private Messageable coordinator;
@@ -214,9 +213,40 @@ public class HWNode implements MsgListener {
             });//end task
     }
 
-	private void broadcasthandle(Message m) {
+	private void broadcasthandle(Message msg) throws CorruptDataException {
+		if (msg.getType() != MsgType.UPDATE || !(msg.getData() instanceof MT_Broadcast)) {
+			throw new CorruptDataException();
+		}
+		MT_Broadcast broadcast = (MT_Broadcast) msg.getData();
+		if (!broadcastMsgs.contains(broadcast)){
+			hwLock.writeLock().lock();
+			broadcastMsgs.add(broadcast);
+			hwLock.writeLock().unlock();
+			//send msg to all HwNode if is a car
+			if(broadcast.isCar()){
 
-    }
+				hwLock.readLock().lock();
+				for (HWStNode node:hwlist) {
+					if(!msg.getId().equals(node.getId()))
+						carMsgHandler.sendUDP(node,msg);
+				}
+				hwLock.readLock().unlock();
+			}
+			//send msg to all Cars if is a HW
+			if(broadcast.isHw()){
+				hwLock.readLock().lock();
+				for (CarStNode node:carMonitor.getList()) {
+					if(!msg.getId().equals(node.getId()))
+						carMsgHandler.sendUDP(node,msg);
+				}
+				hwLock.readLock().unlock();
+			}
+		}
+			/*hwLock.writeLock().lock();
+				broadcastMsgs.add(broadcast);
+			hwLock.writeLock().unlock();*/
+
+	}
 
 	private void handleAlive(Message msg) {
         logger.info("Alive received from coordinator");
