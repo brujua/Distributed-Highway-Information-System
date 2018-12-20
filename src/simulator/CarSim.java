@@ -17,7 +17,7 @@ import java.io.IOException;
 public class CarSim implements SimObject {
 
     public static final Logger logger = LoggerFactory.getLogger(CarSim.class);
-	public static final double Y_POS = Simulator.HEIGHT * 0.7;
+    public static final double Y_POS = 92;
     public static final String IMG_FILE = "resources/car2.png";
     private static Image img;
 	private Car car;
@@ -34,6 +34,7 @@ public class CarSim implements SimObject {
     private void initImage() {
         try {
             BufferedImage imgAux = ImageIO.read(new File(IMG_FILE));
+            //the image has a 2:1 ratio
             img = imgAux.getScaledInstance(60, 30, Image.SCALE_SMOOTH);
             logger.info("Img initialized and scalated");
         } catch (IOException e) {

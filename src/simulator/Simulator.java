@@ -8,7 +8,7 @@ import java.awt.image.BufferStrategy;
  */
 public class Simulator extends Canvas implements Runnable {
 
-    public static final int WIDTH = 1200, HEIGHT = WIDTH / 12 * 9;
+	public static final int WIDTH = 1200, HEIGHT = 600;
 	private static final long serialVersionUID = 1L;
     private static final double TICKS_PER_SECOND = 30;
 	private Thread thread;
@@ -23,7 +23,7 @@ public class Simulator extends Canvas implements Runnable {
     }
 
 	public static void main(String[] args) {
-		new Simulator();
+		new Simulator().start();
 	}
 
 	public synchronized void start() {
@@ -81,6 +81,11 @@ public class Simulator extends Canvas implements Runnable {
 
 		graphics.setColor(Color.black);
 		graphics.fillRect(0, 0, WIDTH, HEIGHT);
+		graphics.setColor(Color.green);
+		//Draw the road
+		graphics.drawLine(0, 15, WIDTH, 15);
+		graphics.drawLine(0, 200, WIDTH, 200);
+		//render all the objects
 		handler.render(graphics);
 
 		graphics.dispose();
