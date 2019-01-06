@@ -66,4 +66,9 @@ public class CarSim implements SimObject {
         */
 
 	}
+
+    @Override
+    public void setSimModeOn(boolean on) {
+
+    }
 }

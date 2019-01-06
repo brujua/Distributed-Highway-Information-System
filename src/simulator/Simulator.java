@@ -16,10 +16,12 @@ public class Simulator extends Canvas implements Runnable {
 	private SimMainHandler handler;
 
 	public Simulator() {
-		handler = new SimMainHandler();
+        handler = new SimMainHandler(WIDTH, HEIGHT);
+        this.addKeyListener(handler);
         handler.addObject(new CarSim("prueba", 0.0, 0.5, handler));
         handler.addObject(new CarSim("prueba2", 50, 1, handler));
         new Window(WIDTH, HEIGHT, "Highway", this);
+
     }
 
 	public static void main(String[] args) {
@@ -81,11 +83,8 @@ public class Simulator extends Canvas implements Runnable {
 
 		graphics.setColor(Color.black);
 		graphics.fillRect(0, 0, WIDTH, HEIGHT);
-		graphics.setColor(Color.green);
-		//Draw the road
-		graphics.drawLine(0, 15, WIDTH, 15);
-		graphics.drawLine(0, 200, WIDTH, 200);
-		//render all the objects
+
+        //render all the objects
 		handler.render(graphics);
 
 		graphics.dispose();

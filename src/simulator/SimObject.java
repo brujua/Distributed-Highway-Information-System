@@ -9,4 +9,6 @@ public interface SimObject {
 	void tick();
 
 	void render(Graphics g);
+
+    void setSimModeOn(boolean on);
 }
