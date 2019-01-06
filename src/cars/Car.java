@@ -81,6 +81,22 @@ public class Car implements MsgListener, MotionObservable{
         this.possibleHWNodes = highwayNodes;
 	}
 
+	/**
+	 * This method reads the configuration file for the cars, named 'config-cars.properties' under resources.
+	 * From there, extracts the list of possible locations (ip and range of ports) for HWNodes
+	 *
+	 * @return the list of possible hwnodes
+	 */
+	private List<StNode> readConfig() {
+		List<StNode> nodes = new ArrayList<>();
+		try {
+			nodes = Util.readNodeConfigFile(CONFIG_NODES_PATH);
+		} catch (MissingResourceException e) {
+			logger.error("Config file for car corrupted: " + e.getMessage());
+		}
+		return nodes;
+	}
+
     /**
      * @return this (Fluid Syntax)
      * @throws NoPeersFoundException if could not register in any HWNode, there is no HWNode, or the config file is corrupted.
@@ -95,29 +111,13 @@ public class Car implements MsgListener, MotionObservable{
 				logger.info("Intentando registro en nodo: " + highwNode);
 
 				registered = tryRegister(highwNode);
-			} else 
-				throw new NoPeersFoundException(); 
+			} else
+				throw new NoPeersFoundException();
 		}
 		logger.info("Registered in node:" + selectedHWNode);
 		return this;
 	}
 
-
-    /**
-     * This method reads the configuration file for the cars, named 'config-cars.properties' under resources.
-     * From there, extracts the list of possible locations (ip and range of ports) for HWNodes
-     *
-     * @return the list of possible hwnodes
-     */
-    private List<StNode> readConfig() {
-        List<StNode> nodes = new ArrayList<>();
-        try {
-            nodes = Util.readNodeConfigFile(CONFIG_NODES_PATH);
-        } catch (MissingResourceException e) {
-            logger.error("Config file for car corrupted: " + e.getMessage());
-        }
-        return nodes;
-    }
 
     public Car listenForMsgs() {
         port = Util.getAvailablePort(tentativePort);

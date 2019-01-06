@@ -36,9 +36,9 @@ public class CarSim implements SimObject {
             BufferedImage imgAux = ImageIO.read(new File(IMG_FILE));
             //the image has a 2:1 ratio
             img = imgAux.getScaledInstance(60, 30, Image.SCALE_SMOOTH);
-            logger.info("Img initialized and scalated");
+            logger.info("Img initialized and scaled");
         } catch (IOException e) {
-            logger.error("Coudnt initialize image: " + e.getMessage());
+            logger.error("Could not initialize image: " + e.getMessage());
             //create a default img
             BufferedImage image = new BufferedImage(50, 50, BufferedImage.TYPE_INT_RGB);
             Graphics2D g = image.createGraphics();
