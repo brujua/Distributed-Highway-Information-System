@@ -10,15 +10,17 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Random;
 
 /**
  * Class responsible to wrap a car in order to simulate it and draw it on the screen
  */
 public class SimCar implements SimObject {
 
+    public static final String IMG_FILE = "resources/car3.png";
     public static final Logger logger = LoggerFactory.getLogger(SimCar.class);
-    public static final double Y_POS = 92;
-    public static final String IMG_FILE = "resources/car2.png";
+    public static double[] y_posiciones = {30, 92, 135};
+    private double y_pos;
     private static Image img;
 	private Car car;
 	private SimMainHandler handler;
@@ -27,7 +29,9 @@ public class SimCar implements SimObject {
         if (img == null)
             initImage();
 		this.handler = handler;
-        car = new Car(new Position(xpos, Y_POS), velocity, name);
+        int yPosIndex = new Random().nextInt(y_posiciones.length);
+        y_pos = y_posiciones[yPosIndex];
+        car = new Car(new Position(xpos, y_pos), velocity, name);
 
     }
 

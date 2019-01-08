@@ -8,12 +8,15 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class SimMainHandler implements SimController, KeyListener {
 
     private static final int hudStart = 250;
     private final HUD hud;
     private ScheduledExecutorService intantiatorScheduler = Executors.newSingleThreadScheduledExecutor();
+    private ReentrantReadWriteLock objectsLock = new ReentrantReadWriteLock();
+
 
 
 
@@ -25,17 +28,20 @@ public class SimMainHandler implements SimController, KeyListener {
     }
 
 	public void tick() {
+        objectsLock.readLock().lock();
 		for (SimObject obj : objects) {
 			obj.tick();
 		}
-	}
+        objectsLock.readLock().unlock();
+    }
 
 	public void render(Graphics graphics) {
         hud.render(graphics);
+        objectsLock.readLock().lock();
 		for (SimObject obj : objects) {
 			obj.render(graphics);
 		}
-
+        objectsLock.readLock().unlock();
 	}
 
 	public void addObject(SimObject obj) {
@@ -51,7 +57,10 @@ public class SimMainHandler implements SimController, KeyListener {
     public void addCar(String name, int startPosition, double velocity, int delay) {
         intantiatorScheduler.schedule(() -> {
             SimCar car = new SimCar(name, startPosition, velocity, this);
+            objectsLock.writeLock().lock();
             objects.add(car);
+            objectsLock.writeLock().unlock();
+
         }, delay, TimeUnit.SECONDS);
     }
 

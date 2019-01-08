@@ -3,6 +3,7 @@ package simulator;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.Random;
 
 public class HUD implements SimObject, KeyListener {
 
@@ -18,6 +19,7 @@ public class HUD implements SimObject, KeyListener {
     private int carStartPosition = 0;
     private SimController simController;
     private boolean simModeOn;
+    private int nameCounter = 0;
 
     public HUD(SimController simController, int width, int height, int heightstart) {
         this.simController = simController;
@@ -97,7 +99,7 @@ public class HUD implements SimObject, KeyListener {
                 break;
             }
             case KeyEvent.VK_C: {
-                //simController.addCar(carStartPosition, name);
+                simController.addCar("Car" + nameCounter++, carStartPosition, new Random().nextDouble() * 4, 0);
                 break;
             }
             case KeyEvent.VK_N: {
