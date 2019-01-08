@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Car-1",
+    "velocity": 4,
+    "startPosition": 0,
+    "delay": 0
+  },
+  {
+    "name": "Car-2",
+    "velocity": 1,
+    "startPosition": 40,
+    "delay": 5
+  },
+  {
+    "name": "Car-3",
+    "velocity": 10,
+    "startPosition": 100,
+    "delay": 3
+  },
+  {
+    "name": "Car-4",
+    "velocity": 30,
+    "startPosition": 0,
+    "delay": 5
+  }
+]

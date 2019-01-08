@@ -97,11 +97,11 @@ public class HUD implements SimObject, KeyListener {
                 break;
             }
             case KeyEvent.VK_C: {
-                simController.addCar(carStartPosition);
+                //simController.addCar(carStartPosition, name);
                 break;
             }
             case KeyEvent.VK_N: {
-                simController.addHWNode();
+                //simController.addHWNode();
                 break;
             }
             case KeyEvent.VK_S: {

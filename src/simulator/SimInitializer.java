@@ -3,30 +3,26 @@ package simulator;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import highway.HWCoordinator;
-import highway.HWNode;
 import highway.Segment;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
-public class Instantiator {
+/**
+ * Class responsible of initialize the simulation according to the json config files,
+ * utilizing the SimController interface
+ */
+public class SimInitializer {
 
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final String filepath_coord = "resources/simconfig-coordinator.json";
     private static final String filepath_hwnodes = "resources/simconfig-hwnodes.json";
     private static final String filepath_cars = "resources/simconfig-cars.json";
-    private SimMainHandler handler;
+    private SimController controller;
 
-
-
-    /*private Instantiator(SimMainHandler handler){
-        this.handler = handler;
-    }*/
-
-    public static void main(String[] args) {
-        new Instantiator().instantiate();
+    public SimInitializer(SimController controller) {
+        this.controller = controller;
     }
 
     private CoordInstantiator readCoord() throws IOException {
@@ -36,72 +32,47 @@ public class Instantiator {
 
     private List<HWNodeInstantiator> readHWnodes() throws IOException {
         File file = new File(filepath_hwnodes);
-        return mapper.readValue(file, new TypeReference<HWNodeInstantiator>() {
+        return mapper.readValue(file, new TypeReference<List<HWNodeInstantiator>>() {
         });
     }
 
     private List<CarInstantiator> readCars() throws IOException {
         File file = new File(filepath_cars);
-        return mapper.readValue(file, new TypeReference<CarInstantiator>() {
+        return mapper.readValue(file, new TypeReference<List<CarInstantiator>>() {
         });
     }
 
-    public void instantiate() {
+    public void initialize() {
         try {
             CoordInstantiator coord_inst = readCoord();
             List<HWNodeInstantiator> nodes_inst = readHWnodes();
             List<CarInstantiator> cars_inst = readCars();
 
             HWCoordinator coord = null;
-            //List<HWNodeSim> hwnodes;
-            List<HWNode> hwnodes = new ArrayList<>();
-            List<CarSim> car;
-
             if (coord_inst.isCreate_Coordinator()) {
                 coord = new HWCoordinator(coord_inst.getSegments(), coord_inst.getPort());
+                coord.listenForMsgs();
             }
-            for (HWNodeInstantiator n : nodes_inst) {
-                HWNode node = new HWNode();
-                hwnodes.add(node);
+            for (HWNodeInstantiator node : nodes_inst) {
+                controller.addHWNode(node.getName(), node.getDelay());
             }
-            //TODO not finished, better to do the config files for the nodes first, so that their initialisation its easier
-
+            for (CarInstantiator car : cars_inst) {
+                controller.addCar(car.getName(), car.getStartPosition(), car.getVelocity(), car.getDelay());
+            }
 
         } catch (IOException e) {
             e.printStackTrace();
         }
-       /* List<Segment> segments;
-        CoordInstantiator coor = new CoordInstantiator();
-        coor.setCreate_Coordinator(true);
-        coor.setPort(9000);
-        segments = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
-            double begin = i * 50;
-            double end = begin + 50;
-            segments.add(new Segment(begin, end, 0, 100, i));
-        }
-        coor.setSegments(segments);
-        try{
-            File file = new File(filepath);
-            //Ident output so it is human readable and editable
-            mapper.enable(SerializationFeature.INDENT_OUTPUT);
-            mapper.writeValue(file,coor);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-       /*try{
-           File file = new File(filepath);
-           segments = mapper.readValue(file,new TypeReference<List<Segment>>(){});
-           System.out.println(segments);
-
-       } catch (IOException e) {
-           e.printStackTrace();
-       }*/
     }
 
-    private class CarInstantiator {
+    /*
+     * INTERNAL REPRESENTATION OF THE NEEDED PARAMETERS FOR INITIALIZATION
+     *
+     * */
+
+    private static class CarInstantiator {
         private String name;
-        private int x_position;
+        private int startPosition;
         private double velocity;
         private int delay;
 
@@ -113,12 +84,12 @@ public class Instantiator {
             this.name = name;
         }
 
-        public int getX_position() {
-            return x_position;
+        public int getStartPosition() {
+            return startPosition;
         }
 
-        public void setX_position(int x_position) {
-            this.x_position = x_position;
+        public void setStartPosition(int startPosition) {
+            this.startPosition = startPosition;
         }
 
         public double getVelocity() {
@@ -128,9 +99,17 @@ public class Instantiator {
         public void setVelocity(double velocity) {
             this.velocity = velocity;
         }
+
+        public int getDelay() {
+            return delay;
+        }
+
+        public void setDelay(int delay) {
+            this.delay = delay;
+        }
     }
 
-    private class CoordInstantiator {
+    private static class CoordInstantiator {
         private boolean create_Coordinator;
         private int port;
         private List<Segment> segments;
@@ -160,24 +139,24 @@ public class Instantiator {
         }
     }
 
-    private class HWNodeInstantiator {
-        private String ip;
-        private int port;
+    private static class HWNodeInstantiator {
+        private String name;
+        private int delay;
 
-        public String getIp() {
-            return ip;
+        public String getName() {
+            return name;
         }
 
-        public void setIp(String ip) {
-            this.ip = ip;
+        public void setName(String name) {
+            this.name = name;
         }
 
-        public int getPort() {
-            return port;
+        public int getDelay() {
+            return delay;
         }
 
-        public void setPort(int port) {
-            this.port = port;
+        public void setDelay(int delay) {
+            this.delay = delay;
         }
     }
 }

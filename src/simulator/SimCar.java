@@ -14,16 +14,16 @@ import java.io.IOException;
 /**
  * Class responsible to wrap a car in order to simulate it and draw it on the screen
  */
-public class CarSim implements SimObject {
+public class SimCar implements SimObject {
 
-    public static final Logger logger = LoggerFactory.getLogger(CarSim.class);
+    public static final Logger logger = LoggerFactory.getLogger(SimCar.class);
     public static final double Y_POS = 92;
     public static final String IMG_FILE = "resources/car2.png";
     private static Image img;
 	private Car car;
 	private SimMainHandler handler;
 
-	public CarSim(String name, double xpos, double velocity, SimMainHandler handler) {
+    public SimCar(String name, double xpos, double velocity, SimMainHandler handler) {
         if (img == null)
             initImage();
 		this.handler = handler;

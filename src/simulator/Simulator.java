@@ -18,8 +18,8 @@ public class Simulator extends Canvas implements Runnable {
 	public Simulator() {
         handler = new SimMainHandler(WIDTH, HEIGHT);
         this.addKeyListener(handler);
-        handler.addObject(new CarSim("prueba", 0.0, 0.5, handler));
-        handler.addObject(new CarSim("prueba2", 50, 1, handler));
+       /* handler.addObject(new SimCar("prueba", 0.0, 0.5, handler));
+        handler.addObject(new SimCar("prueba2", 50, 1, handler));*/
         new Window(WIDTH, HEIGHT, "Highway", this);
 
     }
