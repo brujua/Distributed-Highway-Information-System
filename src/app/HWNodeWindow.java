@@ -2,7 +2,6 @@ package app;
 
 import common.Position;
 import highway.HWNode;
-/*
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
@@ -49,7 +48,7 @@ public class HWNodeWindow {
 	}
 
 	// Use to send logger text into the ui textArea
-	private static class TextAreaOutputStream extends OutputStream {
+	public static class TextAreaOutputStream extends OutputStream {
 
 		private TextArea textArea;
 
@@ -63,4 +62,3 @@ public class HWNodeWindow {
 		}
 	}
 }
-*/

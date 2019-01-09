@@ -1,5 +1,6 @@
 package simulator;
 
+
 import java.awt.*;
 import java.awt.image.BufferStrategy;
 
@@ -22,7 +23,8 @@ public class Simulator extends Canvas implements Runnable {
         handler.addObject(new SimCar("prueba2", 50, 1, handler));*/
         new Window(WIDTH, HEIGHT, "Highway", this);
 
-    }
+
+	}
 
 	public static void main(String[] args) {
 		new Simulator().start();

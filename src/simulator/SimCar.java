@@ -31,7 +31,13 @@ public class SimCar implements SimObject {
 		this.handler = handler;
         int yPosIndex = new Random().nextInt(y_posiciones.length);
         y_pos = y_posiciones[yPosIndex];
-        car = new Car(new Position(xpos, y_pos), velocity, name);
+       /* try {
+            car = new Car(new Position(xpos, y_pos), velocity, name).listenForMsgs().registerInNetwork().emitPulses();
+        } catch (NoPeersFoundException e) {
+            logger.error("Peer Discovery failed");
+        }*/
+        car = new Car(new Position(xpos, y_pos), velocity, name); 
+
 
     }
 
@@ -40,7 +46,7 @@ public class SimCar implements SimObject {
             BufferedImage imgAux = ImageIO.read(new File(IMG_FILE));
             //the image has a 2:1 ratio
             img = imgAux.getScaledInstance(60, 30, Image.SCALE_SMOOTH);
-            logger.info("Img initialized and scaled");
+            logger.info("Car Img initialized and scaled");
         } catch (IOException e) {
             logger.error("Could not initialize image: " + e.getMessage());
             //create a default img
@@ -65,9 +71,6 @@ public class SimCar implements SimObject {
 	public void render(Graphics g) {
 		Position pos = car.getPulse().getPosition();
         g.drawImage(img, pos.getCordx().intValue(), pos.getCordy().intValue(), null);
-		/*g.setColor(Color.green);
-		g.fillRect((int) Math.round(pos.getCordx()), (int) Math.round(pos.getCordy()), 20, 20);
-        */
 
 	}
 
