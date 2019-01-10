@@ -33,6 +33,7 @@ public class HWNode implements MsgListener {
 
 	private String id;
 	private StNode stNode;
+    private String name = null;
 	private int portCars;
 	private int portHighway;
     private List<? extends Messageable> posibleCoordinator;
@@ -67,9 +68,9 @@ public class HWNode implements MsgListener {
         coordinator = null;
     }
 
-    public HWNode(List<Messageable> possibleCoords) {
+    public HWNode(String name) {
         this();
-        this.posibleCoordinator = possibleCoords;
+        this.name = name;
     }
 
     /**
@@ -104,7 +105,7 @@ public class HWNode implements MsgListener {
 	}
 
 	private String getName() {
-		return "HW"+ id.substring(0,5);
+        return name != null ? name : "HW" + id.substring(0, 5);
 	}
 
 	public HWNode registerInNetwork() {
