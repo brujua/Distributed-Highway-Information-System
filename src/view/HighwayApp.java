@@ -28,7 +28,7 @@ public class HighwayApp extends Application {
     private Stage window;
     private Canvas simCanvas = null;
     private Canvas singleViewCanvas = null;
-    private MainHandler simController;
+    private MainController simController;
     private HWController singleViewController;
 
     public static void main(String[] args) {
@@ -53,7 +53,7 @@ public class HighwayApp extends Application {
         GridPane centerGridLayout = new GridPane();
         centerGridLayout.setVgap(10);
 
-        simController = new MainHandler();
+        simController = new MainController();
         SimInitializer simInitializer = new SimInitializer(simController);
         simInitializer.initialize();
         if (simInitializer.isSimModeOn()) {
@@ -67,6 +67,7 @@ public class HighwayApp extends Application {
         AnimationTimer simLoop = new SimLoop();
         window.show();
         simLoop.start();
+        simController.start();
     }
 
     private void tick() {
@@ -116,10 +117,11 @@ public class HighwayApp extends Application {
             accumulatedTime += secondsElapsedCapped;
             previousTime = currentTime;
 
-            while (accumulatedTime >= timeStep) {
+            /*while (accumulatedTime >= timeStep) {
                 tick();
                 accumulatedTime -= timeStep;
-            }
+            }*/
+            tick();
             render();
         }
     }

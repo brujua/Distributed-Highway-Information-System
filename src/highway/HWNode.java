@@ -284,13 +284,14 @@ public class HWNode implements MsgListener {
 
 	private boolean isInSegments(Position pos) {
 		hwLock.readLock().lock();
-		for (Segment seg:segments) {
-			if(seg.contains(pos)){
-				hwLock.readLock().unlock();
-				return true;
-			}
-		}
-
+        if (segments != null) {
+            for (Segment seg : segments) {
+                if (seg.contains(pos)) {
+                    hwLock.readLock().unlock();
+                    return true;
+                }
+            }
+        }
 		hwLock.readLock().unlock();
 		return false;
 	}
@@ -327,13 +328,15 @@ public class HWNode implements MsgListener {
 
 	private StNode searchRedirect(Position position) {
 		hwLock.readLock().lock();
-		for (HWStNode node:hwlist) {
-			if(node.isInSegment(position)){
-				StNode response = node.getCarStNode();
-				hwLock.readLock().unlock();
-				return response;
-			}
-		}
+        if (hwlist != null) {
+            for (HWStNode node : hwlist) {
+                if (node.isInSegment(position)) {
+                    StNode response = node.getCarStNode();
+                    hwLock.readLock().unlock();
+                    return response;
+                }
+            }
+        }
 		hwLock.readLock().unlock();
 		return null;
 	}
@@ -357,5 +360,9 @@ public class HWNode implements MsgListener {
         carMonitor.shutdown();
         carMsgHandler.close();
         hwMsgHandler.close();
+    }
+
+    public String getId() {
+        return id;
     }
 }

@@ -68,4 +68,12 @@ public class DrawableCar implements DrawableObject {
             logger.error("Could not initialize image: " + e.getMessage());
         }
     }
+
+    public void start() {
+        /*try {
+            car.listenForMsgs().registerInNetwork().emitPulses();
+        } catch (NoPeersFoundException e) {
+            logger.error(car.getName() + "Could not register in the network");
+        }*/
+    }
 }

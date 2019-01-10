@@ -62,7 +62,7 @@ public class SimInitializer {
             new HWCoordinator(config.getSegments()).listenForMsgs();
 
             for (HWNodeInstantiator node : nodes_inst) {
-                controller.addHWNode(new DrawableHWNode(), node.getDelay());
+                controller.addHWNode(new DrawableHWNode(node.getName()), node.getDelay());
             }
             for (CarInstantiator car : cars_inst) {
                 controller.addCar(new DrawableCar(car.getName(), car.getStartPosition(), car.getVelocity()), car.getDelay());
