@@ -1,9 +1,11 @@
-package simulator;
+package view;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import highway.HWCoordinator;
 import highway.Segment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,23 +13,26 @@ import java.util.List;
 
 /**
  * Class responsible of initialize the simulation according to the json config files,
- * utilizing the SimController interface
+ * utilizing the HWController interface
  */
 public class SimInitializer {
 
+    private static final Logger logger = LoggerFactory.getLogger(SimInitializer.class);
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static final String filepath_coord = "resources/simconfig-coordinator.json";
+    private static final String filepath_coord = "resources/simconfig.json";
     private static final String filepath_hwnodes = "resources/simconfig-hwnodes.json";
     private static final String filepath_cars = "resources/simconfig-cars.json";
-    private SimController controller;
+    private HWController controller;
+    private boolean simModeOn;
 
-    public SimInitializer(SimController controller) {
+    public SimInitializer(HWController controller) {
         this.controller = controller;
+        simModeOn = false;
     }
 
-    private CoordInstantiator readCoord() throws IOException {
+    private Config readConfig() throws IOException {
         File file = new File(filepath_coord);
-        return mapper.readValue(file, CoordInstantiator.class);
+        return mapper.readValue(file, Config.class);
     }
 
     private List<HWNodeInstantiator> readHWnodes() throws IOException {
@@ -44,25 +49,32 @@ public class SimInitializer {
 
     public void initialize() {
         try {
-            CoordInstantiator coord_inst = readCoord();
-            List<HWNodeInstantiator> nodes_inst = readHWnodes();
-            List<CarInstantiator> cars_inst = readCars();
+            Config config = readConfig();
+            simModeOn = config.isSimulation_mode_on();
 
-            HWCoordinator coord = null;
-            if (coord_inst.isCreate_Coordinator()) {
-                coord = new HWCoordinator(coord_inst.getSegments(), coord_inst.getPort());
-                coord.listenForMsgs();
+            if (!simModeOn) {
+                logger.info("Simulation Mode its OFF");
+                return;
             }
+            List<CarInstantiator> cars_inst = readCars();
+            List<HWNodeInstantiator> nodes_inst = readHWnodes();
+
+            new HWCoordinator(config.getSegments()).listenForMsgs();
+
             for (HWNodeInstantiator node : nodes_inst) {
-                controller.addHWNode(node.getName(), node.getDelay());
+                controller.addHWNode(new DrawableHWNode(), node.getDelay());
             }
             for (CarInstantiator car : cars_inst) {
-                controller.addCar(car.getName(), car.getStartPosition(), car.getVelocity(), car.getDelay());
+                controller.addCar(new DrawableCar(car.getName(), car.getStartPosition(), car.getVelocity()), car.getDelay());
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Simulation Config files are corrupt: " + e.getMessage());
         }
+    }
+
+    public boolean isSimModeOn() {
+        return simModeOn;
     }
 
     /*
@@ -109,9 +121,8 @@ public class SimInitializer {
         }
     }
 
-    private static class CoordInstantiator {
-        private boolean create_Coordinator;
-        private int port;
+    private static class Config {
+        private boolean simulation_mode_on;
         private List<Segment> segments;
 
         public List<Segment> getSegments() {
@@ -122,20 +133,12 @@ public class SimInitializer {
             this.segments = segments;
         }
 
-        public int getPort() {
-            return port;
+        public boolean isSimulation_mode_on() {
+            return simulation_mode_on;
         }
 
-        public void setPort(int port) {
-            this.port = port;
-        }
-
-        public boolean isCreate_Coordinator() {
-            return create_Coordinator;
-        }
-
-        public void setCreate_Coordinator(boolean create_Coordinator) {
-            this.create_Coordinator = create_Coordinator;
+        public void setSimulation_mode_on(boolean simulation_mode_on) {
+            this.simulation_mode_on = simulation_mode_on;
         }
     }
 
