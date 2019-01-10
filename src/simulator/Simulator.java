@@ -1,5 +1,6 @@
 package simulator;
 
+
 import java.awt.*;
 import java.awt.image.BufferStrategy;
 
@@ -8,22 +9,25 @@ import java.awt.image.BufferStrategy;
  */
 public class Simulator extends Canvas implements Runnable {
 
-	public static final int WIDTH = 640, HEIGHT = WIDTH / 12 * 9;
+	public static final int WIDTH = 1200, HEIGHT = 600;
 	private static final long serialVersionUID = 1L;
-	private static final double TICKS_PER_SECOND = 1;
+    private static final double TICKS_PER_SECOND = 30;
 	private Thread thread;
 	private boolean running = false;
 	private SimMainHandler handler;
 
 	public Simulator() {
-		handler = new SimMainHandler();
-		new Window(WIDTH, HEIGHT, "Highway", this);
-		handler.addObject(new CarSim("prueba", 0.0, 1.5, handler));
-		handler.addObject(new CarSim("prueba2", 50, 10, handler));
+        handler = new SimMainHandler(WIDTH, HEIGHT);
+        this.addKeyListener(handler);
+       /* handler.addObject(new SimCar("prueba", 0.0, 0.5, handler));
+        handler.addObject(new SimCar("prueba2", 50, 1, handler));*/
+        new Window(WIDTH, HEIGHT, "Highway", this);
+
+
 	}
 
 	public static void main(String[] args) {
-		new Simulator();
+		new Simulator().start();
 	}
 
 	public synchronized void start() {
@@ -81,6 +85,8 @@ public class Simulator extends Canvas implements Runnable {
 
 		graphics.setColor(Color.black);
 		graphics.fillRect(0, 0, WIDTH, HEIGHT);
+
+        //render all the objects
 		handler.render(graphics);
 
 		graphics.dispose();

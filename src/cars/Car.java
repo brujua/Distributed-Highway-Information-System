@@ -50,12 +50,6 @@ public class Car implements MsgListener, MotionObservable{
 	private ScheduledExecutorService pulseScheduler = Executors.newSingleThreadScheduledExecutor();
 	private ExecutorService threadService = Executors.newCachedThreadPool();
 
-	public Car(Position position, double velocity, List<StNode> highwayNodes){
-        this(position, velocity);
-        this.possibleHWNodes = highwayNodes;
-
-    }
-
     public Car(Position position, double velocity) {
         id = UUID.randomUUID().toString();
         logger = LoggerFactory.getLogger(getName());
@@ -74,10 +68,37 @@ public class Car implements MsgListener, MotionObservable{
 
     }
 
+    public Car(Position position, double velocity, String name) {
+        this(position, velocity);
+        this.name = name;
+        this.logger = LoggerFactory.getLogger(name);
+    }
+
+    public Car(Position position, double velocity, List<StNode> highwayNodes) {
+        this(position, velocity);
+        this.possibleHWNodes = highwayNodes;
+
+    }
+
 	public Car(Position position, double velocity, List<StNode> highwayNodes, String name){
-		this(position,velocity,highwayNodes);
-		this.name = name;
-		this.logger = LoggerFactory.getLogger(name);
+        this(position, velocity, name);
+        this.possibleHWNodes = highwayNodes;
+	}
+
+	/**
+	 * This method reads the configuration file for the cars, named 'config-cars.properties' under resources.
+	 * From there, extracts the list of possible locations (ip and range of ports) for HWNodes
+	 *
+	 * @return the list of possible hwnodes
+	 */
+	private List<StNode> readConfig() {
+		List<StNode> nodes = new ArrayList<>();
+		try {
+			nodes = Util.readNodeConfigFile(CONFIG_NODES_PATH);
+		} catch (MissingResourceException e) {
+			logger.error("Config file for car corrupted: " + e.getMessage());
+		}
+		return nodes;
 	}
 
     /**
@@ -94,29 +115,13 @@ public class Car implements MsgListener, MotionObservable{
 				logger.info("Intentando registro en nodo: " + highwNode);
 
 				registered = tryRegister(highwNode);
-			} else 
-				throw new NoPeersFoundException(); 
+			} else
+				throw new NoPeersFoundException();
 		}
 		logger.info("Registered in node:" + selectedHWNode);
 		return this;
 	}
 
-
-    /**
-     * This method reads the configuration file for the cars, named 'config-cars.properties' under resources.
-     * From there, extracts the list of possible locations (ip and range of ports) for HWNodes
-     *
-     * @return the list of possible hwnodes
-     */
-    private List<StNode> readConfig() {
-        List<StNode> nodes = new ArrayList<>();
-        try {
-            nodes = Util.readNodeConfigFile(CONFIG_NODES_PATH);
-        } catch (MissingResourceException e) {
-            logger.error("Config file for car corrupted: " + e.getMessage());
-        }
-        return nodes;
-    }
 
     public Car listenForMsgs() {
         port = Util.getAvailablePort(tentativePort);

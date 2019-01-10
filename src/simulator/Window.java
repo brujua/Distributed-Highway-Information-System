@@ -14,7 +14,7 @@ public class Window extends Canvas {
 	private int height;
 	private JFrame frame;
 
-	public Window(int width, int height, String title, Simulator simulator) {
+	public Window(int width, int height, String title, Component component) {
 		super();
 		this.width = width;
 		this.height = height;
@@ -25,9 +25,8 @@ public class Window extends Canvas {
 
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setResizable(false);
-		frame.add(simulator);
+		frame.add(component);
 		frame.setVisible(true);
-		simulator.start();
 
 	}
 }

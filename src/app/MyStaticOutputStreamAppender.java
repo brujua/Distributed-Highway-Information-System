@@ -3,7 +3,6 @@ package app;
 import ch.qos.logback.core.OutputStreamAppender;
 
 import java.io.FilterOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 
 public class MyStaticOutputStreamAppender<E> extends OutputStreamAppender<E> {
@@ -21,7 +20,7 @@ public class MyStaticOutputStreamAppender<E> extends OutputStreamAppender<E> {
 		DELEGATING_OUTPUT_STREAM.setOutputStream(outputStream);
 	}
 
-	private static class DelegatingOutputStream extends FilterOutputStream {
+	public static class DelegatingOutputStream extends FilterOutputStream {
 
 		/**
 		 * Creates a delegating outputstream with a NO-OP delegate
@@ -29,7 +28,8 @@ public class MyStaticOutputStreamAppender<E> extends OutputStreamAppender<E> {
 		public DelegatingOutputStream(OutputStream out){
 			super(new OutputStream() {
 				@Override
-				public void write(int b) throws IOException {}
+				public void write(int b) {
+				}
 			});
 		}
 
