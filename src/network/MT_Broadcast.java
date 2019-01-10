@@ -1,9 +1,10 @@
 package network;
 
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
 
-public class MT_Broadcast {
+public class MT_Broadcast implements Serializable {
     private String id;
     private int TTL;
     private boolean car;
