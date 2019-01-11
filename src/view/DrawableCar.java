@@ -1,6 +1,7 @@
 package view;
 
 import cars.Car;
+import common.NoPeersFoundException;
 import common.Position;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
@@ -28,11 +29,6 @@ public class DrawableCar implements DrawableObject {
             initImage();
         int yPosIndex = new Random().nextInt(y_posiciones.length);
         y_pos = y_posiciones[yPosIndex];
-       /* try {
-            car = new Car(new Position(xpos, y_pos), velocity, name).listenForMsgs().registerInNetwork().emitPulses();
-        } catch (NoPeersFoundException e) {
-            logger.error("Peer Discovery failed");
-        }*/
         car = new Car(new Position(xpos, y_pos), velocity, name); 
 
 
@@ -70,10 +66,10 @@ public class DrawableCar implements DrawableObject {
     }
 
     public void start() {
-        /*try {
+        try {
             car.listenForMsgs().registerInNetwork().emitPulses();
         } catch (NoPeersFoundException e) {
             logger.error(car.getName() + "Could not register in the network");
-        }*/
+        }
     }
 }

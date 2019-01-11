@@ -3,6 +3,7 @@ package view;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -94,7 +95,9 @@ public class HighwayApp extends Application {
 
         @Override
         public void write(int b) {
-            textArea.appendText(String.valueOf((char) b));
+            Platform.runLater(() -> {
+                textArea.appendText(String.valueOf((char) b));
+            });
         }
     }
 
