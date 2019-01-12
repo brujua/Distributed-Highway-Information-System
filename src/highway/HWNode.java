@@ -49,7 +49,7 @@ public class HWNode implements MsgListener {
 	//private final Object hwlistLock = new Object();
 	private CarMonitor carMonitor;
 
-	private List<MT_Broadcast> broadcastMsgs = new ArrayList<>();
+    private List<MT_Broadcast> broadcastMsgs = new ArrayList<>();
 	private List<Segment> segments;
 
 	private Messageable coordinator;
@@ -163,7 +163,7 @@ public class HWNode implements MsgListener {
 
 		StNode carstNode = new StNode(id,ip,portCars);
 
-		HWStNode hwStNode = new HWStNode(carstNode, stNode,getSegments());
+        HWStNode hwStNode = new HWStNode(carstNode, stNode, getSegments());
 
 		HWStNode response = hwStNode;
 		return response;
@@ -201,10 +201,10 @@ public class HWNode implements MsgListener {
                             responseACK(m);
                             break;
                         }
-						case BROADCAST: {
-							broadcasthandle(m);
-							break;
-						}
+                        case BROADCAST: {
+                            broadcasthandle(m);
+                            break;
+                        }
                         default: {
                             logger.error("Received message of wrong type: " + m.getType().toString());
                         }
@@ -216,49 +216,49 @@ public class HWNode implements MsgListener {
             });//end task
     }
 
-	private void broadcasthandle(Message msg) throws CorruptDataException {
-		if (msg.getType() != MsgType.BROADCAST || !(msg.getData() instanceof MT_Broadcast)) {
-			throw new CorruptDataException();
-		}
-		MT_Broadcast broadcast = (MT_Broadcast) msg.getData();
-		if (!broadcastMsgs.contains(broadcast)){
-			hwLock.writeLock().lock();
-			broadcastMsgs.add(broadcast);
-			//System.err.println("HW Broadcast recived");
-			hwLock.writeLock().unlock();
-			//send msg to all HwNode if is a car
-			if(broadcast.isCar()){
-				logger.info("Broadcast Msg recived from car: ");
+    private void broadcasthandle(Message msg) throws CorruptDataException {
+        if (msg.getType() != MsgType.BROADCAST || !(msg.getData() instanceof MT_Broadcast)) {
+            throw new CorruptDataException();
+        }
+        MT_Broadcast broadcast = (MT_Broadcast) msg.getData();
+        if (!broadcastMsgs.contains(broadcast)) {
+            hwLock.writeLock().lock();
+            broadcastMsgs.add(broadcast);
+            //System.err.println("HW Broadcast recived");
+            hwLock.writeLock().unlock();
+            //send msg to all HwNode if is a car
+            if (broadcast.isCar()) {
+                logger.info("Broadcast Msg recived from car: ");
 
-				hwLock.readLock().lock();
-				for (HWStNode node:hwlist) {
-					System.err.println("HW size:"+ hwlist.size());
-					if(!msg.getId().equals(node.getId())){
-						MsgHandler.sendTCPMsg(node.getStNode(),new Message(MsgType.BROADCAST,ip,portHighway,broadcast.setHw()));
-						logger.info("Broadcast send to  hw :PORT "+ node.getStNode().getPort()+" IP:  "+node.getStNode().getIP());
-					}
-				}
-				hwLock.readLock().unlock();
-			}
-			//send msg to all Cars if is a HW
-			if(broadcast.isHw()){
-				logger.info("HW Broadcast recived from hw: "+ msg.getData());
-				hwLock.readLock().lock();
-				List<CarStNode> cars = carMonitor.getList();
-				for (CarStNode node:cars) {
-					if(!msg.getId().equals(node.getId()))
-                        carMsgHandler.sendUDP(node,new Message(MsgType.BROADCAST,ip,portCars,broadcast.setHw()));
-				}
-				hwLock.readLock().unlock();
-			}
-		}
+                hwLock.readLock().lock();
+                for (HWStNode node : hwlist) {
+                    System.err.println("HW size:" + hwlist.size());
+                    if (!msg.getId().equals(node.getId())) {
+                        MsgHandler.sendTCPMsg(node.getStNode(), new Message(MsgType.BROADCAST, ip, portHighway, broadcast.setHw()));
+                        logger.info("Broadcast send to  hw :PORT " + node.getStNode().getPort() + " IP:  " + node.getStNode().getIP());
+                    }
+                }
+                hwLock.readLock().unlock();
+            }
+            //send msg to all Cars if is a HW
+            if (broadcast.isHw()) {
+                logger.info("HW Broadcast recived from hw: " + msg.getData());
+                hwLock.readLock().lock();
+                List<CarStNode> cars = carMonitor.getList();
+                for (CarStNode node : cars) {
+                    if (!msg.getId().equals(node.getId()))
+                        carMsgHandler.sendUDP(node, new Message(MsgType.BROADCAST, ip, portCars, broadcast.setHw()));
+                }
+                hwLock.readLock().unlock();
+            }
+        }
 			/*hwLock.writeLock().lock();
 				broadcastMsgs.add(broadcast);
 			hwLock.writeLock().unlock();*/
 
-	}
+    }
 
-	private void handleAlive(Message msg) {
+    private void handleAlive(Message msg) {
         logger.info("Alive received from coordinator");
 	}
 
@@ -358,7 +358,7 @@ public class HWNode implements MsgListener {
 
             redirect(msg, getNextNode());
 
-	}
+    }
 
     private StNode getNextNode() {
         hwLock.readLock().lock();
@@ -415,7 +415,7 @@ public class HWNode implements MsgListener {
 	public List<Segment> getSegments() {
 
         hwLock.readLock().lock();
-        List<Segment> response= segments;
+        List<Segment> response = segments;
         hwLock.readLock().unlock();
         return response;
 	}
