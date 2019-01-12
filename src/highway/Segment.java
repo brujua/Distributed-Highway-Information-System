@@ -50,7 +50,7 @@ public class Segment implements Serializable, Comparable<Segment> {
 		return endY;
 	}
 
-	private int getIndex() {
+	public int getIndex() {
 		return index;
 	}
 

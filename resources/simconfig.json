@@ -1,6 +1,5 @@
 {
-  "create_Coordinator": true,
-  "port": 9000,
+  "simulation_mode_on": true,
   "segments": [
     {
       "index": 0,

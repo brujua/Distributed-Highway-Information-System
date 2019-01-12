@@ -1,4 +1,4 @@
-package app;
+package view;
 
 import ch.qos.logback.core.OutputStreamAppender;
 

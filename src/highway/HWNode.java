@@ -9,39 +9,41 @@ import network.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Array;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.MissingResourceException;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 public class HWNode implements MsgListener {
-    private Logger logger;
+	private Logger logger;
 
-    public static final String ip = "localhost";
+	public static final String ip = "localhost";
 
     public static final int tentativePortCars = 7000;
 
-    public static final int tentativePortHighway = 8000;
+	public static final int tentativePortHighway = 8000;
     public static final String CONFIG_COORDINATOR_PATH = "config-hwnodes";
 
-    private static final double MAX_RANGE = 0;
+	private static final double MAX_RANGE = 0;
 
-    private String id;
-    private StNode stNode;
-    private int portCars;
-    private int portHighway;
+	private String id;
+	private StNode stNode;
+    private String name = null;
+	private int portCars;
+	private int portHighway;
     private List<? extends Messageable> posibleCoordinator;
-    private ExecutorService threadService = Executors.newCachedThreadPool();
+	private ExecutorService threadService = Executors.newCachedThreadPool();
 
-    private ReentrantReadWriteLock hwLock = new ReentrantReadWriteLock();
+	private ReentrantReadWriteLock hwLock = new ReentrantReadWriteLock();
+	private StNode nextStNode;
 
-    private StNode nextStNode;
-
-    private MsgHandler carMsgHandler;
-    private MsgHandler hwMsgHandler;
+	private MsgHandler carMsgHandler;
+	private MsgHandler hwMsgHandler;
 
 	private List<HWStNode> hwlist; //other highway nodes
 	//private final Object hwlistLock = new Object();
@@ -68,9 +70,9 @@ public class HWNode implements MsgListener {
         coordinator = null;
     }
 
-    public HWNode(List<Messageable> possibleCoords) {
+    public HWNode(String name) {
         this();
-        this.posibleCoordinator = possibleCoords;
+        this.name = name;
     }
 
     /**
@@ -105,7 +107,7 @@ public class HWNode implements MsgListener {
 	}
 
 	private String getName() {
-		return "HW"+ id.substring(0,5);
+        return name != null ? name : "HW" + id.substring(0, 5);
 	}
 
 	public HWNode registerInNetwork() {
@@ -330,15 +332,16 @@ public class HWNode implements MsgListener {
 	
 
 	private boolean isInSegments(Position pos) {
-
-		for (Segment seg:getSegments()) {
-			if(seg.contains(pos)){
-				//hwLock.readLock().unlock();
-				return true;
-			}
-		}
-
-
+		hwLock.readLock().lock();
+        if (segments != null) {
+            for (Segment seg : segments) {
+                if (seg.contains(pos)) {
+                    hwLock.readLock().unlock();
+                    return true;
+                }
+            }
+        }
+		hwLock.readLock().unlock();
 		return false;
 	}
 
@@ -382,13 +385,15 @@ public class HWNode implements MsgListener {
 
 	private StNode searchRedirect(Position position) {
 		hwLock.readLock().lock();
-		for (HWStNode node:gethwlist()) {
-			if(node.isInSegment(position)){
-				StNode response = node.getCarStNode();
-				hwLock.readLock().unlock();
-				return response;
-			}
-		}
+        if (hwlist != null) {
+            for (HWStNode node : hwlist) {
+                if (node.isInSegment(position)) {
+                    StNode response = node.getCarStNode();
+                    hwLock.readLock().unlock();
+                    return response;
+                }
+            }
+        }
 		hwLock.readLock().unlock();
 		return null;
 	}
@@ -421,5 +426,9 @@ public class HWNode implements MsgListener {
         carMonitor.shutdown();
         carMsgHandler.close();
         hwMsgHandler.close();
+    }
+
+    public String getId() {
+        return id;
     }
 }

@@ -233,7 +233,7 @@ public class Car implements MsgListener, MotionObservable{
         return pulse;
 	}
 
-	private String getName() {
+    public String getName() {
 		return (name != null)? name : this.id.substring(0,5);
 	}
 	
@@ -259,13 +259,14 @@ public class Car implements MsgListener, MotionObservable{
                             }
                             case ERROR: {
                                 logger.error("Received error message: " + m);
+                                break;
                             }
 							case BROADCAST: {
 								handleBroadcastMsg(m);
 								break;
 							}
                             default: {
-                                logger.error("Received message of wrong type" + m.getType().toString() + " in car");
+                                logger.error("Received message of wrong type: " + m.getType().toString());
                             }
                         }
                     } catch (CorruptDataException cde) {
