@@ -15,19 +15,6 @@ public final class StNode implements Serializable, Messageable {
 	private final String ip;
 	private final int port;
 
-	//private final Pulse pulse;
-
-
-
-//	private static final double DEFAULT_POSITION_X = 0;
-//	private static final double DEFAULT_POSITION_Y = 0;
-//	private static final Units DEFAULT_UNIT = Units.KiloMeters;
-
-
-//	public StNode(String id, String ip, int port) {
-//		this(id,ip,port,new Position(DEFAULT_POSITION_X, DEFAULT_POSITION_Y, DEFAULT_UNIT));
-//	}
-
 
 	public StNode(String id, String ip, int port) {
 		super();
@@ -86,18 +73,12 @@ public final class StNode implements Serializable, Messageable {
 
 	@Override
 	public String toString() {
-        if (id.length() >= 5)
-            return "StNode[id=" + id.substring(0, 5) + "]";
-        return "StNode[id=" + id + "]";
+        return "StNode[id=" + id.substring(0, 5) + " ip=" + ip + " port=" + port + "]";
 	}
 
 
 	public StNode changeIp(String ip) {
 		return new StNode(id, ip, port);
 	}
-
-/*	public Pulse getPulse() {
-		return pulse;
-	}*/
 
 }
