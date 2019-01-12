@@ -104,7 +104,7 @@ public class HighwayApp extends Application {
     private class SimLoop extends AnimationTimer {
 
         private static final float timeStep = 0.0166f; //update state 60 times per second
-        private static final float maximunStep = 5; //max 5 sec to avoid spiral of death. See: http://svanimpe.be/blog/game-loops
+        private static final float maximunStep = 5f; //max 5 sec to avoid spiral of death. See: http://svanimpe.be/blog/game-loops
         private long previousTime = 0;
         private float accumulatedTime = 0;
 
@@ -120,11 +120,11 @@ public class HighwayApp extends Application {
             accumulatedTime += secondsElapsedCapped;
             previousTime = currentTime;
 
-            /*while (accumulatedTime >= timeStep) {
+            while (accumulatedTime >= timeStep) {
                 tick();
                 accumulatedTime -= timeStep;
-            }*/
-            tick();
+            }
+            //tick();
             render();
         }
     }
