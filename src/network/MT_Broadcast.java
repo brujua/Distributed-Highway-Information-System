@@ -9,7 +9,7 @@ public class MT_Broadcast implements Serializable {
     private int TTL;
     private boolean car;
 
-    public MT_Broadcast(int TTL,boolean car) {
+    public MT_Broadcast(int TTL, boolean car) {
         this(TTL);
         this.id = UUID.randomUUID().toString();
         //this.TTL = TTL;
@@ -41,21 +41,21 @@ public class MT_Broadcast implements Serializable {
         return Objects.hash(id);
     }
 
-    public boolean isHw(){
+    public boolean isHw() {
         return !car;
     }
 
-    public boolean isCar(){
+    public boolean isCar() {
         return car;
     }
 
-    public MT_Broadcast setCar(){
-        car=true;
+    public MT_Broadcast setCar() {
+        car = true;
         return this;
     }
 
-    public MT_Broadcast setHw(){
-        car=false;
+    public MT_Broadcast setHw() {
+        car = false;
         return this;
     }
 }
