@@ -33,7 +33,7 @@ public class HWCoordinator implements Messageable, MsgListener {
     }
 
 	/**
-	 * starts a thread that listens for connections while the listening flag its on.
+     * starts a thread that listens for connections.
 	 * This thread starts a new thread for each new connection to read the message received.
 	 *
 	 * @return this -fluent api-
