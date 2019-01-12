@@ -1,6 +1,8 @@
 package cars;
 
 import common.*;
+import highway.HWNode;
+import highway.HWStNode;
 import network.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,8 +37,9 @@ public class Car implements MsgListener, MotionObservable{
 	private Position position;
 	private double velocity;
     private ReentrantReadWriteLock positionLock = new ReentrantReadWriteLock();
+	private ReentrantReadWriteLock neighsLock = new ReentrantReadWriteLock();
 
-
+	private List<MT_Broadcast> broadcastMsgs = new ArrayList<MT_Broadcast>() ;
     private MsgHandler msgHandler;
     private List<StNode> possibleHWNodes;
 	private StNode selectedHWNode;
@@ -62,6 +65,7 @@ public class Car implements MsgListener, MotionObservable{
         msgHandler.addMsgListener(this);
 
         pulseEmiter = new PulseEmiter(this, primaryMonitor, msgHandler, getCarStNode());
+
     }
 
     public Car(Position position, double velocity, String name) {
@@ -205,6 +209,17 @@ public class Car implements MsgListener, MotionObservable{
 		pulseScheduler.scheduleWithFixedDelay(pulseEmiter, 0, pulseRefreshTime, pRefreshTimeUnit);
 		return this;
 	}
+
+	public boolean containBroadcast(MT_Broadcast broadcast){
+		//TODO is only test method dont use
+		if (broadcastMsgs.contains(broadcast))
+			return true;
+		return false;
+	}
+
+
+
+
 	
 	private void monitorFarCars() {
 		// TODO Auto-generated method stub
@@ -246,6 +261,10 @@ public class Car implements MsgListener, MotionObservable{
                                 logger.error("Received error message: " + m);
                                 break;
                             }
+							case BROADCAST: {
+								handleBroadcastMsg(m);
+								break;
+							}
                             default: {
                                 logger.error("Received message of wrong type: " + m.getType().toString());
                             }
@@ -316,6 +335,39 @@ public class Car implements MsgListener, MotionObservable{
         logger.info("Pulse received from node: " + car);
 	}
 
+	public void handleBroadcastMsg(Message msg) throws CorruptDataException {
+		if (msg.getType() != MsgType.BROADCAST || !(msg.getData() instanceof MT_Broadcast)) {
+			throw new CorruptDataException();
+		}
+		MT_Broadcast broadcast = (MT_Broadcast) msg.getData();
+	//	if (broadcastMsgs != null){
+			if (!broadcastMsgs.contains(broadcast)){
+				logger.info("BROADCAST RECIVIDO"+ broadcast.getId()+"Car: "+ this.id);
+				neighsLock.writeLock().lock();
+				broadcastMsgs.add(broadcast);
+				neighsLock.writeLock().unlock();
+				//send msg to all HwNode if is a car
+				if(broadcast.isCar()){
+
+					neighsLock.readLock().lock();
+					for (CarStNode node:getNeighs()) {
+						if(!msg.getId().equals(node.getId())) {
+							msgHandler.sendUDP(node,new Message(MsgType.BROADCAST,ip,port,broadcast.setCar()));
+						}
+					}
+					msgHandler.sendUDP(selectedHWNode,new Message(MsgType.BROADCAST,ip,port,broadcast.setCar()));
+					neighsLock.readLock().unlock();
+				}
+				//send msg to all Cars if is a HW
+
+			}
+		//}
+			/*hwLock.writeLock().lock();
+				broadcastMsgs.add(broadcast);
+			hwLock.writeLock().unlock();*/
+
+	}
+
 	private boolean sendHello(StNode node, boolean isHWNode) throws CorruptDataException {
 		CompletableFuture<Message> msgHelloRsp = msgHandler.sendUDPWithResponse(node, new Message(MsgType.HELLO, ip, port, getStNode()));
 		try {
@@ -330,6 +382,19 @@ public class Car implements MsgListener, MotionObservable{
 			}
 			return false;
 		}
+	}
+
+	public MT_Broadcast sendBroadcast(){
+		MT_Broadcast msgbroadcast = new MT_Broadcast(5,true);
+		Message msg =new Message(MsgType.BROADCAST,ip,port,msgbroadcast);
+		for (CarStNode node:primaryMonitor.getList()) {
+
+			msgHandler.sendUDP(node.getStNode(),msg);
+		}
+		msgHandler.sendUDP(selectedHWNode,msg);
+		broadcastMsgs.add(msgbroadcast);
+		System.err.println("MENSAJE ENVIADO : "+msg.getType());
+		return msgbroadcast;
 	}
 
 	private void sendHelloResponse(Message m) throws CorruptDataException {

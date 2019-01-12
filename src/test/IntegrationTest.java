@@ -7,6 +7,7 @@ import common.Position;
 import highway.HWCoordinator;
 import highway.HWNode;
 import highway.Segment;
+import network.MT_Broadcast;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,14 +55,14 @@ class IntegrationTest {
 
     @AfterEach
     void shutdownNodes() {
-        coordinator.shutDown();
+/*        coordinator.shutDown();
         hwNode.shutdown();
         hwNode2.shutdown();
         try {
             Thread.sleep(3500);
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 	
 	@Test
@@ -166,6 +167,7 @@ class IntegrationTest {
 	@Test
 	void Car_HWNode_RedirectWhenChangeSegment() {
 		try {
+
             Car car1 = new Car(new Position(coordXOrigin + 2, coordYOrigin + 2), 2);
             car1.listenForMsgs().registerInNetwork().emitPulses();
             Car car2 = new Car(new Position(coordXOrigin, coordYOrigin), 0);
@@ -181,5 +183,65 @@ class IntegrationTest {
             e.printStackTrace();
 		}
     }
+    @Test
+	void  Car_sendBroadcasMsg(){
+		try {
+
+			HWNode hwNode3 = new HWNode().listenForMsgs().registerInNetwork();
+
+
+			double possX = ((NUMBER_OF_SEGMENTS*DEFAULT_SEGMENT_SIDE_SIZE) /2)+DEFAULT_SEGMENT_SIDE_SIZE;
+			double possY = DEFAULT_SEGMENT_SIDE_SIZE;
+
+			Thread.sleep(500);
+			Car car1 = new Car(new Position(5.0 , coordYOrigin), 0);
+			car1.listenForMsgs().registerInNetwork().emitPulses();
+
+			Car car2 = new Car(new Position(49.0, coordYOrigin), 0);
+			car2.listenForMsgs().registerInNetwork().emitPulses();
+
+
+			Car car3 = new Car(new Position(25.0, coordYOrigin), 0);
+			car3.listenForMsgs().registerInNetwork().emitPulses();
+			Thread.sleep(500);
+
+/*			Car car3 = new Car(new Position(coordXOrigin, coordYOrigin), 0);
+			car3.listenForMsgs().registerInNetwork().emitPulses();*/
+
+		//	Thread.sleep(500);
+
+			//assert(!car1.getSelectedHWnode().equals(car3.getSelectedHWnode()));
+/*			car1.setPosition(new Position(possX,possY));*/
+			Thread.sleep(5000);
+
+			assert(!car2.getSelectedHWnode().equals(car1.getSelectedHWnode()));
+
+ 			assert(!car2.getSelectedHWnode().equals(car3.getSelectedHWnode()));
+
+			assert(!car3.getSelectedHWnode().equals(car1.getSelectedHWnode()));
+
+
+			MT_Broadcast msgbroadcast = car1.sendBroadcast();
+			System.err.println("Message Broadcast "+ msgbroadcast.getId());
+			Thread.sleep(500);
+			assert (car1.containBroadcast(msgbroadcast) );
+			assert (car3.containBroadcast(msgbroadcast) );
+			assert (car2.containBroadcast(msgbroadcast) );
+
+
+			car1.shutdown();
+			car2.shutdown();
+			car3.shutdown();
+			hwNode3.shutdown();
+
+		} catch (NoPeersFoundException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}finally {
+
+		}
+
+	}
 
 }
