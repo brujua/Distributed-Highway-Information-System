@@ -23,4 +23,11 @@ public class MT_Update implements Serializable {
 	public Instant getTimestamp() {
 		return timestamp;
 	}
+
+    @Override
+    public String toString() {
+        return "MT_Update{" +
+                "timestamp=" + timestamp +
+                '}';
+    }
 }

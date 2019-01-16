@@ -55,14 +55,14 @@ class IntegrationTest {
 
     @AfterEach
     void shutdownNodes() {
-/*        coordinator.shutDown();
+        coordinator.shutDown();
         hwNode.shutdown();
         hwNode2.shutdown();
         try {
             Thread.sleep(3500);
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }*/
+        }
     }
 	
 	@Test
@@ -153,7 +153,7 @@ class IntegrationTest {
 			car2.listenForMsgs().registerInNetwork().emitPulses();
 			assert (car2.getNeighs().contains(car1.getCarStNode()));
 			Thread.sleep(10001);
-			assert(car2.getNeighs().isEmpty());
+            assert (!car2.getNeighs().contains(car1.getCarStNode()));
 			car1.shutdown();
 			car2.shutdown();
 		} catch (NoPeersFoundException e) {
@@ -195,14 +195,14 @@ class IntegrationTest {
 		    double possY = DEFAULT_SEGMENT_SIDE_SIZE;
 
 		    Thread.sleep(500);
-		    Car car1 = new Car(new Position(5.0, coordYOrigin), 0);
+            Car car1 = new Car(new Position(5.0, coordYOrigin), 0, "Car1");
 		    car1.listenForMsgs().registerInNetwork().emitPulses();
 
-		    Car car2 = new Car(new Position(49.0, coordYOrigin), 0);
+            Car car2 = new Car(new Position(49.0, coordYOrigin), 0, "Car2");
 		    car2.listenForMsgs().registerInNetwork().emitPulses();
 
 
-		    Car car3 = new Car(new Position(25.0, coordYOrigin), 0);
+            Car car3 = new Car(new Position(25.0, coordYOrigin), 0, "Car3");
 		    car3.listenForMsgs().registerInNetwork().emitPulses();
 		    Thread.sleep(500);
 

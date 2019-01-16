@@ -1,10 +1,6 @@
 package network;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.util.UUID;
 
 public class Message implements Serializable{
@@ -90,6 +86,13 @@ public class Message implements Serializable{
 		}
 		return null;
 	}
-	
-	
+
+	@Override
+	public String toString() {
+		return "Message{" +
+				"type=" + type +
+				", origIp='" + origIp + '\'' +
+				", origPort=" + origPort +
+				"data=" + data + '}';
+	}
 }

@@ -56,7 +56,7 @@ public final class Position implements Serializable{
 
 	@Override
 	public String toString() {
-		return "Position [cordx=" + cordx + ", cordy=" + cordy + "]";
+		return "[cordx=" + cordx + ", cordy=" + cordy + "]";
 	}
 
 	@Override
@@ -79,11 +79,8 @@ public final class Position implements Serializable{
 		} else if (!cordx.equals(other.cordx))
 			return false;
 		if (cordy == null) {
-			if (other.cordy != null)
-				return false;
-		} else if (!cordy.equals(other.cordy))
-			return false;
-		return true;
+			return other.cordy == null;
+		} else return cordy.equals(other.cordy);
 	}
 
 

@@ -271,7 +271,7 @@ public class HWNode implements MsgListener {
 		//check timestamp
 		if (lastHWUpdate !=null){
 			if (update.getTimestamp().isBefore(lastHWUpdate)) {
-				logger.info("Received an old update");
+                logger.info("Received an old update: " + msg);
 				return;
 			}
 		}
@@ -325,7 +325,7 @@ public class HWNode implements MsgListener {
 			if (nodeRedirect!=null) {
 				redirect(m, nodeRedirect);
 			}else{
-				carMsgHandler.sendUDP(node,new Message(MsgType.ERROR,ip,portCars,null));
+                carMsgHandler.sendUDP(node, new Message(MsgType.ERROR, ip, portCars, "404: No hw-node for position " + node.getPosition()));
 			}
 		}
 	}
@@ -393,6 +393,9 @@ public class HWNode implements MsgListener {
                     return response;
                 }
             }
+        }
+        if (hwlist == null) {
+            logger.error("HW-List not yet initialized and a received a redirect request");
         }
 		hwLock.readLock().unlock();
 		return null;

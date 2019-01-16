@@ -43,6 +43,7 @@ public class HWCoordinator implements Messageable, MsgListener {
 		msgHandler = new MsgHandler(port, "Coordinator");
 		msgHandler.addMsgListener(this);
 		msgHandler.listenForTCPMsgs();
+        logger.info("Ready and listening on port: " + port);
 		return this;
 	}
 
