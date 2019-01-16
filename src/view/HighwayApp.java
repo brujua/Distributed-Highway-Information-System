@@ -3,19 +3,17 @@ package view;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.OutputStream;
 
 public class HighwayApp extends Application {
 
@@ -41,11 +39,24 @@ public class HighwayApp extends Application {
         window = primaryStage;
         window.setTitle(TITLE);
 
-        //Text area for showing the logs logs
-        TextArea consoleTextArea = new TextArea();
-        OutputStream os = new TextAreaOutputStream(consoleTextArea);
-        MyStaticOutputStreamAppender.setStaticOutputStream(os);
+        Button coordButton = new Button();
+        coordButton.setText("Create Coordinator");
+        coordButton.setOnAction(event -> {
+            createCoordinator();
+        });
+        Button hwnodeButton = new Button();
+        hwnodeButton.setText("Create HW-Node");
+        hwnodeButton.setOnAction(event -> {
+            createHWNode();
+        });
+        Button carButton = new Button();
+        carButton.setText("Create a Car");
+        carButton.setOnAction(event -> {
+            createCar();
+        });
 
+        //Text area for showing the logs
+        TextArea consoleTextArea = new ConsoleArea();
 
         BorderPane borderLayout = new BorderPane();
         borderLayout.setPadding(new Insets(10));
@@ -71,6 +82,18 @@ public class HighwayApp extends Application {
         simController.start();
     }
 
+    private void createCar() {
+
+    }
+
+    private void createHWNode() {
+
+    }
+
+    private void createCoordinator() {
+
+    }
+
     private void tick() {
         if (simController != null) {
             simController.tick();
@@ -84,22 +107,7 @@ public class HighwayApp extends Application {
         }
     }
 
-    // Use to send logger text into the ui textArea
-    public static class TextAreaOutputStream extends OutputStream {
 
-        private TextArea textArea;
-
-        public TextAreaOutputStream(TextArea textArea) {
-            this.textArea = textArea;
-        }
-
-        @Override
-        public void write(int b) {
-            Platform.runLater(() -> {
-                textArea.appendText(String.valueOf((char) b));
-            });
-        }
-    }
 
     private class SimLoop extends AnimationTimer {
 
