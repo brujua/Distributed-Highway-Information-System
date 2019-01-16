@@ -1,16 +1,13 @@
 
-package view;
+package app;
 
-import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
-import javafx.scene.control.TextArea;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,14 +18,9 @@ public class HighwayApp extends Application {
     private static final String TITLE = "HighWay App";
     private static int WIDHT = 1300;
     private static int HEIGHT = 700;
-    private static int CANVAS_WIDHT = 1200;
-    private static int CANVAS_HEIGHT = 600;
     private Scene mainScene;
     private Stage window;
-    private Canvas simCanvas = null;
-    private Canvas singleViewCanvas = null;
-    private MainController simController;
-    private HWController singleViewController;
+
 
     public static void main(String[] args) {
         launch(args);
@@ -55,31 +47,34 @@ public class HighwayApp extends Application {
             createCar();
         });
 
-        //Text area for showing the logs
-        TextArea consoleTextArea = new ConsoleArea();
+        GridPane grid = new GridPane();
+        grid.add(coordButton, 0, 0);
+        grid.add(hwnodeButton, 1, 0);
+        grid.add(carButton, 2, 0);
+        grid.setPadding(new Insets(25));
+        GridPane.setMargin(coordButton, new Insets(5));
+        GridPane.setMargin(hwnodeButton, new Insets(5));
+        GridPane.setMargin(carButton, new Insets(5));
+        VBox box = new VBox();
+        box.setAlignment(Pos.CENTER);
+        box.getChildren().add(grid);
 
-        BorderPane borderLayout = new BorderPane();
-        borderLayout.setPadding(new Insets(10));
-        borderLayout.setBottom(consoleTextArea);
-
-        GridPane centerGridLayout = new GridPane();
-        centerGridLayout.setVgap(10);
-
-        simController = new MainController();
+      /*  simController = new SimControllerImpl();
         SimInitializer simInitializer = new SimInitializer(simController);
         simInitializer.initialize();
         if (simInitializer.isSimModeOn()) {
             simCanvas = new Canvas(CANVAS_WIDHT, CANVAS_HEIGHT);
 
             centerGridLayout.add(simCanvas, 0, 0);
-        }
+        }*/
+        mainScene = new Scene(box);
 
-        borderLayout.setCenter(centerGridLayout);
-        window.setScene(new Scene(borderLayout, WIDHT, HEIGHT));
-        AnimationTimer simLoop = new SimLoop();
+        window.setScene(mainScene);
+        window.centerOnScreen();
+        //AnimationTimer simLoop = new SimLoop();
         window.show();
-        simLoop.start();
-        simController.start();
+        //simLoop.start();
+        //simController.start();
     }
 
     private void createCar() {
@@ -94,7 +89,7 @@ public class HighwayApp extends Application {
 
     }
 
-    private void tick() {
+    /*private void tick() {
         if (simController != null) {
             simController.tick();
         }
@@ -123,7 +118,7 @@ public class HighwayApp extends Application {
                 previousTime = currentTime;
                 return;
             }
-            float secondsElapsed = (currentTime - previousTime) / 1e9f; /* nanoseconds to seconds */
+            float secondsElapsed = (currentTime - previousTime) / 1e9f; *//* nanoseconds to seconds *//*
             float secondsElapsedCapped = Math.min(secondsElapsed, maximunStep);
             accumulatedTime += secondsElapsedCapped;
             previousTime = currentTime;
@@ -135,5 +130,5 @@ public class HighwayApp extends Application {
             //tick();
             render();
         }
-    }
+    }*/
 }

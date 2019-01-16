@@ -1,4 +1,4 @@
-package view;
+package app;
 
 import cars.Car;
 import common.NoPeersFoundException;
@@ -22,7 +22,6 @@ public class DrawableCar implements DrawableObject {
     private double y_pos;
     private static Image img;
 	private Car car;
-    private ViewController controller = null;
 
     public DrawableCar(String name, double xpos, double velocity) {
         if (img == null)
@@ -35,9 +34,6 @@ public class DrawableCar implements DrawableObject {
 
     }
 
-    public void setController(ViewController controller) {
-        this.controller = controller;
-    }
 
     @Override
 	public String getID() {

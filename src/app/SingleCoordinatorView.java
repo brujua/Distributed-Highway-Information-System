@@ -1,4 +1,4 @@
-package view;
+package app;
 
 public class SingleCoordinatorView {
 

@@ -1,5 +1,7 @@
-package view;
+package app.simulation;
 
+import app.DrawableCar;
+import app.DrawableHWNode;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import highway.HWCoordinator;
@@ -13,7 +15,7 @@ import java.util.List;
 
 /**
  * Class responsible of initialize the simulation according to the json config files,
- * utilizing the HWController interface
+ * utilizing the SimController interface
  */
 public class SimInitializer {
 
@@ -22,15 +24,15 @@ public class SimInitializer {
     private static final String filepath_coord = "resources/simconfig.json";
     private static final String filepath_hwnodes = "resources/simconfig-hwnodes.json";
     private static final String filepath_cars = "resources/simconfig-cars.json";
-    private HWController controller;
+    private SimController controller;
     private boolean simModeOn;
 
-    public SimInitializer(HWController controller) {
+    public SimInitializer(SimController controller) {
         this.controller = controller;
         simModeOn = false;
     }
 
-    private Config readConfig() throws IOException {
+    private static Config readConfig() throws IOException {
         File file = new File(filepath_coord);
         return mapper.readValue(file, Config.class);
     }
@@ -45,6 +47,16 @@ public class SimInitializer {
         File file = new File(filepath_cars);
         return mapper.readValue(file, new TypeReference<List<CarInstantiator>>() {
         });
+    }
+
+    public static HWCoordinator getCoordinator() {
+        try {
+            Config config = readConfig();
+            return new HWCoordinator(config.getSegments());
+        } catch (IOException e) {
+            logger.error("Simulation Config files are corrupt: " + e.getMessage());
+        }
+        return null;
     }
 
     public void initialize() {

@@ -1,13 +1,13 @@
-package view;
+package app;
 
 import javafx.application.Platform;
 import javafx.scene.control.TextArea;
 
 import java.io.OutputStream;
 
-public class ConsoleArea extends TextArea {
+public class LoggerTextArea extends TextArea {
 
-    public ConsoleArea() {
+    public LoggerTextArea() {
         super();
         this.setEditable(false);
         MyStaticOutputStreamAppender.setStaticOutputStream(new TextAreaOutputStream(this));

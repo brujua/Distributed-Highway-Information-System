@@ -1,5 +1,8 @@
-package view;
+package app.simulation;
 
+import app.DrawableCar;
+import app.DrawableHWNode;
+import app.DrawableObject;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
@@ -10,7 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class MainController implements HWController, ViewController {
+public class SimControllerImpl implements SimController {
     private static final long minTimeBetweenAdds = 400L; //milliseconds
     private List<DrawableCar> cars = Collections.synchronizedList(new ArrayList<>());
     private List<DrawableHWNode> nodes = Collections.synchronizedList(new ArrayList<>());
@@ -36,11 +39,6 @@ public class MainController implements HWController, ViewController {
             if (running)
                 hwnode.start();
         }, delay, TimeUnit.SECONDS);
-    }
-
-    @Override
-    public void drawMsgArrow(MsgArrow arrow) {
-
     }
 
     public void start() {
