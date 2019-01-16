@@ -1,6 +1,5 @@
 package view;
 
-import javafx.application.Platform;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
@@ -12,32 +11,31 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class MainController implements HWController, ViewController {
-    List<DrawableCar> cars = Collections.synchronizedList(new ArrayList<>());
-    List<DrawableHWNode> nodes = Collections.synchronizedList(new ArrayList<>());
-    ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    boolean running = false;
+    private static final long minTimeBetweenAdds = 400L; //milliseconds
+    private List<DrawableCar> cars = Collections.synchronizedList(new ArrayList<>());
+    private List<DrawableHWNode> nodes = Collections.synchronizedList(new ArrayList<>());
+    private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private boolean running = false;
+    private Object timelock = new Object();
+    private long timeLastAdd = 0L;
 
     @Override
     public void addCar(DrawableCar car, int delay) {
-        Platform.runLater(() -> {
-            scheduler.schedule(() -> {
-                cars.add(car);
-                if (running) {
-                    car.start();
-                }
-            }, delay, TimeUnit.SECONDS);
-        });
+        scheduler.schedule(() -> {
+            __addWithMaxFrecuency(car, cars);
+            if (running) {
+                car.start();
+            }
+        }, delay, TimeUnit.SECONDS);
     }
 
     @Override
     public void addHWNode(DrawableHWNode hwnode, int delay) {
-        Platform.runLater(() -> {
-            scheduler.schedule(() -> {
-                nodes.add(hwnode);
-                if (running)
-                    hwnode.start();
-            }, delay, TimeUnit.SECONDS);
-        });
+        scheduler.schedule(() -> {
+            __addWithMaxFrecuency(hwnode, nodes);
+            if (running)
+                hwnode.start();
+        }, delay, TimeUnit.SECONDS);
     }
 
     @Override
@@ -83,6 +81,25 @@ public class MainController implements HWController, ViewController {
             for (DrawableObject object : cars) {
                 object.render(gc);
             }
+        }
+    }
+
+    private <E> void __addWithMaxFrecuency(E object, List<E> list) {
+        Long now = System.currentTimeMillis();
+        try {
+            synchronized (timelock) {
+                Long timeSinceLastAdd = now - timeLastAdd;
+                if (timeSinceLastAdd < minTimeBetweenAdds) {
+                    Thread.sleep(minTimeBetweenAdds - timeSinceLastAdd);
+                }
+                synchronized (list) {
+                    list.add(object);
+                }
+                timeLastAdd = System.currentTimeMillis();
+            }
+
+        } catch (InterruptedException e) {
+            e.printStackTrace(); //log?
         }
     }
 }
