@@ -17,8 +17,6 @@ public class Car implements MsgListener, MotionObservable{
 	// -- temporary constants --
 	public final String ip = "localhost";
 	public final int tentativePort = 5555;
-    // resource bundle, used to read the config options for example
-    //private static ResourceBundle resourceBundle = ResourceBundle.getBundle("config-cars");
     public static final String CONFIG_NODES_PATH = "config-cars";
 	// range for the monitors
     public final double PRIMARY_RANGE = 200; //near cars
@@ -69,7 +67,7 @@ public class Car implements MsgListener, MotionObservable{
     public Car(Position position, double velocity, String name) {
         this(position, velocity);
         this.name = name;
-        this.logger = LoggerFactory.getLogger(name);
+	    this.logger = LoggerFactory.getLogger(getName());
     }
 
     public Car(Position position, double velocity, List<StNode> highwayNodes) {
@@ -191,20 +189,23 @@ public class Car implements MsgListener, MotionObservable{
 
 
     private void updateNeigh(CarStNode neigh) {
-        positionLock.readLock().lock();
-        double distance = position.distance(neigh.getPosition());
-        if (distance <= PRIMARY_RANGE)
-            primaryMonitor.update(neigh);
-        else if (distance <= SECONDARY_RANGE)
-            secondaryMonitor.update(neigh);
+	    //if its not this same car
+	    if (!neigh.getId().equals(id)) {
+		    positionLock.readLock().lock();
+		    double distance = position.distance(neigh.getPosition());
+		    if (distance <= PRIMARY_RANGE)
+			    primaryMonitor.update(neigh);
+		    else if (distance <= SECONDARY_RANGE)
+			    secondaryMonitor.update(neigh);
 
-        positionLock.readLock().unlock();
+		    positionLock.readLock().unlock();
+	    }
 	}
 
 
 
 	public Car emitPulses() {
-		pulseScheduler.scheduleWithFixedDelay(pulseEmiter, 0, pulseRefreshTime, pRefreshTimeUnit);
+		pulseScheduler.scheduleWithFixedDelay(pulseEmiter, pulseRefreshTime, pulseRefreshTime, pRefreshTimeUnit);
 		return this;
 	}
 
@@ -230,7 +231,7 @@ public class Car implements MsgListener, MotionObservable{
 	}
 
     public String getName() {
-		return (name != null)? name : this.id.substring(0,5);
+	    return (name != null) ? name + '#' + this.id.substring(0, 5) : this.id.substring(0, 5);
 	}
 	
 	@Override
@@ -280,7 +281,7 @@ public class Car implements MsgListener, MotionObservable{
 			throw new CorruptDataException();
 		}
 		StNode car = (StNode) m.getData();
-		logger.info("Hello received on node: " + getStNode() + "from node: " + car);
+		logger.info("Hello received from node: " + car);
 		sendHelloResponse(m);
 
 	}
@@ -313,9 +314,12 @@ public class Car implements MsgListener, MotionObservable{
 		List<CarStNode> knownCars = primaryMonitor.getList();
 		knownCars.addAll(secondaryMonitor.getList());
 		for (CarStNode car : helloRsp.getCars()) {
-            updateNeigh(car);
-			if(! knownCars.contains(car)){
-				sendHello(car.getStNode(), false);
+			//check if its not this same car
+			if (!car.getId().equals(id)) {
+				updateNeigh(car);
+				if (!knownCars.contains(car)) {
+					sendHello(car.getStNode(), false);
+				}
 			}
 		}
 	}
