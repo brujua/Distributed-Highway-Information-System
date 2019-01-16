@@ -29,7 +29,8 @@ public class DrawableCar implements DrawableObject {
             initImage();
         int yPosIndex = new Random().nextInt(y_posiciones.length);
         y_pos = y_posiciones[yPosIndex];
-        car = new Car(new Position(xpos, y_pos), velocity, name); 
+        double velocityAdjusted = velocity / 20; // tick() will be call 60 times per second.
+        car = new Car(new Position(xpos, y_pos), velocityAdjusted, name);
 
 
     }
