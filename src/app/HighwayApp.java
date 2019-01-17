@@ -86,7 +86,9 @@ public class HighwayApp extends Application {
     }
 
     private void createCoordinator() {
-
+        CoordinatorView view = new CoordinatorView();
+        window.setScene(view.getScene());
+        window.sizeToScene();
     }
 
     /*private void tick() {
