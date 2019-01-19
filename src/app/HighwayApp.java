@@ -3,11 +3,12 @@ package app;
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,11 +17,14 @@ public class HighwayApp extends Application {
 
     private static final Logger LOG = LoggerFactory.getLogger(HighwayApp.class);
     private static final String TITLE = "HighWay App";
-    private static int WIDHT = 1300;
-    private static int HEIGHT = 700;
+    private static final double BACK_BTN_FONT_SIZE = 25;
+    /*    private static int WIDHT = 1300;
+        private static int HEIGHT = 700;*/
     private Scene mainScene;
     private Stage window;
-
+    private BorderPane mainPane;
+    private Pane defaultCenter;
+    private Pane navigation;
 
     public static void main(String[] args) {
         launch(args);
@@ -55,26 +59,28 @@ public class HighwayApp extends Application {
         GridPane.setMargin(coordButton, new Insets(5));
         GridPane.setMargin(hwnodeButton, new Insets(5));
         GridPane.setMargin(carButton, new Insets(5));
-        VBox box = new VBox();
-        box.setAlignment(Pos.CENTER);
-        box.getChildren().add(grid);
+        defaultCenter = grid;
+        mainPane = new BorderPane();
+        mainPane.setCenter(grid);
 
-      /*  simController = new SimControllerImpl();
-        SimInitializer simInitializer = new SimInitializer(simController);
-        simInitializer.initialize();
-        if (simInitializer.isSimModeOn()) {
-            simCanvas = new Canvas(CANVAS_WIDHT, CANVAS_HEIGHT);
 
-            centerGridLayout.add(simCanvas, 0, 0);
-        }*/
-        mainScene = new Scene(box);
+        Button btnBack = new Button("<-");
+        btnBack.setFont(Font.font(BACK_BTN_FONT_SIZE));
+        btnBack.setOnAction((event) -> {
+            back();
+        });
+        navigation = new Pane(btnBack);
+        mainScene = new Scene(mainPane);
 
         window.setScene(mainScene);
         window.centerOnScreen();
-        //AnimationTimer simLoop = new SimLoop();
         window.show();
-        //simLoop.start();
-        //simController.start();
+    }
+
+    private void back() {
+        mainPane.setCenter(defaultCenter);
+        mainPane.setTop(null);
+        window.sizeToScene();
     }
 
     private void createCar() {
@@ -87,7 +93,8 @@ public class HighwayApp extends Application {
 
     private void createCoordinator() {
         CoordinatorView view = new CoordinatorView();
-        window.setScene(view.getScene());
+        mainPane.setCenter(view.getContent());
+        mainPane.setTop(navigation);
         window.sizeToScene();
     }
 
