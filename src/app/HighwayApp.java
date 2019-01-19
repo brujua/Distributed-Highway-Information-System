@@ -25,6 +25,7 @@ public class HighwayApp extends Application {
     private BorderPane mainPane;
     private Pane defaultCenter;
     private Pane navigation;
+    private CloseableView currentView;
 
     public static void main(String[] args) {
         launch(args);
@@ -78,6 +79,7 @@ public class HighwayApp extends Application {
     }
 
     private void back() {
+        currentView.close();
         mainPane.setCenter(defaultCenter);
         mainPane.setTop(null);
         window.sizeToScene();
@@ -93,6 +95,7 @@ public class HighwayApp extends Application {
 
     private void createCoordinator() {
         CoordinatorView view = new CoordinatorView();
+        currentView = view;
         mainPane.setCenter(view.getContent());
         mainPane.setTop(navigation);
         window.sizeToScene();

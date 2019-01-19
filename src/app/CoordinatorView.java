@@ -4,7 +4,8 @@ import highway.HWCoordinator;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 
-public class CoordinatorView {
+
+public class CoordinatorView implements CloseableView {
 
     private static final String INIT_MSG = "A coordinator will be initialized according to config files...";
     private static final double VBOX_SPACING = 10.0;
@@ -25,11 +26,13 @@ public class CoordinatorView {
         pane = box;
     }
 
-    private void back() {
-
-    }
 
     public Pane getContent() {
         return pane;
+    }
+
+    @Override
+    public void close() {
+        coord.shutDown();
     }
 }
