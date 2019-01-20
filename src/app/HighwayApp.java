@@ -25,7 +25,7 @@ public class HighwayApp extends Application {
     private BorderPane mainPane;
     private Pane defaultCenter;
     private Pane navigation;
-    private CloseableView currentView;
+    private NodeView currentView;
 
     public static void main(String[] args) {
         launch(args);
@@ -90,7 +90,11 @@ public class HighwayApp extends Application {
     }
 
     private void createHWNode() {
-
+        HWNodeView view = new HWNodeView();
+        currentView = view;
+        mainPane.setCenter(view.getContent());
+        mainPane.setTop(navigation);
+        window.sizeToScene();
     }
 
     private void createCoordinator() {
