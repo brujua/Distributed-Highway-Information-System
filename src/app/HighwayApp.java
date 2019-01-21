@@ -18,6 +18,9 @@ public class HighwayApp extends Application {
     private static final Logger LOG = LoggerFactory.getLogger(HighwayApp.class);
     private static final String TITLE = "HighWay App";
     private static final double BACK_BTN_FONT_SIZE = 25;
+    private static final String CAR_TITLE = "Car";
+    private static final String HWNODE_TITLE = "HW Node";
+    private static final String COORD_TITLE = "Coordinator";
     /*    private static int WIDHT = 1300;
         private static int HEIGHT = 700;*/
     private Scene mainScene;
@@ -86,19 +89,21 @@ public class HighwayApp extends Application {
     }
 
     private void createCar() {
-
+        showNodeView(new CarView());
+        window.setTitle(CAR_TITLE);
     }
 
     private void createHWNode() {
-        HWNodeView view = new HWNodeView();
-        currentView = view;
-        mainPane.setCenter(view.getContent());
-        mainPane.setTop(navigation);
-        window.sizeToScene();
+        window.setTitle(HWNODE_TITLE);
+        showNodeView(new HWNodeView());
     }
 
     private void createCoordinator() {
-        CoordinatorView view = new CoordinatorView();
+        window.setTitle(COORD_TITLE);
+        showNodeView(new CoordinatorView());
+    }
+
+    private void showNodeView(NodeView view) {
         currentView = view;
         mainPane.setCenter(view.getContent());
         mainPane.setTop(navigation);

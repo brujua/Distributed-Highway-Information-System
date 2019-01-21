@@ -31,6 +31,6 @@ public class HWNodeView implements NodeView {
 
     @Override
     public void close() {
-
+        node.shutdown();
     }
 }
