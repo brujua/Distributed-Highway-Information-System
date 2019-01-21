@@ -21,8 +21,6 @@ public class HighwayApp extends Application {
     private static final String CAR_TITLE = "Car";
     private static final String HWNODE_TITLE = "HW Node";
     private static final String COORD_TITLE = "Coordinator";
-    /*    private static int WIDHT = 1300;
-        private static int HEIGHT = 700;*/
     private Scene mainScene;
     private Stage window;
     private BorderPane mainPane;
@@ -38,7 +36,19 @@ public class HighwayApp extends Application {
     public void start(Stage primaryStage) {
         window = primaryStage;
         window.setTitle(TITLE);
+        navigation = initNavigation();
+        defaultCenter = initDefaultCenter();
 
+        mainPane = new BorderPane();
+        mainPane.setCenter(defaultCenter);
+        mainScene = new Scene(mainPane);
+
+        window.setScene(mainScene);
+        window.centerOnScreen();
+        window.show();
+    }
+
+    private Pane initDefaultCenter() {
         Button coordButton = new Button();
         coordButton.setText("Create Coordinator");
         coordButton.setOnAction(event -> {
@@ -63,22 +73,16 @@ public class HighwayApp extends Application {
         GridPane.setMargin(coordButton, new Insets(5));
         GridPane.setMargin(hwnodeButton, new Insets(5));
         GridPane.setMargin(carButton, new Insets(5));
-        defaultCenter = grid;
-        mainPane = new BorderPane();
-        mainPane.setCenter(grid);
+        return grid;
+    }
 
-
+    private Pane initNavigation() {
         Button btnBack = new Button("<-");
         btnBack.setFont(Font.font(BACK_BTN_FONT_SIZE));
         btnBack.setOnAction((event) -> {
             back();
         });
-        navigation = new Pane(btnBack);
-        mainScene = new Scene(mainPane);
-
-        window.setScene(mainScene);
-        window.centerOnScreen();
-        window.show();
+        return new Pane(btnBack);
     }
 
     private void back() {
