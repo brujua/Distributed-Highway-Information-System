@@ -9,7 +9,6 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,10 +33,8 @@ public class CarView implements NodeView {
         loggerTextArea.appendText(INIT_MSG);
         carVisualContext = new Canvas(CANVAS_WIDHT, CANVAS_HEIGHT);
         GraphicsContext gc = carVisualContext.getGraphicsContext2D();
-        gc.setFill(Color.BLACK);
-        gc.fillRect(0, 0, CANVAS_WIDHT, CANVAS_HEIGHT);
         executorService.submit(() -> {
-            car = new Car(new Position(10.0, 75.0), 1, "Car");
+            car = new Car(new Position((Math.random() * 50) + 1, (Math.random() * 200) + 50), 1, "Car");
             try {
                 car.listenForMsgs().registerInNetwork().emitPulses();
                 carDrawer = new CarDrawer(car);
@@ -101,7 +98,7 @@ public class CarView implements NodeView {
                 accumulatedTime -= timeStep;
             }*/
             if (carDrawer != null)
-                carDrawer.draw(carVisualContext.getGraphicsContext2D(), currentTime);
+                carDrawer.draw(carVisualContext, currentTime);
         }
     }
 
