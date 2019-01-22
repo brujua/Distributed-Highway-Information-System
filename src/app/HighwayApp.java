@@ -2,6 +2,7 @@
 package app;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -42,6 +43,13 @@ public class HighwayApp extends Application {
         mainScene = new Scene(mainPane);
 
         window.setScene(mainScene);
+        window.setOnCloseRequest((event) -> {
+            if (mainPane.getCenter() != defaultCenter) {
+                currentView.close();
+            }
+            Platform.exit();
+            System.exit(0);
+        });
         window.centerOnScreen();
         window.show();
     }
