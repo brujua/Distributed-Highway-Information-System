@@ -11,12 +11,9 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class HighwayApp extends Application {
 
-    private static final Logger LOG = LoggerFactory.getLogger(HighwayApp.class);
     private static final String TITLE = "HighWay App";
     private static final double BACK_BTN_FONT_SIZE = 25;
     private static final String CAR_TITLE = "Car";
@@ -136,31 +133,5 @@ public class HighwayApp extends Application {
 
 
 
-    private class SimLoop extends AnimationTimer {
-
-        private static final float timeStep = 0.0166f; //update state 60 times per second
-        private static final float maximunStep = 5f; //max 5 sec to avoid spiral of death. See: http://svanimpe.be/blog/game-loops
-        private long previousTime = 0;
-        private float accumulatedTime = 0;
-
-
-        @Override
-        public void handle(long currentTime) {
-            if (previousTime == 0) {
-                previousTime = currentTime;
-                return;
-            }
-            float secondsElapsed = (currentTime - previousTime) / 1e9f; *//* nanoseconds to seconds *//*
-            float secondsElapsedCapped = Math.min(secondsElapsed, maximunStep);
-            accumulatedTime += secondsElapsedCapped;
-            previousTime = currentTime;
-
-            while (accumulatedTime >= timeStep) {
-                tick();
-                accumulatedTime -= timeStep;
-            }
-            //tick();
-            render();
-        }
-    }*/
+    */
 }

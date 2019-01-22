@@ -3,6 +3,7 @@ package app;
 import cars.Car;
 import common.NoPeersFoundException;
 import common.Position;
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -21,10 +22,12 @@ public class CarView implements NodeView {
     private static final double VBOX_SPACING = 10.0;
     private static final double CANVAS_WIDHT = 1000;
     private static final double CANVAS_HEIGHT = 500;
+    private final CanvasAnimationTimer canvasAnimationTimer;
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
     private Pane pane;
     private Car car;
     private Canvas carVisualContext;
+    private CarDrawer carDrawer = null;
 
     public CarView() {
         LoggerTextArea loggerTextArea = new LoggerTextArea();
@@ -34,21 +37,22 @@ public class CarView implements NodeView {
         gc.setFill(Color.BLACK);
         gc.fillRect(0, 0, CANVAS_WIDHT, CANVAS_HEIGHT);
         executorService.submit(() -> {
-            car = new Car(new Position(0.0, 75.0), 1, "Car");
+            car = new Car(new Position(10.0, 75.0), 1, "Car");
             try {
                 car.listenForMsgs().registerInNetwork().emitPulses();
+                carDrawer = new CarDrawer(car);
             } catch (NoPeersFoundException e) {
                 Platform.runLater(() -> {
                     loggerTextArea.appendText(PEER_DISCOV_ERROR_MSG);
                 });
             }
         });
-
         VBox box = new VBox(VBOX_SPACING);
         box.getChildren().add(carVisualContext);
         box.getChildren().add(loggerTextArea);
-
         pane = box;
+        canvasAnimationTimer = new CanvasAnimationTimer();
+        canvasAnimationTimer.start();
 
     }
 
@@ -59,6 +63,7 @@ public class CarView implements NodeView {
 
     @Override
     public void close() {
+        canvasAnimationTimer.stop();
         executorService.shutdown();
         try {
             if (!executorService.awaitTermination(1000, TimeUnit.MILLISECONDS))
@@ -71,4 +76,33 @@ public class CarView implements NodeView {
         }
         car.shutdown();
     }
+
+    private class CanvasAnimationTimer extends AnimationTimer {
+
+        private static final float timeStep = 0.0166f; //update state 60 times per second
+        private static final float maximunStep = 5f; //max 5 sec to avoid spiral of death. See: http://svanimpe.be/blog/game-loops
+        private long previousTime = 0;
+        private float accumulatedTime = 0;
+
+
+        @Override
+        public void handle(long currentTime) {
+            if (previousTime == 0) {
+                previousTime = currentTime;
+                return;
+            }
+            float secondsElapsed = (currentTime - previousTime) / 1e9f; /* nanoseconds to seconds */
+            float secondsElapsedCapped = Math.min(secondsElapsed, maximunStep);
+            accumulatedTime += secondsElapsedCapped;
+            previousTime = currentTime;
+
+            /*while (accumulatedTime >= timeStep) {
+                tick();
+                accumulatedTime -= timeStep;
+            }*/
+            if (carDrawer != null)
+                carDrawer.draw(carVisualContext.getGraphicsContext2D(), currentTime);
+        }
+    }
+
 }
