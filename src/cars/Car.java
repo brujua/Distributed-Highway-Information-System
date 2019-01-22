@@ -482,4 +482,7 @@ public class Car implements MsgListener, MotionObservable{
 		msgHandler.close();
 	}
 
+    public void setVelocity(double velocity) {
+        this.velocity = velocity;
+    }
 }

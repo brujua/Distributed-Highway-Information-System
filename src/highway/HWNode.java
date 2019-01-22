@@ -424,11 +424,12 @@ public class HWNode implements MsgListener {
 	}
 
     public void shutdown() {
-        logger.info("Shutting down");
+        logger.info("Shutting down...");
         threadService.shutdown();
         carMonitor.shutdown();
         carMsgHandler.close();
         hwMsgHandler.close();
+        logger.info("Shutting down completed.");
     }
 
     public String getId() {

@@ -4,6 +4,7 @@ package app;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
@@ -86,7 +87,13 @@ public class HighwayApp extends Application {
     }
 
     private void back() {
-        currentView.close();
+        try {
+            currentView.close();
+        } catch (Exception e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Cant go back right now, awating taks...");
+            alert.show();
+            return;
+        }
         mainPane.setCenter(defaultCenter);
         mainPane.setTop(null);
         window.sizeToScene();
