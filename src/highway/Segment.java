@@ -55,26 +55,6 @@ public class Segment implements Serializable, Comparable<Segment> {
 	}
 
 
-    public void setBeginX(double beginX) {
-        this.beginX = beginX;
-    }
-
-    public void setEndX(double endX) {
-        this.endX = endX;
-    }
-
-    public void setBeginY(double beginY) {
-        this.beginY = beginY;
-    }
-
-    public void setEndY(double endY) {
-        this.endY = endY;
-    }
-
-    public void setIndex(int index) {
-        this.index = index;
-    }
-
     public boolean contains(Position pos) {
         double posX = pos.getCordx();
         double posY = pos.getCordy();
