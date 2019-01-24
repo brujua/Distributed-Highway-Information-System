@@ -299,6 +299,7 @@ public class HWNode implements MsgListener {
 		if(!(m.getData() instanceof CarStNode))
 			throw new CorruptDataException();
 		CarStNode node = (CarStNode) m.getData();
+        logger.info("Hello received from: " + node);
 		if (isInSegments( node.getPosition() ) ) {
             Message msg = new Message(MsgType.HELLO_RESPONSE, getIp(), getPortCars(), new MT_HelloResponse(m.getId(), getStNode(), carMonitor.getList()));
 			carMonitor.update(node);
