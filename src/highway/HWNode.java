@@ -76,12 +76,18 @@ public class HWNode implements MsgListener {
         logger = LoggerFactory.getLogger(getName());
     }
 
-    public void sendAliveToCarsPeriodically() {
+    /**
+     * Starts a thread that sends an alive to the cars periodically every {@value #ALIVE_TO_CARS_TIME_FREQ}
+     *
+     * @return this, fluent api
+     */
+    public HWNode sendAliveToCarsPeriodically() {
         aliveForCarsScheduler.scheduleWithFixedDelay(() -> {
             for (CarStNode car : carMonitor.getList()) {
                 sendAlive(car);
             }
         }, ALIVE_TO_CARS_TIME_FREQ, ALIVE_TO_CARS_TIME_FREQ, TimeUnit.MILLISECONDS);
+        return this;
     }
 
     /**
@@ -121,9 +127,7 @@ public class HWNode implements MsgListener {
 	}
 
 	public HWNode registerInNetwork() {
-        System.out.println("creando msg");
         Message msg = new Message(MsgType.REGISTER, ip, portHighway, getHWStNode());
-        System.out.println("fin creado de mensaje");
 		for (Messageable coordAux : posibleCoordinator) {
             logger.info("Attempting register to coordinator: " + coordAux);
 			if (MsgHandler.sendTCPMsg(coordAux, msg)) {
@@ -209,7 +213,6 @@ public class HWNode implements MsgListener {
         if (!broadcastMsgs.contains(broadcast)) {
             hwLock.writeLock().lock();
             broadcastMsgs.add(broadcast);
-            //System.err.println("HW Broadcast recived");
             hwLock.writeLock().unlock();
             //send msg to all HwNode if is a car
             if (broadcast.isCar()) {
@@ -217,7 +220,6 @@ public class HWNode implements MsgListener {
 
                 hwLock.readLock().lock();
                 for (HWStNode node : hwlist) {
-                    System.err.println("HW size:" + hwlist.size());
                     if (!msg.getId().equals(node.getId())) {
                         MsgHandler.sendTCPMsg(node.getStNode(), new Message(MsgType.BROADCAST, ip, portHighway, broadcast.setHw()));
                         logger.info("Broadcast send to  hw :PORT " + node.getStNode().getPort() + " IP:  " + node.getStNode().getIP());
@@ -430,15 +432,9 @@ public class HWNode implements MsgListener {
     }
 
     public HWStNode getHWStNode() {
-
-        StNode stNode = new StNode(id, ip, portHighway);
-
-        StNode carstNode = new StNode(id, ip, portCars);
-
-        HWStNode hwStNode = new HWStNode(carstNode, stNode, getSegments());
-
-        HWStNode response = hwStNode;
-        return response;
+        StNode stNode = new StNode(id, ip, getPortHighway());
+        StNode carstNode = new StNode(id, ip, getPortCars());
+        return new HWStNode(carstNode, stNode, getSegments());
     }
 
     public Messageable getCoordinator() {
