@@ -22,10 +22,13 @@ public class LoggerTextArea extends TextArea {
             this.textArea = textArea;
         }
 
+
         @Override
         public void write(int b) {
             Platform.runLater(() -> {
+                int caretPosition = textArea.caretPositionProperty().get();
                 textArea.appendText(String.valueOf((char) b));
+                textArea.positionCaret(caretPosition);
             });
         }
     }
