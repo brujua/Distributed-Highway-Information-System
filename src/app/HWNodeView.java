@@ -20,7 +20,13 @@ public class HWNodeView implements NodeView {
         LoggerTextArea loggerTextArea = new LoggerTextArea();
         loggerTextArea.appendText(INIT_MSG);
 
-        executorService.submit(() -> node = new HWNode().listenForMsgs().registerInNetwork());
+        executorService.submit(() -> {
+            node = new HWNode();
+            node.listenForMsgs();
+            System.out.println("registering in network");
+            node.registerInNetwork();
+            node.sendAliveToCarsPeriodically();
+        });
 
         VBox box = new VBox(VBOX_SPACING);
         box.getChildren().add(loggerTextArea);

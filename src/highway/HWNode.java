@@ -16,20 +16,20 @@ import java.util.MissingResourceException;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 public class HWNode implements MsgListener {
-	private Logger logger;
 
-	public static final String ip = "localhost";
+    public static final String ip = "localhost";
+    private static final int tentativePortCars = 7000;
+    private static final int tentativePortHighway = 8000;
+    private static final long ALIVE_TO_CARS_TIME_FREQ = 3000;
+    private static final String CONFIG_COORDINATOR_PATH = "config-hwnodes";
+    private Logger logger;
 
-    public static final int tentativePortCars = 7000;
-
-	public static final int tentativePortHighway = 8000;
-    public static final String CONFIG_COORDINATOR_PATH = "config-hwnodes";
-
-	private static final double MAX_RANGE = 0;
 
 	private String id;
 	private StNode stNode;
@@ -37,24 +37,24 @@ public class HWNode implements MsgListener {
 	private int portCars;
 	private int portHighway;
     private List<? extends Messageable> posibleCoordinator;
-	private ExecutorService threadService = Executors.newCachedThreadPool();
-
-	private ReentrantReadWriteLock hwLock = new ReentrantReadWriteLock();
-	private StNode nextStNode;
-
-	private MsgHandler carMsgHandler;
-	private MsgHandler hwMsgHandler;
-
-	private List<HWStNode> hwlist; //other highway nodes
-	//private final Object hwlistLock = new Object();
-	private CarMonitor carMonitor;
-
+    private Messageable coordinator;
+    private List<Segment> segments;
+    private List<HWStNode> hwlist; //other highway nodes
+    private StNode nextHWNode;
+    private Instant lastHWUpdate;
     private List<MT_Broadcast> broadcastMsgs = new ArrayList<>();
-	private List<Segment> segments;
 
-	private Messageable coordinator;
 
-	private Instant lastHWUpdate;
+    private MsgHandler carMsgHandler;
+    private MsgHandler hwMsgHandler;
+    private CarMonitor carMonitor;
+
+    private ScheduledExecutorService aliveForCarsScheduler = Executors.newSingleThreadScheduledExecutor();
+    private ExecutorService threadService = Executors.newCachedThreadPool();
+    private ReentrantReadWriteLock hwLock = new ReentrantReadWriteLock();
+
+
+
 
     public HWNode() {
 		super();
@@ -73,6 +73,15 @@ public class HWNode implements MsgListener {
     public HWNode(String name) {
         this();
         this.name = name;
+        logger = LoggerFactory.getLogger(getName());
+    }
+
+    public void sendAliveToCarsPeriodically() {
+        aliveForCarsScheduler.scheduleWithFixedDelay(() -> {
+            for (CarStNode car : carMonitor.getList()) {
+                sendAlive(car);
+            }
+        }, ALIVE_TO_CARS_TIME_FREQ, ALIVE_TO_CARS_TIME_FREQ, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -101,7 +110,8 @@ public class HWNode implements MsgListener {
 
 		carMsgHandler.listenForUDPMsgs();
 		hwMsgHandler.listenForTCPMsgs();
-		logger.info("Escuchando a coordinador en puerto: " + hwMsgHandler.getPort());
+        logger.info("Listening coordinator on port: " + hwMsgHandler.getPort());
+        logger.info("Listening for cars on port: " + portCars);
 
 		return this; // fluent
 	}
@@ -111,9 +121,11 @@ public class HWNode implements MsgListener {
 	}
 
 	public HWNode registerInNetwork() {
-		Message msg = new Message(MsgType.REGISTER, ip, portHighway, getStNodeForHW());
-
+        System.out.println("creando msg");
+        Message msg = new Message(MsgType.REGISTER, ip, portHighway, getHWStNode());
+        System.out.println("fin creado de mensaje");
 		for (Messageable coordAux : posibleCoordinator) {
+            logger.info("Attempting register to coordinator: " + coordAux);
 			if (MsgHandler.sendTCPMsg(coordAux, msg)) {
                 logger.info("registered in coordinator: " + coordAux);
 				this.coordinator = coordAux;
@@ -144,34 +156,7 @@ public class HWNode implements MsgListener {
 		}*/
 	}
 
-	private String getIp() {
-		return ip;
-	}
 
-
-	private int getPortCars() {
-		return portCars;
-	}
-
-	public StNode getStNode() {
-		return new StNode(id, ip, portCars);
-	}
-
-	public HWStNode getStNodeForHW() {
-
-		StNode stNode = new StNode(id, ip, portHighway);
-
-		StNode carstNode = new StNode(id,ip,portCars);
-
-        HWStNode hwStNode = new HWStNode(carstNode, stNode, getSegments());
-
-		HWStNode response = hwStNode;
-		return response;
-	}
-
-	public Messageable getCoordinator() {
-		return coordinator;
-	}
 
 	@Override
 	public void msgReceived(Message m) {
@@ -288,9 +273,9 @@ public class HWNode implements MsgListener {
 				hwlist = list;
 				// if im not the last one
 				if (i + 1 < list.size()) {
-					nextStNode = list.get(i + 1).getCarStNode();
+                    nextHWNode = list.get(i + 1).getCarStNode();
 				} else {
-					nextStNode = null;
+                    nextHWNode = null;
 				}
 				break;
 			}
@@ -329,23 +314,14 @@ public class HWNode implements MsgListener {
 			}
 		}
 	}
-	
 
-	private boolean isInSegments(Position pos) {
-		hwLock.readLock().lock();
-        if (segments != null) {
-            for (Segment seg : segments) {
-                if (seg.contains(pos)) {
-                    hwLock.readLock().unlock();
-                    return true;
-                }
-            }
-        }
-		hwLock.readLock().unlock();
-		return false;
-	}
+    private void sendAlive(Messageable dest) {
+        Message msg = new Message(MsgType.ALIVE, getIp(), getPortCars(), getStNode());
+        carMsgHandler.sendUDP(dest, msg);
+    }
 
-	
+
+
 	private void handlePulse(Message msg) throws CorruptDataException {
 		if(msg.getType() != MsgType.PULSE || ! (msg.getData() instanceof CarStNode )){
 			throw new CorruptDataException();
@@ -360,19 +336,11 @@ public class HWNode implements MsgListener {
 
     }
 
-    private StNode getNextNode() {
-        hwLock.readLock().lock();
-        StNode response = nextStNode;
-        hwLock.readLock().unlock();
-        return response;
-    }
-
     private void updateCar(CarStNode car) {
 		carMonitor.update(car);
 	}
 
 	private void redirect(Message m, StNode hwRedirect) {
-
 
 		//StNode hwRedirect = searchRedirect(((Position) m.getData()));
 		MT_Redirect redirect = new MT_Redirect(m.getId(), hwRedirect);
@@ -408,20 +376,73 @@ public class HWNode implements MsgListener {
         return response;
     }
 
-    private void ack(Message m) {
-
-		//Message msg = new Message(MsgType.ACK,getIp(),getPortCars(),m.getId());
-
-		//carMsgHandler.sendUDP((Messageable) m.getOrigin(), msg);
-	}
-
-	public List<Segment> getSegments() {
-
+    private StNode getNextNode() {
         hwLock.readLock().lock();
-        List<Segment> response = segments;
+        StNode response = nextHWNode;
         hwLock.readLock().unlock();
         return response;
-	}
+    }
+
+    public List<Segment> getSegments() {
+        List<Segment> response = new ArrayList<>();
+        hwLock.readLock().lock();
+        if (segments != null) {
+            response.addAll(segments);
+        }
+        hwLock.readLock().unlock();
+        return response;
+    }
+
+    private boolean isInSegments(Position pos) {
+        hwLock.readLock().lock();
+        if (segments != null) {
+            for (Segment seg : segments) {
+                if (seg.contains(pos)) {
+                    hwLock.readLock().unlock();
+                    return true;
+                }
+            }
+        }
+        hwLock.readLock().unlock();
+        return false;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    private String getIp() {
+        return ip;
+    }
+
+
+    private int getPortCars() {
+        return portCars;
+    }
+
+    private int getPortHighway() {
+        return portHighway;
+    }
+
+    public StNode getStNode() {
+        return new StNode(id, ip, portCars);
+    }
+
+    public HWStNode getHWStNode() {
+
+        StNode stNode = new StNode(id, ip, portHighway);
+
+        StNode carstNode = new StNode(id, ip, portCars);
+
+        HWStNode hwStNode = new HWStNode(carstNode, stNode, getSegments());
+
+        HWStNode response = hwStNode;
+        return response;
+    }
+
+    public Messageable getCoordinator() {
+        return coordinator;
+    }
 
     public void shutdown() {
         logger.info("Shutting down...");
@@ -429,10 +450,7 @@ public class HWNode implements MsgListener {
         carMonitor.shutdown();
         carMsgHandler.close();
         hwMsgHandler.close();
+        aliveForCarsScheduler.shutdown();
         logger.info("Shutting down completed.");
-    }
-
-    public String getId() {
-        return id;
     }
 }
