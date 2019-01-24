@@ -19,8 +19,8 @@ public class CarView implements NodeView {
     private static final String INIT_MSG = "A car will be initialized according to config files... \n";
     private static final String PEER_DISCOV_ERROR_MSG = "Error: Could not find peers \n";
     private static final double VBOX_SPACING = 10.0;
-    private static final double CANVAS_WIDHT = 1000;
-    private static final double CANVAS_HEIGHT = 500;
+    private static final double CANVAS_WIDHT = 600;
+    private static final double CANVAS_HEIGHT = 300;
     private final CanvasAnimationTimer canvasAnimationTimer;
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
     private Pane pane;

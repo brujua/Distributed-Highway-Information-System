@@ -42,17 +42,17 @@ public class CarDrawer {
         if (updateNeeded(currentTime)) {
             drawBackground(canvas);
             GraphicsContext gc = canvas.getGraphicsContext2D();
-            middleCanvasPosition = calculateMiddlePosition(gc.getCanvas());
+            middleCanvasPosition = calculateMiddlePosition(canvas);
             neighs = car.getNeighs();
             carPosition = car.getPulse().getPosition();
             //draw car in the middle
-            gc.drawImage(carImg, middleCanvasPosition.getCordx(), middleCanvasPosition.getCordy());
+            gc.drawImage(carImg, middleCanvasPosition.getCordx() - (carImg.getWidth() / 2), middleCanvasPosition.getCordy() - (carImg.getHeight() / 2));
             for (CarStNode neigh : neighs) {
                 Position neighPos = neigh.getPosition();
                 Position relativePos = new Position(
                         neighPos.getCordx() - carPosition.getCordx() + middleCanvasPosition.getCordx(),
                         neighPos.getCordy() - carPosition.getCordy() + middleCanvasPosition.getCordy());
-                gc.drawImage(neighImg, relativePos.getCordx(), relativePos.getCordy());
+                gc.drawImage(neighImg, relativePos.getCordx() - (neighImg.getWidth() / 2), relativePos.getCordy() - (neighImg.getHeight() / 2));
             }
         }
 
