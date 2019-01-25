@@ -17,13 +17,13 @@ import java.util.List;
  * Can render a car and its surroundings on a Canvas.
  * Periodically query its car to update data needed.
  */
-public class CarDrawer {
-    public static final String NEIGH_IMG_FILE = "resources/car3.png";
-    public static final String CAR_IMG_FILE = "resources/car.png";
+public class CarDrawer implements Drawer {
     public static final Logger logger = LoggerFactory.getLogger(CarDrawer.class);
+    private static final String NEIGH_IMG_FILE = "resources/car3.png";
+    private static final String CAR_IMG_FILE = "resources/car.png";
     private static final long MIN_TIME_BEFORE_UPDATE = 1000;
-    private static Image neighImg;
-    private static Image carImg;
+    private Image neighImg;
+    private Image carImg;
 
     private Car car;
     private List<CarStNode> neighs;
