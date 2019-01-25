@@ -63,9 +63,8 @@ public class HWNodeDrawer implements Drawer {
             double maxHeigt = canvas.getHeight() - (nodeImg.getHeight() + 20);
             Segment firstSegment = segments.get(0);
             Segment lastSegment = segments.get(segments.size() - 1);
-            double unscaledWidth = lastSegment.getEndX() - firstSegment.getBeginX();
-            System.out.println("unscaled width " + unscaledWidth);
-            double scaleX = calculateScaleFactor(lastSegment.getEndX() - firstSegment.getBeginX(), canvas.getWidth());
+            double unscaledSegmentsWidth = lastSegment.getEndX() - firstSegment.getBeginX();
+            double scaleX = calculateScaleFactor(unscaledSegmentsWidth, canvas.getWidth());
             double scaleY = calculateScaleFactor(lastSegment.getEndY() - lastSegment.getBeginY(), maxHeigt);
             for (Segment seg : node.getSegments()) {
                 double segStartX = (seg.getBeginX() - firstSegment.getBeginX()) * scaleX;

@@ -37,11 +37,11 @@ public class HWListManager {
 			synchronized (list) {
                 for (Iterator<HWStNode> iterator = list.iterator(); iterator.hasNext(); ) {
                     HWStNode node = iterator.next();
-					if (!sendAlive(node)) {
-						remove(node);
+                    if (!isAlive(node)) {
+                        logger.error("NODE DOWN: " + node);
+                        reassignSegmentsOf(node);
                         iterator.remove();
                         updateNeeded = true;
-						logger.error("NODE DOWN: " + node);
 					}
 				}
                 if (updateNeeded)
@@ -51,7 +51,7 @@ public class HWListManager {
 	}
 
 
-	private boolean sendAlive(HWStNode node) {
+    private boolean isAlive(HWStNode node) {
 		Messageable dest = node.getStNode();
 		Message msg = new Message(MsgType.ALIVE, null, 0, null);
 		return MsgHandler.sendTCPMsg(dest, msg);
@@ -103,22 +103,24 @@ public class HWListManager {
 		return index;
 	}
 
-	private void remove(HWStNode node) {
+    private synchronized void reassignSegmentsOf(HWStNode node) {
 		if (!list.contains(node))
 			return;
+        logger.info("reassigning segments.");
 		int listsize = list.size();
 		if (listsize == 1) { //removing only node
 			logger.error("FATAL ERROR : NO NODES IN NETWORK");
 			return;
 		}
 		int indexRemoved = list.indexOf(node);
-		// on default the segments are added to the node on the right
-		// if its the last, they are added to the one on the left
+        // on default the segments are added to the next node of the list
+        // if its the last, they are added to the one on the previous
 		int indexToAdd = (indexRemoved != listsize - 1) ? indexRemoved + 1 : indexRemoved - 1;
 		list.get(indexToAdd).addSegments(node.getSegments());
 	}
 
 	private void notifyUpdate() {
+        logger.info("Notifying update of the assigned segments");
 		synchronized (list) {
 			MT_Update listUpdate = new MT_Update(list);
 			Message updateMsg = new Message(MsgType.UPDATE, null, 0, listUpdate);

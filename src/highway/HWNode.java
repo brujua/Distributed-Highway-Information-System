@@ -266,24 +266,28 @@ public class HWNode implements MsgListener {
 		lastHWUpdate = update.getTimestamp();
 	}
 
-	private void updateHWList(List<HWStNode> list) {
-		hwLock.writeLock().lock();
-		for (int i = 0; i < list.size(); i++) {
-			HWStNode hwNode = list.get(i);
-			if (stNode.equals(hwNode.getStNode())) {
-				segments = hwNode.getSegments();
-				hwlist = list;
-				// if im not the last one
-				if (i + 1 < list.size()) {
+    /**
+     * Update the list and Finds this node in the list to update segments and nextHWNode.
+     *
+     * @param list new hwlist
+     */
+    private void updateHWList(List<HWStNode> list) {
+        hwLock.writeLock().lock();
+        for (int i = 0; i < list.size(); i++) {
+            HWStNode hwNode = list.get(i);
+            if (getHWStNode().equals(hwNode)) {
+                segments = hwNode.getSegments();
+                hwlist = list;
+                // if im not the last one
+                if (i + 1 < list.size()) {
                     nextHWNode = list.get(i + 1).getCarStNode();
-				} else {
+                } else {
                     nextHWNode = null;
-				}
-				break;
-			}
-		}
-		hwLock.writeLock().unlock();
-	}
+                }
+            }
+        }
+        hwLock.writeLock().unlock();
+    }
 
 	private void responseACK(Message m) {
 		CarStNode node = (CarStNode) m.getData();

@@ -4,6 +4,7 @@ import highway.HWStNode;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MT_Update implements Serializable {
@@ -12,7 +13,9 @@ public class MT_Update implements Serializable {
 	private Instant timestamp;
 
 	public MT_Update(List<HWStNode> list) {
-		this.list = list;
+        if (list == null || list.isEmpty())
+            throw new IllegalArgumentException();
+        this.list = new ArrayList<>(list);
 		timestamp = Instant.now();
 	}
 
