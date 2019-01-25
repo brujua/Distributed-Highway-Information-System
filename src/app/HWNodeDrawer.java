@@ -1,5 +1,6 @@
 package app;
 
+import cars.CarStNode;
 import highway.HWNode;
 import highway.Segment;
 import javafx.scene.canvas.Canvas;
@@ -23,6 +24,11 @@ public class HWNodeDrawer implements Drawer {
     private long previousTime;
     private Image carImg;
     private Image nodeImg;
+
+    // used to draw segments and car on the canvas
+    private double offsetX = 0;
+    private double scaleX = 0;
+    private double scaleY = 0;
 
 
     public HWNodeDrawer(HWNode node) {
@@ -48,7 +54,29 @@ public class HWNodeDrawer implements Drawer {
             drawBackground(canvas);
             drawNode(canvas);
             drawSegments(canvas);
+            drawCars(canvas);
         }
+    }
+
+    private boolean updateNeeded(long currentTime) {
+        if (previousTime == 0) {
+            previousTime = currentTime;
+            return true;
+        }
+        long timeEnlapsed = currentTime - previousTime;
+        return timeEnlapsed > MIN_TIME_BEFORE_UPDATE;
+    }
+
+    private void drawBackground(Canvas canvas) {
+        GraphicsContext gc = canvas.getGraphicsContext2D();
+        gc.setFill(Color.BLACK);
+        gc.fillRect(0.0, 0.0, canvas.getWidth(), canvas.getHeight());
+    }
+
+    private void drawNode(Canvas canvas) {
+        GraphicsContext gc = canvas.getGraphicsContext2D();
+        //in middle of the bottom with x and y offsets accounting for the img size
+        gc.drawImage(nodeImg, (canvas.getWidth() / 2) - (nodeImg.getWidth() / 2), canvas.getHeight() - (nodeImg.getHeight() + 7));
     }
 
     /**
@@ -61,14 +89,20 @@ public class HWNodeDrawer implements Drawer {
         if (segments != null && !segments.isEmpty()) {
             GraphicsContext gc = canvas.getGraphicsContext2D();
             double maxHeigt = canvas.getHeight() - (nodeImg.getHeight() + 20);
+
             Segment firstSegment = segments.get(0);
             Segment lastSegment = segments.get(segments.size() - 1);
+
             double unscaledSegmentsWidth = lastSegment.getEndX() - firstSegment.getBeginX();
-            double scaleX = calculateScaleFactor(unscaledSegmentsWidth, canvas.getWidth());
-            double scaleY = calculateScaleFactor(lastSegment.getEndY() - lastSegment.getBeginY(), maxHeigt);
+            double unscaledSegmentsHeight = lastSegment.getEndY() - lastSegment.getBeginY();
+
+            scaleX = calculateScaleFactor(unscaledSegmentsWidth, canvas.getWidth());
+            scaleY = calculateScaleFactor(unscaledSegmentsHeight, maxHeigt);
+            offsetX = firstSegment.getBeginX();
+
             for (Segment seg : node.getSegments()) {
-                double segStartX = (seg.getBeginX() - firstSegment.getBeginX()) * scaleX;
-                double segEndX = (seg.getEndX() - firstSegment.getBeginX()) * scaleX;
+                double segStartX = (seg.getBeginX() - offsetX) * scaleX;
+                double segEndX = (seg.getEndX() - offsetX) * scaleX;
                 double segStartY = seg.getBeginY() * scaleY;
                 double segEndY = seg.getEndY() * scaleY;
                 gc.setStroke(Color.BLUEVIOLET);
@@ -86,24 +120,14 @@ public class HWNodeDrawer implements Drawer {
         return size2 / size1;
     }
 
-    private void drawNode(Canvas canvas) {
+    private void drawCars(Canvas canvas) {
         GraphicsContext gc = canvas.getGraphicsContext2D();
-        //in middle of the bottom with x and y offsets accounting for the img size
-        gc.drawImage(nodeImg, (canvas.getWidth() / 2) - (nodeImg.getWidth() / 2), canvas.getHeight() - (nodeImg.getHeight() + 7));
-    }
+        List<CarStNode> cars = node.getCarNodes();
 
-    private boolean updateNeeded(long currentTime) {
-        if (previousTime == 0) {
-            previousTime = currentTime;
-            return true;
+        for (CarStNode car : cars) {
+            double carXPos = (car.getPosition().getCordx() - offsetX) * scaleX;
+            double carYPos = car.getPosition().getCordy() * scaleY;
+            gc.drawImage(carImg, carXPos - (carImg.getWidth() / 2), carYPos - (carImg.getHeight() / 2));
         }
-        long timeEnlapsed = currentTime - previousTime;
-        return timeEnlapsed > MIN_TIME_BEFORE_UPDATE;
-    }
-
-    private void drawBackground(Canvas canvas) {
-        GraphicsContext gc = canvas.getGraphicsContext2D();
-        gc.setFill(Color.BLACK);
-        gc.fillRect(0.0, 0.0, canvas.getWidth(), canvas.getHeight());
     }
 }
