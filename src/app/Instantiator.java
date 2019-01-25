@@ -13,7 +13,7 @@ import java.util.List;
 public final class Instantiator {
     private static final Logger logger = LoggerFactory.getLogger(Instantiator.class);
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static final String filepath_coord = "resources/simconfig.json";
+    private static final String filepath_coord = "resources/hw-config.json";
 
     private static Config readConfig() throws IOException {
         File file = new File(filepath_coord);
