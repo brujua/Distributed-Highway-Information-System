@@ -34,9 +34,8 @@ public class HWNodeMonitor {
 
     public void update(StNode node) {
         nodeLock.readLock().lock();
-        if (this.node.equals(node)) {
+        if (this.node != null && this.node.equals(node))
             lastUpdate = Instant.now().toEpochMilli();
-        }
         nodeLock.readLock().unlock();
     }
 

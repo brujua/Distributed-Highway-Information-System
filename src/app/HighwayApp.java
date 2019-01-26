@@ -25,6 +25,7 @@ public class HighwayApp extends Application {
     private static final String COORD_TITLE = "Coordinator";
     private static final String STYLE_FILE = "/css/dark.css";
     private static final String ICON_FILE = "resources/hwnode2.png";
+    public static final String AWATING_TAKS_MSG = "Cant go back right now, awating taks...";
     private Scene mainScene;
     private Stage window;
     private BorderPane mainPane;
@@ -41,6 +42,7 @@ public class HighwayApp extends Application {
         window = primaryStage;
         window.setTitle(TITLE);
         window.getIcons().add(new Image(new File(ICON_FILE).toURI().toString()));
+
         navigation = initNavigation();
         defaultCenter = initDefaultCenter();
 
@@ -102,7 +104,7 @@ public class HighwayApp extends Application {
         try {
             currentView.close();
         } catch (Exception e) {
-            Alert alert = new Alert(Alert.AlertType.ERROR, "Cant go back right now, awating taks...");
+            Alert alert = new Alert(Alert.AlertType.ERROR, AWATING_TAKS_MSG);
             alert.show();
             return;
         }
@@ -132,21 +134,4 @@ public class HighwayApp extends Application {
         mainPane.setTop(navigation);
         window.sizeToScene();
     }
-
-    /*private void tick() {
-        if (simController != null) {
-            simController.tick();
-        }
-    }
-
-    private void render() {
-        if (simCanvas != null && simController != null) {
-            GraphicsContext gc = simCanvas.getGraphicsContext2D();
-            simController.render(gc);
-        }
-    }
-
-
-
-    */
 }

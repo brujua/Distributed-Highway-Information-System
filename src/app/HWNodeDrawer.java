@@ -42,7 +42,7 @@ public class HWNodeDrawer implements Drawer {
             nodeImg = new Image(new File(HWNODE_IMG_FILE).toURI().toString(), 50, 50, true, true);
             //img has a 2:1 ratio
             carImg = new Image(new File(NEIGH_IMG_FILE).toURI().toString(), 30, 15, true, true);
-            logger.info("Hwnode Imgs initialized and scaled");
+            logger.debug("Hwnode Imgs initialized and scaled");
         } catch (IllegalArgumentException e) {
             logger.error("Could not initialize image: " + e.getMessage());
         }
@@ -53,6 +53,7 @@ public class HWNodeDrawer implements Drawer {
         if (updateNeeded(currentTime)) {
             drawBackground(canvas);
             drawNode(canvas);
+            calculateScale(canvas);
             drawSegments(canvas);
             drawCars(canvas);
         }
@@ -79,6 +80,25 @@ public class HWNodeDrawer implements Drawer {
         gc.drawImage(nodeImg, (canvas.getWidth() / 2) - (nodeImg.getWidth() / 2), canvas.getHeight() - (nodeImg.getHeight() + 7));
     }
 
+    private void calculateScale(Canvas canvas) {
+        List<Segment> segments = node.getSegments();
+        if (segments != null && !segments.isEmpty()) {
+            double maxHeigt = canvas.getHeight() - (nodeImg.getHeight() + 20);
+            Segment firstSegment = segments.get(0);
+            Segment lastSegment = segments.get(segments.size() - 1);
+            double unscaledSegmentsWidth = lastSegment.getEndX() - firstSegment.getBeginX();
+            double unscaledSegmentsHeight = lastSegment.getEndY() - lastSegment.getBeginY();
+
+            scaleX = calculateScaleFactor(unscaledSegmentsWidth, canvas.getWidth());
+            scaleY = calculateScaleFactor(unscaledSegmentsHeight, maxHeigt);
+            offsetX = firstSegment.getBeginX();
+        }
+    }
+
+    private double calculateScaleFactor(double size1, double size2) {
+        return size2 / size1;
+    }
+
     /**
      * This function assumes that the segments are equal rectangles starting from (0,0)
      *
@@ -88,18 +108,6 @@ public class HWNodeDrawer implements Drawer {
         List<Segment> segments = node.getSegments();
         if (segments != null && !segments.isEmpty()) {
             GraphicsContext gc = canvas.getGraphicsContext2D();
-            double maxHeigt = canvas.getHeight() - (nodeImg.getHeight() + 20);
-
-            Segment firstSegment = segments.get(0);
-            Segment lastSegment = segments.get(segments.size() - 1);
-
-            double unscaledSegmentsWidth = lastSegment.getEndX() - firstSegment.getBeginX();
-            double unscaledSegmentsHeight = lastSegment.getEndY() - lastSegment.getBeginY();
-
-            scaleX = calculateScaleFactor(unscaledSegmentsWidth, canvas.getWidth());
-            scaleY = calculateScaleFactor(unscaledSegmentsHeight, maxHeigt);
-            offsetX = firstSegment.getBeginX();
-
             for (Segment seg : node.getSegments()) {
                 double segStartX = (seg.getBeginX() - offsetX) * scaleX;
                 double segEndX = (seg.getEndX() - offsetX) * scaleX;
@@ -114,10 +122,6 @@ public class HWNodeDrawer implements Drawer {
             }
         }
 
-    }
-
-    private double calculateScaleFactor(double size1, double size2) {
-        return size2 / size1;
     }
 
     private void drawCars(Canvas canvas) {

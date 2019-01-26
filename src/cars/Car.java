@@ -186,6 +186,10 @@ public class Car implements MsgListener, MotionObservable{
 
     private void handleHWNodeDown() {
         logger.error("Selected hwnode down. Attempting to re-register in network...");
+        selectedHWNodeLock.writeLock().lock();
+        selectedHWNode = null;
+        pulseEmiter.setHighwayNode(null);
+        selectedHWNodeLock.writeLock().unlock();
         boolean registered = false;
         //indefinitely attempt to find a hwnode to register
         while (!Thread.currentThread().isInterrupted() && !registered) {
@@ -193,6 +197,10 @@ public class Car implements MsgListener, MotionObservable{
                 registerInNetwork();
                 registered = true;
             } catch (NoPeersFoundException e) {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException ignored) {
+                }
                 continue;
             }
         }
@@ -304,12 +312,11 @@ public class Car implements MsgListener, MotionObservable{
             throw new CorruptDataException();
         }
         StNode node = (StNode) m.getData();
-        logger.info("Received Alive from: " + node);
+        logger.debug("Received Alive from: " + node);
+
         selectedHWNodeLock.readLock().lock();
-        if (selectedHWNode.equals(node))
+        if (selectedHWNodeLock != null && selectedHWNode.equals(node))
             hwNodeMonitor.update(node);
-
-
         selectedHWNodeLock.readLock().unlock();
     }
 
@@ -318,7 +325,7 @@ public class Car implements MsgListener, MotionObservable{
 			throw new CorruptDataException();
 		}
 		StNode car = (StNode) m.getData();
-		logger.info("Hello received from node: " + car);
+        logger.debug("Hello received from node: " + car);
 		sendHelloResponse(m);
 
 	}
@@ -369,7 +376,7 @@ public class Car implements MsgListener, MotionObservable{
 		}
 		CarStNode car = (CarStNode) m.getData();
         updateNeigh(car);
-        logger.info("Pulse received from node: " + car);
+        logger.debug("Pulse received from node: " + car);
 	}
 
 	public void handleBroadcastMsg(Message msg) throws CorruptDataException {

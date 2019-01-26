@@ -25,7 +25,7 @@ public final class Instantiator {
             Config config = readConfig();
             return new HWCoordinator(config.getSegments());
         } catch (IOException e) {
-            logger.error("Simulation Config files are corrupt: " + e.getMessage());
+            logger.error("Hw config file is corrupt: " + e.getMessage());
         }
         return null;
     }

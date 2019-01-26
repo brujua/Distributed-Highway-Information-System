@@ -246,7 +246,7 @@ public class HWNode implements MsgListener {
     }
 
     private void handleAlive(Message msg) {
-        logger.info("Alive received from coordinator");
+        logger.debug("Alive received from coordinator");
 	}
 
 	private void handleUpdate(Message msg) throws CorruptDataException {
@@ -267,17 +267,17 @@ public class HWNode implements MsgListener {
 	}
 
     /**
-     * Update the list and Finds this node in the list to update segments and nextHWNode.
+     * Update the list and finds this node in the list to update segments and nextHWNode.
      *
      * @param list new hwlist
      */
     private void updateHWList(List<HWStNode> list) {
         hwLock.writeLock().lock();
+        hwlist = list;
         for (int i = 0; i < list.size(); i++) {
             HWStNode hwNode = list.get(i);
             if (getHWStNode().equals(hwNode)) {
                 segments = hwNode.getSegments();
-                hwlist = list;
                 // if im not the last one
                 if (i + 1 < list.size()) {
                     nextHWNode = list.get(i + 1).getCarStNode();
@@ -305,7 +305,7 @@ public class HWNode implements MsgListener {
 		if(!(m.getData() instanceof CarStNode))
 			throw new CorruptDataException();
 		CarStNode node = (CarStNode) m.getData();
-        logger.info("Hello received from: " + node);
+        logger.debug("Hello received from: " + node);
 		if (isInSegments( node.getPosition() ) ) {
             Message msg = new Message(MsgType.HELLO_RESPONSE, getIp(), getPortCars(), new MT_HelloResponse(m.getId(), getStNode(), carMonitor.getList()));
 			carMonitor.update(node);
@@ -334,7 +334,7 @@ public class HWNode implements MsgListener {
 			throw new CorruptDataException();
 		}
 		CarStNode car = (CarStNode) msg.getData();
-        logger.info("Pulse received from node: " + car);
+        logger.debug("Pulse received from node: " + car);
 		if(isInSegments(car.getPosition()))
 			updateCar(car);
 		else
