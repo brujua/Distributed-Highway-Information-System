@@ -19,7 +19,7 @@ import java.io.File;
 public class HighwayApp extends Application {
 
     private static final String TITLE = "HighWay App";
-    private static final double BACK_BTN_FONT_SIZE = 25;
+    private static final double BACK_BTN_FONT_SIZE = 16;
     private static final String CAR_TITLE = "Car";
     private static final String HWNODE_TITLE = "HW Node";
     private static final String COORD_TITLE = "Coordinator";
@@ -90,7 +90,7 @@ public class HighwayApp extends Application {
     }
 
     private Pane initNavigation() {
-        Button btnBack = new Button("<-");
+        Button btnBack = new Button("Shutdown");
         btnBack.setFont(Font.font(BACK_BTN_FONT_SIZE));
         btnBack.setOnAction((event) -> {
             back();
