@@ -36,7 +36,7 @@ public class Car implements MsgListener, MotionObservable{
 	private ReentrantReadWriteLock neighsLock = new ReentrantReadWriteLock();
     private ReentrantReadWriteLock selectedHWNodeLock = new ReentrantReadWriteLock();
 
-    private List<MT_Broadcast> broadcastMsgs = new ArrayList<>();
+    private final List<MT_Broadcast> broadcastMsgs = new ArrayList<>();
     private MsgHandler msgHandler;
     private List<StNode> possibleHWNodes;
 	private StNode selectedHWNode;
@@ -286,7 +286,7 @@ public class Car implements MsgListener, MotionObservable{
                                 break;
                             }
 	                        case BROADCAST: {
-		                        handleBroadcastMsg(m);
+                                handleBroadcast(m);
 		                        break;
 	                        }
                             case ALIVE: {
@@ -379,37 +379,19 @@ public class Car implements MsgListener, MotionObservable{
         logger.debug("Pulse received from node: " + car);
 	}
 
-	public void handleBroadcastMsg(Message msg) throws CorruptDataException {
+    public void handleBroadcast(Message msg) throws CorruptDataException {
 		if (msg.getType() != MsgType.BROADCAST || !(msg.getData() instanceof MT_Broadcast)) {
 			throw new CorruptDataException();
 		}
 		MT_Broadcast broadcast = (MT_Broadcast) msg.getData();
-		//	if (broadcastMsgs != null){
-		if (!broadcastMsgs.contains(broadcast)) {
-			logger.info("BROADCAST RECIVIDO" + broadcast.getId() + "Car: " + this.id);
-			neighsLock.writeLock().lock();
-			broadcastMsgs.add(broadcast);
-			neighsLock.writeLock().unlock();
-			//send msg to all HwNode if is a car
-			if (broadcast.isCar()) {
-
-				neighsLock.readLock().lock();
-				for (CarStNode node : getNeighs()) {
-					if (!msg.getId().equals(node.getId())) {
-						msgHandler.sendUDP(node, new Message(MsgType.BROADCAST, ip, port, broadcast.setCar()));
-					}
-				}
-				msgHandler.sendUDP(selectedHWNode, new Message(MsgType.BROADCAST, ip, port, broadcast.setCar()));
-				neighsLock.readLock().unlock();
-			}
-			//send msg to all Cars if is a HW
-
-		}
-		//}
-			/*hwLock.writeLock().lock();
-				broadcastMsgs.add(broadcast);
-			hwLock.writeLock().unlock();*/
-
+        synchronized (broadcastMsgs) {
+            if (!broadcastMsgs.contains(broadcast) && broadcast.getTTL() > 0) {
+                logger.info("Broadcast Message received: " + broadcast.getMsg());
+                broadcastMsgs.add(broadcast);
+                //resend the msg to flood
+                sendBroadcast(broadcast.decrementTTL());
+            }
+        }
 	}
 
 	private boolean sendHello(StNode node, boolean isHWNode) throws CorruptDataException {
@@ -428,17 +410,21 @@ public class Car implements MsgListener, MotionObservable{
 		}
 	}
 
-	public MT_Broadcast sendBroadcast() {
-		MT_Broadcast msgbroadcast = new MT_Broadcast(5, true);
-		Message msg = new Message(MsgType.BROADCAST, ip, port, msgbroadcast);
-		for (CarStNode node : primaryMonitor.getList()) {
+    public void sendBroadcast(MT_Broadcast broadcastMsg) {
+        broadcastMsg.setFromCar(true);
+        Message msg = new Message(MsgType.BROADCAST, ip, port, broadcastMsg);
+        for (CarStNode node : getNeighs()) {
+            msgHandler.sendUDP(node, msg);
+        }
+        selectedHWNodeLock.readLock().lock();
+        if (selectedHWNode != null)
+            msgHandler.sendUDP(selectedHWNode, msg);
+        selectedHWNodeLock.readLock().unlock();
 
-			msgHandler.sendUDP(node.getStNode(), msg);
-		}
-		msgHandler.sendUDP(selectedHWNode, msg);
-		broadcastMsgs.add(msgbroadcast);
-		System.err.println("MENSAJE ENVIADO : " + msg.getType());
-		return msgbroadcast;
+        synchronized (broadcastMsgs) {
+            if (!broadcastMsgs.contains(broadcastMsg))
+                broadcastMsgs.add(broadcastMsg);
+        }
 	}
 
 	private void sendHelloResponse(Message m) throws CorruptDataException {

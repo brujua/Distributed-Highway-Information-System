@@ -43,10 +43,10 @@ class IntegrationTest {
 		coordinator.listenForMsgs();
 
 		try {
-            hwNode = new HWNode().listenForMsgs().registerInNetwork();
+            hwNode = new HWNode().listenForMsgs().registerInNetwork().sendAliveToCarsPeriodically();
             //sleep to give time for registration of the hwnode
             Thread.sleep(500);
-            hwNode2 = new HWNode().listenForMsgs().registerInNetwork();
+            hwNode2 = new HWNode().listenForMsgs().registerInNetwork().sendAliveToCarsPeriodically();
             Thread.sleep(500);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -188,7 +188,7 @@ class IntegrationTest {
     void Car_sendBroadcasMsg() {
 	    try {
 
-		    HWNode hwNode3 = new HWNode().listenForMsgs().registerInNetwork();
+            HWNode hwNode3 = new HWNode().listenForMsgs().registerInNetwork().sendAliveToCarsPeriodically();
 
 
 		    double possX = ((NUMBER_OF_SEGMENTS * DEFAULT_SEGMENT_SIDE_SIZE) / 2) + DEFAULT_SEGMENT_SIDE_SIZE;
@@ -221,13 +221,12 @@ class IntegrationTest {
 
 		    assert (!car3.getSelectedHWnode().equals(car1.getSelectedHWnode()));
 
-
-		    MT_Broadcast msgbroadcast = car1.sendBroadcast();
-		    System.err.println("Message Broadcast " + msgbroadcast.getId());
+            MT_Broadcast msgBroadcast = new MT_Broadcast("Accidente en kilometro " + car1.getPulse().getPosition().getCordx(), true);
+            car1.sendBroadcast(msgBroadcast);
 		    Thread.sleep(500);
-		    assert (car1.containBroadcast(msgbroadcast));
-		    assert (car3.containBroadcast(msgbroadcast));
-		    assert (car2.containBroadcast(msgbroadcast));
+            assert (car1.containBroadcast(msgBroadcast));
+            assert (car3.containBroadcast(msgBroadcast));
+            assert (car2.containBroadcast(msgBroadcast));
 
 
 		    car1.shutdown();
@@ -235,12 +234,8 @@ class IntegrationTest {
 		    car3.shutdown();
 		    hwNode3.shutdown();
 
-	    } catch (NoPeersFoundException e) {
+        } catch (NoPeersFoundException | InterruptedException e) {
 		    e.printStackTrace();
-	    } catch (InterruptedException e) {
-		    e.printStackTrace();
-	    } finally {
-
 	    }
 
     }

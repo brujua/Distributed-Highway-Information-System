@@ -42,7 +42,7 @@ public class HWNode implements MsgListener {
     private List<HWStNode> hwlist; //other highway nodes
     private StNode nextHWNode;
     private Instant lastHWUpdate;
-    private List<MT_Broadcast> broadcastMsgs = new ArrayList<>();
+    private final List<MT_Broadcast> broadcastMsgs = new ArrayList<>();
 
 
     private MsgHandler carMsgHandler;
@@ -191,7 +191,7 @@ public class HWNode implements MsgListener {
                             break;
                         }
                         case BROADCAST: {
-                            broadcasthandle(m);
+                            handleBroadcast(m);
                             break;
                         }
                         default: {
@@ -205,44 +205,32 @@ public class HWNode implements MsgListener {
             });//end task
     }
 
-    private void broadcasthandle(Message msg) throws CorruptDataException {
+    private void handleBroadcast(Message msg) throws CorruptDataException {
         if (msg.getType() != MsgType.BROADCAST || !(msg.getData() instanceof MT_Broadcast)) {
             throw new CorruptDataException();
         }
         MT_Broadcast broadcast = (MT_Broadcast) msg.getData();
-        if (!broadcastMsgs.contains(broadcast)) {
-            hwLock.writeLock().lock();
-            broadcastMsgs.add(broadcast);
-            hwLock.writeLock().unlock();
-            //send msg to all HwNode if is a car
-            if (broadcast.isCar()) {
-                logger.info("Broadcast Msg recived from car: ");
-
-                hwLock.readLock().lock();
-                for (HWStNode node : hwlist) {
-                    if (!msg.getId().equals(node.getId())) {
-                        MsgHandler.sendTCPMsg(node.getStNode(), new Message(MsgType.BROADCAST, ip, portHighway, broadcast.setHw()));
-                        logger.info("Broadcast send to  hw :PORT " + node.getStNode().getPort() + " IP:  " + node.getStNode().getIP());
+        synchronized (broadcastMsgs) {
+            if (!broadcastMsgs.contains(broadcast) && broadcast.getTTL() > 0) {
+                broadcastMsgs.add(broadcast);
+                //if is from a car send it to the rest of the hwnodes
+                if (broadcast.isFromCar()) {
+                    logger.info("Broadcast Msg received from car: " + broadcast.getMsg());
+                    broadcast.setFromCar(false); //to be resent as from hwnode
+                    for (HWStNode node : getHwlist()) {
+                        if (!node.equals(this.getHWStNode())) {
+                            MsgHandler.sendTCPMsg(node.getStNode(), new Message(MsgType.BROADCAST, ip, portHighway, broadcast.decrementTTL()));
+                        }
+                    }
+                } else //If its from Hwnode send it to my cars
+                {
+                    logger.info("Broadcast received from HW-Node: " + broadcast.getMsg());
+                    for (CarStNode node : carMonitor.getList()) {
+                        carMsgHandler.sendUDP(node, new Message(MsgType.BROADCAST, ip, portCars, broadcast.decrementTTL()));
                     }
                 }
-                hwLock.readLock().unlock();
-            }
-            //send msg to all Cars if is a HW
-            if (broadcast.isHw()) {
-                logger.info("HW Broadcast recived from hw: " + msg.getData());
-                hwLock.readLock().lock();
-                List<CarStNode> cars = carMonitor.getList();
-                for (CarStNode node : cars) {
-                    if (!msg.getId().equals(node.getId()))
-                        carMsgHandler.sendUDP(node, new Message(MsgType.BROADCAST, ip, portCars, broadcast.setHw()));
-                }
-                hwLock.readLock().unlock();
             }
         }
-			/*hwLock.writeLock().lock();
-				broadcastMsgs.add(broadcast);
-			hwLock.writeLock().unlock();*/
-
     }
 
     private void handleAlive(Message msg) {
@@ -376,11 +364,13 @@ public class HWNode implements MsgListener {
 		return null;
 	}
 
-    private List<HWStNode> gethwlist() {
+    private List<HWStNode> getHwlist() {
+        List<HWStNode> list = new ArrayList<>();
         hwLock.readLock().lock();
-        List<HWStNode> response = hwlist;
+        if (hwlist != null)
+            list.addAll(hwlist);
         hwLock.readLock().unlock();
-        return response;
+        return list;
     }
 
     private StNode getNextNode() {

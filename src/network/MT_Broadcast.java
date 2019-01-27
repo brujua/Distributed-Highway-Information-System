@@ -5,20 +5,22 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class MT_Broadcast implements Serializable {
+    private static final int DEFAULT_TTL = 5;
     private String id;
     private int TTL;
-    private boolean car;
+    private boolean fromCar;
+    private String msg;
 
-    public MT_Broadcast(int TTL, boolean car) {
-        this(TTL);
-        this.id = UUID.randomUUID().toString();
-        //this.TTL = TTL;
-    }
-
-    public MT_Broadcast(int TTL) {
-        this.car = true;
+    public MT_Broadcast(String msg, int TTL, boolean fromCar) {
         this.TTL = TTL;
+        this.fromCar = fromCar;
+        this.id = UUID.randomUUID().toString();
     }
+
+    public MT_Broadcast(String msg, boolean fromCar) {
+        this(msg, DEFAULT_TTL, fromCar);
+    }
+
 
     public String getId() {
         return id;
@@ -42,20 +44,33 @@ public class MT_Broadcast implements Serializable {
     }
 
     public boolean isHw() {
-        return !car;
+        return !fromCar;
     }
 
-    public boolean isCar() {
-        return car;
+    public boolean isFromCar() {
+        return fromCar;
+    }
+
+    public void setFromCar(boolean fromCar) {
+        this.fromCar = fromCar;
     }
 
     public MT_Broadcast setCar() {
-        car = true;
+        fromCar = true;
         return this;
     }
 
     public MT_Broadcast setHw() {
-        car = false;
+        fromCar = false;
         return this;
+    }
+
+    public MT_Broadcast decrementTTL() {
+        TTL--;
+        return this;
+    }
+
+    public String getMsg() {
+        return msg;
     }
 }
