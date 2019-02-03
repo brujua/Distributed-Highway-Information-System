@@ -11,6 +11,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import network.MT_Broadcast;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,6 +27,7 @@ public class CarView implements NodeView {
     private static final String VELOCITY_LABEL = "velocity";
     private static final double VEL_CHANGE = 0.5;
     private static final String ERROR_VEL_FIELD_MSG = "ERROR: velocity inserted its not a number";
+    private static final String ACCIDENT_BTN_MSG = "Inform Accident here";
     private final LoggerTextArea loggerTextArea;
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
     private Pane pane;
@@ -74,12 +76,20 @@ public class CarView implements NodeView {
         Button rightButton = new Button("->");
         rightButton.setOnAction((event -> moveRight()));
 
+        Button accidentButton = new Button(ACCIDENT_BTN_MSG);
+        accidentButton.setOnAction(event -> informAccident());
+
         GridPane grid = new GridPane();
         grid.add(velocityLabel, 1, 0);
         grid.add(leftButton, 0, 1);
         grid.add(velocityField, 1, 1);
         grid.add(rightButton, 2, 1);
+        grid.add(accidentButton, 5, 1);
         return grid;
+    }
+
+    private void informAccident() {
+        car.sendBroadcast(new MT_Broadcast("Accident on" + car.getPulse().getPosition(), true));
     }
 
     @Override

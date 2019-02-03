@@ -1,6 +1,7 @@
 package network;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -10,11 +11,15 @@ public class MT_Broadcast implements Serializable {
     private int TTL;
     private boolean fromCar;
     private String msg;
+    private Instant timestamp;
 
     public MT_Broadcast(String msg, int TTL, boolean fromCar) {
         this.TTL = TTL;
         this.fromCar = fromCar;
+        this.msg = msg;
         this.id = UUID.randomUUID().toString();
+        timestamp = Instant.now();
+
     }
 
     public MT_Broadcast(String msg, boolean fromCar) {
@@ -72,5 +77,9 @@ public class MT_Broadcast implements Serializable {
 
     public String getMsg() {
         return msg;
+    }
+
+    public Instant getTimestamp() {
+        return timestamp;
     }
 }
