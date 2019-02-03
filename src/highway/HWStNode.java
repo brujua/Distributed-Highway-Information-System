@@ -94,7 +94,7 @@ public class HWStNode implements Messageable, Serializable {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(stNode.toString());
-        sb.append("[");
+        sb.append("Segments:[");
         for (Segment seg : segments) {
             sb.append(seg.getIndex());
             sb.append(",");
