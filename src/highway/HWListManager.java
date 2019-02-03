@@ -121,7 +121,7 @@ public class HWListManager {
 
     private synchronized void notifyUpdate() {
         if (!list.isEmpty()) {
-            logger.info("Notifying update of the assigned segments");
+            logger.info("Notifying update of the assigned segments, new state of the hwlist: \n" + list);
             MT_Update listUpdate = new MT_Update(list);
             Message updateMsg = new Message(MsgType.UPDATE, null, 0, listUpdate);
             for (HWStNode node : list) {

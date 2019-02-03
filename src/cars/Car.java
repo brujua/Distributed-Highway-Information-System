@@ -166,12 +166,11 @@ public class Car implements MsgListener, MotionObservable{
 		catch (CorruptDataException e) {
 			logger.error("corrupt data on hw-node response");
 			return false;
-        }
-        catch (ExecutionException  e) {
+        } catch (ExecutionException e) { // from the CompletableFuture
         	try {
         		throw e.getCause();
         	} catch(TimeoutException toe) {
-		        logger.info("Node did not respond: "+hwNode.getPort());
+		        logger.info("Node did not respond, tried on port: " + hwNode.getPort());
             	return false;
 
         	} catch (Throwable e1) {

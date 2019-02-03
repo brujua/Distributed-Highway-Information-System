@@ -147,9 +147,11 @@ public class MsgHandler implements MsgObservable{
 			DatagramPacket helloPckt;
 			helloPckt = new DatagramPacket(serializedHello, serializedHello.length, InetAddress.getByName(dest.getIP()) , dest.getPort());
 			sendSocket.send(helloPckt);
-		}  catch (IOException e) {
-			logger.error("IOException Error while sending msg to: "+ dest);
-		}
+        }  catch (IOException e) {
+            logger.error("IOException Error while sending msg to: "+ dest);
+        } catch (Exception e) {
+            logger.error("error sending msg: " + e.getMessage());
+        }
 
 	}
 

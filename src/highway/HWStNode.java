@@ -5,6 +5,7 @@ import common.StNode;
 import network.Messageable;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -70,7 +71,8 @@ public class HWStNode implements Messageable, Serializable {
 	}
 
 	public void addSegments(List<Segment> newSegments) {
-		this.segments.addAll(newSegments);
+        segments.addAll(newSegments);
+        Collections.sort(segments);
 	}
 
 	@Override
@@ -90,6 +92,14 @@ public class HWStNode implements Messageable, Serializable {
 
     @Override
     public String toString() {
-        return stNode.toString();
+        StringBuilder sb = new StringBuilder();
+        sb.append(stNode.toString());
+        sb.append("[");
+        for (Segment seg : segments) {
+            sb.append(seg.getIndex());
+            sb.append(",");
+        }
+        sb.append("]");
+        return sb.toString();
     }
 }

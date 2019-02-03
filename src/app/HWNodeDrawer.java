@@ -53,9 +53,13 @@ public class HWNodeDrawer implements Drawer {
         if (updateNeeded(currentTime)) {
             drawBackground(canvas);
             drawNode(canvas);
+            logger.info("calculating scale...");
             calculateScale(canvas);
+            logger.info("drawing segments...");
             drawSegments(canvas);
+            logger.info("drawing cars...");
             drawCars(canvas);
+            logger.info("drawing completed.");
         }
     }
 

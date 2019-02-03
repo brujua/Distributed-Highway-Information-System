@@ -252,6 +252,7 @@ public class HWNode implements MsgListener {
 		}
 		updateHWList(update.getList());
 		lastHWUpdate = update.getTimestamp();
+        logger.debug("hwlist updated correctly");
 	}
 
     /**
@@ -260,7 +261,9 @@ public class HWNode implements MsgListener {
      * @param list new hwlist
      */
     private void updateHWList(List<HWStNode> list) {
+        logger.debug("waiting for write lock");
         hwLock.writeLock().lock();
+        logger.debug("write lock adquired");
         hwlist = list;
         for (int i = 0; i < list.size(); i++) {
             HWStNode hwNode = list.get(i);
@@ -297,7 +300,7 @@ public class HWNode implements MsgListener {
 		if (isInSegments( node.getPosition() ) ) {
             Message msg = new Message(MsgType.HELLO_RESPONSE, getIp(), getPortCars(), new MT_HelloResponse(m.getId(), getStNode(), carMonitor.getList()));
 			carMonitor.update(node);
-
+            logger.debug(node + " accepted, sending hello response.");
 			carMsgHandler.sendUDP(node, msg);
 
 		}else {
@@ -347,21 +350,19 @@ public class HWNode implements MsgListener {
 
 
 	private StNode searchRedirect(Position position) {
-		hwLock.readLock().lock();
-        if (hwlist != null) {
-            for (HWStNode node : hwlist) {
-                if (node.isInSegment(position)) {
-                    StNode response = node.getCarStNode();
-                    hwLock.readLock().unlock();
-                    return response;
-                }
-            }
+        StNode response = null;
+        hwLock.readLock().lock();
+        try {
+            if (hwlist != null) {
+                for (HWStNode node : hwlist)
+                    if (node.isInSegment(position))
+                        response = node.getCarStNode();
+            } else
+                logger.error("HW-List not yet initialized and a received a redirect request");
+        } finally {
+            hwLock.readLock().unlock();
         }
-        if (hwlist == null) {
-            logger.error("HW-List not yet initialized and a received a redirect request");
-        }
-		hwLock.readLock().unlock();
-		return null;
+        return response;
 	}
 
     private List<HWStNode> getHwlist() {

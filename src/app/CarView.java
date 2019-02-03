@@ -99,7 +99,8 @@ public class CarView implements NodeView {
 
     @Override
     public void close() {
-        canvasAnimationTimer.stop();
+        if (canvasAnimationTimer != null)
+            canvasAnimationTimer.stop();
         executorService.shutdown();
         try {
             if (!executorService.awaitTermination(1000, TimeUnit.MILLISECONDS))
