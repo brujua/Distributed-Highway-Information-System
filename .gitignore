@@ -21,6 +21,7 @@ classes/
 *.zip
 *.tar.gz
 *.rar
+!demo-application*
 
 
 
