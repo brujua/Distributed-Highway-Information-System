@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 public class HWListManager {
 
-	public static final long ALIVE_REFRESH_TIME = 5000;
+    public static final long ALIVE_REFRESH_TIME = 2000;
 	private static final Logger logger = LoggerFactory.getLogger(HWListManager.class);
 	private static final int MIN_SEGMENTS_PER_NODE = 1;
 	private final List<HWStNode> list;
