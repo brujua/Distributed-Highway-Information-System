@@ -31,7 +31,6 @@ public final class Instantiator {
     }
 
     private static class Config {
-        private boolean simulation_mode_on;
         private List<Segment> segments;
 
         public List<Segment> getSegments() {
@@ -42,12 +41,5 @@ public final class Instantiator {
             this.segments = segments;
         }
 
-        public boolean isSimulation_mode_on() {
-            return simulation_mode_on;
-        }
-
-        public void setSimulation_mode_on(boolean simulation_mode_on) {
-            this.simulation_mode_on = simulation_mode_on;
-        }
     }
 }

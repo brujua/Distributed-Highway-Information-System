@@ -11,15 +11,18 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class HWNodeMonitor {
-    public static final long timeOutCheckRefreshTime = 2000;
-    public static final long MAX_TIMEOUT = 5000;
     private Logger logger;
     private ScheduledExecutorService timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
     private ReentrantReadWriteLock nodeLock = new ReentrantReadWriteLock();
+
+    private long timeoutTime;
+    private long timeoutCheckRefreshTime;
     private StNode node;
     private long lastUpdate;
 
-    public HWNodeMonitor(String name) {
+    public HWNodeMonitor(long timeoutTime, long timeoutCheckRefreshTime, String name) {
+        this.timeoutCheckRefreshTime = timeoutCheckRefreshTime;
+        this.timeoutTime = timeoutTime;
         logger = LoggerFactory.getLogger(name + "-HWNodeMonitor");
         node = null;
         lastUpdate = Instant.now().toEpochMilli();
@@ -40,7 +43,7 @@ public class HWNodeMonitor {
     }
 
     public void startMonitoring(Runnable timeOutCallback) {
-        timeoutScheduler.scheduleWithFixedDelay(() -> checkTimeOut(timeOutCallback), timeOutCheckRefreshTime, timeOutCheckRefreshTime, TimeUnit.MILLISECONDS);
+        timeoutScheduler.scheduleWithFixedDelay(() -> checkTimeOut(timeOutCallback), timeoutCheckRefreshTime, timeoutCheckRefreshTime, TimeUnit.MILLISECONDS);
     }
 
     private void checkTimeOut(Runnable timeOutCallback) {
@@ -49,8 +52,8 @@ public class HWNodeMonitor {
         boolean doCallback = false;
         nodeLock.readLock().lock();
         if (node != null) {
-            if (timeSinceLastUpdate > MAX_TIMEOUT) {
-                logger.error("HWNode haven't sent alive in " + MAX_TIMEOUT + " milliseconds");
+            if (timeSinceLastUpdate > timeoutTime) {
+                logger.error("HWNode haven't sent alive in " + timeoutTime + " milliseconds");
                 node = null;
                 doCallback = true;
             }

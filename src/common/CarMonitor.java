@@ -17,23 +17,21 @@ import java.util.concurrent.TimeUnit;
 /**
  * This class maintains a list of CarStNode, adding and updating them by CarMonitor.add().
  * Starts a scheduled task that checks every  {@link CarMonitor}.TIMEOUT_CHECK_REFRESH_TIME
- * if every car was updated at least once in MAX_TIMEOUT milliseconds, if not, removes the car.
+ * if every car was updated at least once in timeoutTime milliseconds, if not, removes the car.
  */
 public class CarMonitor {
+    private final Map<CarStNode, Instant> cars;
+    private Logger logger;
+    private ScheduledExecutorService timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
+    private long timeoutTime;
 
-    public static final long timeOutCheckRefreshTime = 2000;
-    public static final long MAX_TIMEOUT = 5000;
-
-	private Logger logger;
-	private final Map<CarStNode,Instant> cars ;
-	private ScheduledExecutorService timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
-
-	public CarMonitor( String name) {
+    public CarMonitor(String name, long timeoutTime, long timeoutCheckFrequency) {
 		super();
-		cars = new ConcurrentHashMap<>();
+        this.timeoutTime = timeoutTime;
+        cars = new ConcurrentHashMap<>();
         logger = LoggerFactory.getLogger(CarMonitor.class.getName() + name);
 
-		timeoutScheduler.scheduleWithFixedDelay(new TimeOutChecker(), timeOutCheckRefreshTime, timeOutCheckRefreshTime, TimeUnit.MILLISECONDS);
+        timeoutScheduler.scheduleWithFixedDelay(new TimeOutChecker(), timeoutCheckFrequency, timeoutCheckFrequency, TimeUnit.MILLISECONDS);
 	}
 
 	public void update(CarStNode car){
@@ -66,7 +64,7 @@ public class CarMonitor {
 				Iterator<Map.Entry<CarStNode, Instant>> iterator = cars.entrySet().iterator();
 				while (iterator.hasNext()) {
 					Map.Entry<CarStNode,Instant> entry = iterator.next();
-					if ((now - entry.getValue().toEpochMilli() >= MAX_TIMEOUT)) {
+                    if ((now - entry.getValue().toEpochMilli() >= timeoutTime)) {
 						iterator.remove();
 						logger.info("Removed " + entry.getKey() + " from monitor list due to timeout");
 					}

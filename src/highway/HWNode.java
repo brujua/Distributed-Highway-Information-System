@@ -1,10 +1,7 @@
 package highway;
 
 import cars.CarStNode;
-import common.CarMonitor;
-import common.Position;
-import common.StNode;
-import common.Util;
+import common.*;
 import network.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,11 +20,16 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class HWNode implements MsgListener {
 
+    private static final String CONFIG_FILE_NAME = "config-hwnodes";
+
     public static final String ip = "localhost";
-    private static final int tentativePortCars = 7000;
-    private static final int tentativePortHighway = 8000;
-    private static final long ALIVE_TO_CARS_TIME_FREQ = 3000;
-    private static final String CONFIG_COORDINATOR_PATH = "config-hwnodes";
+
+    //configurable parameters
+    private int tentativePortCars = 7000;
+    private int tentativePortHighway = 8000;
+    private long aliveToCarsFrequency = 3000;
+    private int timeoutTime = 5000;
+    private int timeoutCheckFrequency = 2000;
     private Logger logger;
 
 
@@ -58,12 +60,12 @@ public class HWNode implements MsgListener {
 
     public HWNode() {
 		super();
-        this.posibleCoordinator = readConfig();
+        initConfigProperties();
 		id = UUID.randomUUID().toString();
 		logger = LoggerFactory.getLogger(getName());
 		portCars = Util.getAvailablePort(tentativePortCars);
 		portHighway = Util.getAvailablePort(tentativePortHighway);
-		carMonitor = new CarMonitor(getName());
+        carMonitor = new CarMonitor(getName(), timeoutTime, timeoutCheckFrequency);
 		carMsgHandler = new MsgHandler(portCars, getName());
 		carMsgHandler.addMsgListener(this);
 		stNode = new StNode(id, ip, portCars);
@@ -78,7 +80,26 @@ public class HWNode implements MsgListener {
     }
 
     /**
-     * Starts a thread that sends an alive to the cars periodically every {@value #ALIVE_TO_CARS_TIME_FREQ}
+     * This method reads the configuration file for the cars, named 'config-hwnodes.properties' under resources.
+     * if at any point the configuration fails, the configurable parameters pending will remain untouched.
+     */
+    private void initConfigProperties() {
+        try {
+            ConfigReader configReader = new ConfigReader(CONFIG_FILE_NAME);
+            tentativePortCars = configReader.getIntProperty("tentative-port-cars");
+            tentativePortHighway = configReader.getIntProperty("tentative-port-highway");
+            aliveToCarsFrequency = configReader.getIntProperty("alive-to-cars-frequency");
+            timeoutTime = configReader.getIntProperty("timeout-time");
+            timeoutCheckFrequency = configReader.getIntProperty("timeout-check-frequency");
+            posibleCoordinator = configReader.getNodes();
+        } catch (MissingResourceException e) {
+            logger.error("config file its missing or corrupt: " + e.getMessage());
+        }
+
+    }
+
+    /**
+     * Starts a thread that sends an alive to the cars periodically
      *
      * @return this, fluent api
      */
@@ -87,24 +108,8 @@ public class HWNode implements MsgListener {
             for (CarStNode car : carMonitor.getList()) {
                 sendAlive(car);
             }
-        }, ALIVE_TO_CARS_TIME_FREQ, ALIVE_TO_CARS_TIME_FREQ, TimeUnit.MILLISECONDS);
+        }, aliveToCarsFrequency, aliveToCarsFrequency, TimeUnit.MILLISECONDS);
         return this;
-    }
-
-    /**
-     * This method reads the configuration file for the hwnodes, named 'config-hwnodes.properties' under resources.
-     * From there, extracts the list of possible locations (ip and range of ports) for coordinators
-     *
-     * @return the list of possible coordinators
-     */
-    public List<StNode> readConfig() {
-        List<StNode> coords = new ArrayList<>();
-        try {
-            coords = Util.readNodeConfigFile(CONFIG_COORDINATOR_PATH);
-        } catch (MissingResourceException e) {
-            logger.error("Config file for HWNodes corrupted: " + e.getMessage());
-        }
-        return coords;
     }
 
 	public HWNode listenForMsgs() {
@@ -144,24 +149,8 @@ public class HWNode implements MsgListener {
 	}
 
 	public List<CarStNode> getCarNodes(){
-
-		return carMonitor.getList();
-		//return this.carNodes;
-
-
-	}
-
-	private void addCarNode (CarStNode car){
-
-		carMonitor.update(car);
-	/*	synchronized (this.carNodes) {
-			this.carNodes.add(car);
-
-
-		}*/
-	}
-
-
+        return carMonitor.getList();
+    }
 
 	@Override
 	public void msgReceived(Message m) {

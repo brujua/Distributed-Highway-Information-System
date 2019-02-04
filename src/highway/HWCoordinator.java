@@ -14,7 +14,7 @@ import java.util.List;
 public class HWCoordinator implements Messageable, MsgListener {
 
 	public static final String ip = "localhost";
-	public int tentativePort = 9000;
+	private int tentativePort = 9000;
 	private final static Logger logger = LoggerFactory.getLogger(HWCoordinator.class);
 	private final HWListManager hwlist;
 	private String id = "0";

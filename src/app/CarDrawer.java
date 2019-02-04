@@ -83,7 +83,7 @@ public class CarDrawer implements Drawer {
             //the image has a 2:1 ratio
             neighImg = new Image(new File(NEIGH_IMG_FILE).toURI().toString(), 60, 30, true, true);
             carImg = new Image(new File(CAR_IMG_FILE).toURI().toString(), 60, 30, true, true);
-            logger.info("Car Imgs initialized and scaled");
+            logger.debug("Car Imgs initialized and scaled");
         } catch (IllegalArgumentException e) {
             logger.error("Could not initialize image: " + e.getMessage());
         }

@@ -14,34 +14,32 @@ public class Car implements MsgListener, MotionObservable{
 
 	private Logger logger;
 
-	// -- temporary constants --
-	public final String ip = "localhost";
-	public final int tentativePort = 5555;
-    public static final String CONFIG_NODES_PATH = "config-cars";
-	// range for the monitors
-    public final double PRIMARY_RANGE = 200; //near cars
+    public static final String CONFIG_FILE_NAME = "config-cars";
+    public final TimeUnit standardTimeUnit = TimeUnit.MILLISECONDS;
 
+    // configurable parameters
+    public final String ip = "localhost";
+    public int tentativePort = 5555;
+    public double PRIMARY_RANGE = 2000; //near cars
+    public double SECONDARY_RANGE = 9000; // far cars
+    public int pulseRefreshTime = 1000;
+    public int timeoutTime = 5000;
+    public int timeoutCheckFrequency = 2000;
 
-	public final int pulseRefreshTime = 1000;
-	public final TimeUnit pRefreshTimeUnit = TimeUnit.MILLISECONDS;
-    public final double SECONDARY_RANGE = 2000; // far cars
+    private String id;
 
-
-	private String id;
 	private String name = null;
 	private int port;
 	private Position position;
 	private double velocity;
     private ReentrantReadWriteLock positionLock = new ReentrantReadWriteLock();
-	private ReentrantReadWriteLock neighsLock = new ReentrantReadWriteLock();
     private ReentrantReadWriteLock selectedHWNodeLock = new ReentrantReadWriteLock();
 
+    private List<StNode> possibleHWNodes = new ArrayList<>();
     private final List<MT_Broadcast> broadcastMsgs = new ArrayList<>();
     private MsgHandler msgHandler;
-    private List<StNode> possibleHWNodes;
 	private StNode selectedHWNode;
     private CarMonitor primaryMonitor; //near cars
-    private CarMonitor secondaryMonitor; // far cars
     private HWNodeMonitor hwNodeMonitor;
 	private PulseEmiter pulseEmiter;
 	private List<MotionObserver> motionObservers = new ArrayList<>();
@@ -53,11 +51,10 @@ public class Car implements MsgListener, MotionObservable{
         logger = LoggerFactory.getLogger(getName());
         this.position = position;
         this.velocity = velocity;
+        initConfigProperties();
         this.port = Util.getAvailablePort(tentativePort);
-        this.possibleHWNodes = readConfig();
-        primaryMonitor = new CarMonitor("PrimaryMonitor: " + getName());
-        secondaryMonitor = new CarMonitor("SecondaryMonitor: " + getName());
-        hwNodeMonitor = new HWNodeMonitor(getName());
+        primaryMonitor = new CarMonitor("PrimaryMonitor: " + getName(), timeoutTime, timeoutCheckFrequency);
+        hwNodeMonitor = new HWNodeMonitor(timeoutTime, timeoutCheckFrequency, getName());
         hwNodeMonitor.startMonitoring(this::handleHWNodeDown);
         //initialize the MsgHandler
         msgHandler = new MsgHandler(this.port);
@@ -84,22 +81,31 @@ public class Car implements MsgListener, MotionObservable{
         this.possibleHWNodes = highwayNodes;
 	}
 
-	/**
-	 * This method reads the configuration file for the cars, named 'config-cars.properties' under resources.
-	 * From there, extracts the list of possible locations (ip and range of ports) for HWNodes
-	 *
-	 * @return the list of possible hwnodes
-	 */
-	private List<StNode> readConfig() {
-		List<StNode> nodes = new ArrayList<>();
-		try {
-			nodes = Util.readNodeConfigFile(CONFIG_NODES_PATH);
-		} catch (MissingResourceException e) {
-			logger.error("Config file for car corrupted: " + e.getMessage());
-		}
-		return nodes;
-	}
+    /**
+     * This method reads the configuration file for the cars, named 'config-cars.properties' under resources.
+     * if at any point the configuration fails, the configurable parameters pending will remain untouched.
+     */
+    private void initConfigProperties() {
+        try {
+            ConfigReader configReader = new ConfigReader(CONFIG_FILE_NAME);
+            tentativePort = configReader.getIntProperty("tentative-port");
+            PRIMARY_RANGE = configReader.getIntProperty("primary-range");
+            SECONDARY_RANGE = configReader.getIntProperty("secondary-range");
+            pulseRefreshTime = configReader.getIntProperty("pulse-frequency");
+            timeoutTime = configReader.getIntProperty("timeout-time");
+            timeoutCheckFrequency = configReader.getIntProperty("timeout-check-frequency");
+            possibleHWNodes = configReader.getNodes();
+        } catch (MissingResourceException e) {
+            logger.error("config file its missing or corrupt: " + e.getMessage());
+        }
 
+    }
+
+    /**
+     * Starts a thread that listens for UDP messages
+     *
+     * @return this (Fluid Syntax)
+     */
     public Car listenForMsgs() {
         port = Util.getAvailablePort(tentativePort);
         msgHandler = new MsgHandler(port, getName());
@@ -149,8 +155,8 @@ public class Car implements MsgListener, MotionObservable{
 			responseMsg = response.get();
 
         	switch(responseMsg.getType()) {
-            	case HELLO_RESPONSE:{
-            		handleHelloResponse(responseMsg,true);
+            	case HELLO_RESPONSE: {
+                    handleHelloResponse(responseMsg);
 		            updateHWNode(((MT_HelloResponse) responseMsg.getData()).getStNode());
 		            return true;
                 }
@@ -221,32 +227,23 @@ public class Car implements MsgListener, MotionObservable{
 		    double distance = position.distance(neigh.getPosition());
 		    if (distance <= PRIMARY_RANGE)
 			    primaryMonitor.update(neigh);
-		    else if (distance <= SECONDARY_RANGE)
-			    secondaryMonitor.update(neigh);
-
 		    positionLock.readLock().unlock();
-	    }
-	}
+        }
+    }
 
-
-
+    /**
+     * starts a thread that periodically sends pulses to neighbours
+     *
+     * @return this (Fluid Syntax)
+     */
 	public Car emitPulses() {
-		pulseScheduler.scheduleWithFixedDelay(pulseEmiter, pulseRefreshTime, pulseRefreshTime, pRefreshTimeUnit);
+        pulseScheduler.scheduleWithFixedDelay(pulseEmiter, pulseRefreshTime, pulseRefreshTime, standardTimeUnit);
 		return this;
 	}
 
 	public boolean containBroadcast(MT_Broadcast broadcast) {
 		//TODO is only test method dont use
 		return broadcastMsgs.contains(broadcast);
-	}
-
-
-
-
-	
-	private void monitorFarCars() {
-		// TODO Auto-generated method stub
-		
 	}
 
 	public Pulse getPulse() {
@@ -324,7 +321,7 @@ public class Car implements MsgListener, MotionObservable{
 			throw new CorruptDataException();
 		}
 		StNode car = (StNode) m.getData();
-        logger.debug("Hello received from node: " + car);
+        logger.info("Hello received from node: " + car);
 		sendHelloResponse(m);
 
 	}
@@ -344,10 +341,9 @@ public class Car implements MsgListener, MotionObservable{
 
 	/**
 	 * @param responseMsg - message received
-	 * @param isHWNode - flag that marks if it is a conversation with a HWNode
-	 * @throws CorruptDataException when the message its of wrong type, or the containing data isn´t of type MT_HelloResponse
-	 */
-	private void handleHelloResponse(Message responseMsg, boolean isHWNode) throws CorruptDataException {
+     * @throws CorruptDataException when the message its of wrong type, or the contained data isn´t of type MT_HelloResponse
+     */
+    private void handleHelloResponse(Message responseMsg) throws CorruptDataException {
 		if(responseMsg.getType() != MsgType.HELLO_RESPONSE || ! (responseMsg.getData() instanceof MT_HelloResponse) )
 			throw new CorruptDataException();
 		MT_HelloResponse helloRsp = (MT_HelloResponse) responseMsg.getData();
@@ -355,13 +351,12 @@ public class Car implements MsgListener, MotionObservable{
 
 		//check new cars that i dont know of, and send them a Hello msg
 		List<CarStNode> knownCars = primaryMonitor.getList();
-		knownCars.addAll(secondaryMonitor.getList());
 		for (CarStNode car : helloRsp.getCars()) {
 			//check if its not this same car
 			if (!car.getId().equals(id)) {
 				updateNeigh(car);
 				if (!knownCars.contains(car)) {
-					sendHello(car.getStNode(), false);
+                    sendHelloToCar(car.getStNode());
 				}
 			}
 		}
@@ -391,12 +386,12 @@ public class Car implements MsgListener, MotionObservable{
                 sendBroadcast(broadcast.decrementTTL());
             }
         }
-	}
+    }
 
-	private boolean sendHello(StNode node, boolean isHWNode) throws CorruptDataException {
+    private boolean sendHelloToCar(StNode node){
 		CompletableFuture<Message> msgHelloRsp = msgHandler.sendUDPWithResponse(node, new Message(MsgType.HELLO, ip, port, getStNode()));
-		try {
-			handleHelloResponse(msgHelloRsp.get(), isHWNode);
+        try {
+            handleHelloResponse(msgHelloRsp.get());
 			return true;
 		} catch (InterruptedException e) {
 			logger.error("Interrupted while waiting hello response");
@@ -406,7 +401,10 @@ public class Car implements MsgListener, MotionObservable{
 				logger.error("Node" + node + " does not respond to Hello");
 			}
 			return false;
-		}
+        } catch (CorruptDataException e) {
+            logger.error("hello response corrupted");
+            return false;
+        }
 	}
 
     public void sendBroadcast(MT_Broadcast broadcastMsg) {
@@ -508,7 +506,6 @@ public class Car implements MsgListener, MotionObservable{
         threadService.shutdownNow();
 		pulseScheduler.shutdownNow();
 		primaryMonitor.shutdown();
-		secondaryMonitor.shutdown();
         hwNodeMonitor.shutdown();
 		msgHandler.close();
 	}
