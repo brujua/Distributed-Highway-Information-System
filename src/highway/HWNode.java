@@ -299,7 +299,7 @@ public class HWNode implements MsgListener {
 			if (nodeRedirect!=null) {
 				redirect(m, nodeRedirect);
 			}else{
-                carMsgHandler.sendUDP(node, new Message(MsgType.ERROR, ip, portCars, "404: No hw-node for position " + node.getPosition()));
+                sendErrorOutOfHighWay(node);
 			}
 		}
 	}
@@ -310,19 +310,27 @@ public class HWNode implements MsgListener {
     }
 
 
-
-	private void handlePulse(Message msg) throws CorruptDataException {
-		if(msg.getType() != MsgType.PULSE || ! (msg.getData() instanceof CarStNode )){
-			throw new CorruptDataException();
-		}
-		CarStNode car = (CarStNode) msg.getData();
+    private void handlePulse(Message msg) throws CorruptDataException {
+        if(msg.getType() != MsgType.PULSE || ! (msg.getData() instanceof CarStNode )){
+            throw new CorruptDataException();
+        }
+        CarStNode car = (CarStNode) msg.getData();
         logger.debug("Pulse received from node: " + car);
-		if(isInSegments(car.getPosition()))
-			updateCar(car);
-		else
+        if(isInSegments(car.getPosition()))
+            updateCar(car);
+        else {
+            StNode nextNode = getNextNode();
+            if (nextNode == null)
+                sendErrorOutOfHighWay(car);
+            else
+                redirect(msg, getNextNode());
 
-            redirect(msg, getNextNode());
+        }
 
+    }
+
+    private void sendErrorOutOfHighWay(CarStNode node) {
+        carMsgHandler.sendUDP(node, new Message(MsgType.ERROR, ip, portCars, "404: No hw-node for position " + node.getPosition()));
     }
 
     private void updateCar(CarStNode car) {
