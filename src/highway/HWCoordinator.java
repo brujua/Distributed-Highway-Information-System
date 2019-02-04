@@ -24,12 +24,12 @@ public class HWCoordinator implements Messageable, MsgListener {
 
 
     public HWCoordinator(List<Segment> segments, int port) {
-        hwlist = new HWListManager(segments);
+        hwlist = new HWListManager(segments, port);
         this.tentativePort = port;
     }
 
     public HWCoordinator(List<Segment> segments) {
-        hwlist = new HWListManager(segments);
+        hwlist = new HWListManager(segments, tentativePort);
     }
 
 	/**
@@ -43,8 +43,10 @@ public class HWCoordinator implements Messageable, MsgListener {
 		msgHandler = new MsgHandler(port, "Coordinator");
 		msgHandler.addMsgListener(this);
 		msgHandler.listenForTCPMsgs();
+        hwlist.setPort(port);
         logger.info("Ready and listening on port: " + port);
-		return this;
+
+        return this;
 	}
 
 	public void shutDown() {

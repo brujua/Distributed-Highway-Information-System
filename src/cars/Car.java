@@ -12,7 +12,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Car implements MsgListener, MotionObservable{
 
-	private Logger logger;
+    private static final long SLEEP_BETWEEN_TRIES_REG_IN_NET = 5000;
+    private Logger logger;
 
     public static final String CONFIG_FILE_NAME = "config-cars";
     public final TimeUnit standardTimeUnit = TimeUnit.MILLISECONDS;
@@ -40,7 +41,7 @@ public class Car implements MsgListener, MotionObservable{
     private MsgHandler msgHandler;
 	private StNode selectedHWNode;
     private CarMonitor primaryMonitor; //near cars
-    private HWNodeMonitor hwNodeMonitor;
+    private SingleNodeMonitor hwNodeMonitor;
 	private PulseEmiter pulseEmiter;
 	private List<MotionObserver> motionObservers = new ArrayList<>();
 	private ScheduledExecutorService pulseScheduler = Executors.newSingleThreadScheduledExecutor();
@@ -54,7 +55,7 @@ public class Car implements MsgListener, MotionObservable{
         initConfigProperties();
         this.port = Util.getAvailablePort(tentativePort);
         primaryMonitor = new CarMonitor("PrimaryMonitor: " + getName(), timeoutTime, timeoutCheckFrequency);
-        hwNodeMonitor = new HWNodeMonitor(timeoutTime, timeoutCheckFrequency, getName());
+        hwNodeMonitor = new SingleNodeMonitor(timeoutTime, timeoutCheckFrequency, getName());
         hwNodeMonitor.startMonitoring(this::handleHWNodeDown);
         //initialize the MsgHandler
         msgHandler = new MsgHandler(this.port);
@@ -203,7 +204,7 @@ public class Car implements MsgListener, MotionObservable{
                 registered = true;
             } catch (NoPeersFoundException e) {
                 try {
-                    Thread.sleep(2000);
+                    Thread.sleep(SLEEP_BETWEEN_TRIES_REG_IN_NET);
                 } catch (InterruptedException ignored) {
                 }
                 continue;

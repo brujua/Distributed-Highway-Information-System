@@ -1,6 +1,5 @@
-package cars;
+package common;
 
-import common.StNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,7 +9,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class HWNodeMonitor {
+public class SingleNodeMonitor {
     private Logger logger;
     private ScheduledExecutorService timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
     private ReentrantReadWriteLock nodeLock = new ReentrantReadWriteLock();
@@ -19,13 +18,15 @@ public class HWNodeMonitor {
     private long timeoutCheckRefreshTime;
     private StNode node;
     private long lastUpdate;
+    private boolean monitoring;
 
-    public HWNodeMonitor(long timeoutTime, long timeoutCheckRefreshTime, String name) {
+    public SingleNodeMonitor(long timeoutTime, long timeoutCheckRefreshTime, String name) {
         this.timeoutCheckRefreshTime = timeoutCheckRefreshTime;
         this.timeoutTime = timeoutTime;
-        logger = LoggerFactory.getLogger(name + "-HWNodeMonitor");
+        logger = LoggerFactory.getLogger(name + "-SingleNodeMonitor");
         node = null;
         lastUpdate = Instant.now().toEpochMilli();
+        monitoring = false;
     }
 
     public void setNode(StNode node) {
@@ -42,8 +43,17 @@ public class HWNodeMonitor {
         nodeLock.readLock().unlock();
     }
 
+    /**
+     * If its not already monitoring, starts a thread that periodically checks if the time passed since last update
+     * its greater than the timeout-time (constructor parameter), if so, runs callback.
+     *
+     * @param timeOutCallback function to be call if a timeout its detected.
+     */
     public void startMonitoring(Runnable timeOutCallback) {
-        timeoutScheduler.scheduleWithFixedDelay(() -> checkTimeOut(timeOutCallback), timeoutCheckRefreshTime, timeoutCheckRefreshTime, TimeUnit.MILLISECONDS);
+        if (!monitoring) {
+            timeoutScheduler.scheduleWithFixedDelay(() -> checkTimeOut(timeOutCallback), timeoutCheckRefreshTime, timeoutCheckRefreshTime, TimeUnit.MILLISECONDS);
+            monitoring = true;
+        }
     }
 
     private void checkTimeOut(Runnable timeOutCallback) {
@@ -53,7 +63,7 @@ public class HWNodeMonitor {
         nodeLock.readLock().lock();
         if (node != null) {
             if (timeSinceLastUpdate > timeoutTime) {
-                logger.error("HWNode haven't sent alive in " + timeoutTime + " milliseconds");
+                logger.error("Node haven't sent alive in " + timeoutTime + " milliseconds");
                 node = null;
                 doCallback = true;
             }

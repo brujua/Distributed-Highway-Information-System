@@ -21,12 +21,14 @@ public class HWListManager {
 	private final List<HWStNode> list;
 	private final List<Segment> segments;
 	private ScheduledExecutorService timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
+    private int port;
 
-	public HWListManager(List<Segment> segments) {
+    public HWListManager(List<Segment> segments, int listeningPort) {
 		if (segments.isEmpty() || segments.size() < MIN_SEGMENTS_PER_NODE)
 			throw new InvalidParameterException();
 		list = Collections.synchronizedList(new ArrayList<>());
 		this.segments = segments;
+        port = listeningPort;
 		Collections.sort(this.segments);
 		checkAlives();
 	}
@@ -53,7 +55,7 @@ public class HWListManager {
 
     private boolean isAlive(HWStNode node) {
 		Messageable dest = node.getStNode();
-		Message msg = new Message(MsgType.ALIVE, null, 0, null);
+        Message msg = new Message(MsgType.ALIVE, null, port, null);
 		return MsgHandler.sendTCPMsg(dest, msg);
 
 	}
@@ -138,4 +140,8 @@ public class HWListManager {
 			logger.error("interrupted while shutting down and awaiting termination of pending tasks");
 		}
 	}
+
+    public void setPort(int port) {
+        this.port = port;
+    }
 }

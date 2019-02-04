@@ -21,6 +21,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class HWNode implements MsgListener {
 
     private static final String CONFIG_FILE_NAME = "config-hwnodes";
+    private static final long SLEEP_BETWEEN_TRIES_REG_IN_NET = 5000;
 
     public static final String ip = "localhost";
 
@@ -50,6 +51,7 @@ public class HWNode implements MsgListener {
     private MsgHandler carMsgHandler;
     private MsgHandler hwMsgHandler;
     private CarMonitor carMonitor;
+    private SingleNodeMonitor coordinatorMonitor;
 
     private ScheduledExecutorService aliveForCarsScheduler = Executors.newSingleThreadScheduledExecutor();
     private ExecutorService threadService = Executors.newCachedThreadPool();
@@ -66,6 +68,7 @@ public class HWNode implements MsgListener {
 		portCars = Util.getAvailablePort(tentativePortCars);
 		portHighway = Util.getAvailablePort(tentativePortHighway);
         carMonitor = new CarMonitor(getName(), timeoutTime, timeoutCheckFrequency);
+        coordinatorMonitor = new SingleNodeMonitor(timeoutTime, timeoutCheckFrequency, getName());
 		carMsgHandler = new MsgHandler(portCars, getName());
 		carMsgHandler.addMsgListener(this);
 		stNode = new StNode(id, ip, portCars);
@@ -142,13 +145,29 @@ public class HWNode implements MsgListener {
 				break;
 			}
 		}
-        if (coordinator == null) {
+        if (coordinator == null)
             logger.error("Could not register to coordinator");
+        else {
+            coordinatorMonitor.setNode(new StNode("0", coordinator.getIP(), coordinator.getPort()));
+            coordinatorMonitor.startMonitoring(this::handleCoordDown);
         }
 		return this;
 	}
 
-	public List<CarStNode> getCarNodes(){
+    private void handleCoordDown() {
+        logger.error("Coordinator offline, periodically trying to re-register...");
+        coordinator = null;
+        while (coordinator == null) {
+            try {
+                registerInNetwork();
+                Thread.sleep(SLEEP_BETWEEN_TRIES_REG_IN_NET);
+            } catch (InterruptedException e) {
+                logger.info("interrupted while sleeping handling coordinator down");
+            }
+        }
+    }
+
+    public List<CarStNode> getCarNodes() {
         return carMonitor.getList();
     }
 
@@ -225,6 +244,7 @@ public class HWNode implements MsgListener {
 
     private void handleAlive(Message msg) {
         logger.debug("Alive received from coordinator");
+        coordinatorMonitor.update(new StNode("0", msg.getIp(), msg.getPort()));
 	}
 
 	private void handleUpdate(Message msg) throws CorruptDataException {
@@ -440,6 +460,7 @@ public class HWNode implements MsgListener {
         logger.info("Shutting down...");
         threadService.shutdown();
         carMonitor.shutdown();
+        coordinatorMonitor.shutdown();
         carMsgHandler.close();
         hwMsgHandler.close();
         aliveForCarsScheduler.shutdown();
