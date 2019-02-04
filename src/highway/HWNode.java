@@ -68,6 +68,7 @@ public class HWNode implements MsgListener {
 		carMsgHandler.addMsgListener(this);
 		stNode = new StNode(id, ip, portCars);
         coordinator = null;
+        segments = null;
     }
 
     public HWNode(String name) {
@@ -294,6 +295,10 @@ public class HWNode implements MsgListener {
 			throw new CorruptDataException();
 		CarStNode node = (CarStNode) m.getData();
         logger.debug("Hello received from: " + node);
+        if (segments == null) {
+            logger.debug("not yet registered on network, ignoring hello.");
+            return;
+        }
 		if (isInSegments( node.getPosition() ) ) {
             Message msg = new Message(MsgType.HELLO_RESPONSE, getIp(), getPortCars(), new MT_HelloResponse(m.getId(), getStNode(), carMonitor.getList()));
 			carMonitor.update(node);
