@@ -1,4 +1,18 @@
 # Distributed-Highway-Information-System
+System to trace a fleet of vehicles and manage the communication between them, in a way that its decentralized and fault tolerant.  
+
+### Demo application
+This its a simple visual application to demostrate some capabilities of the core system.  
+You can download it from [here](/demo-application-V1.0.2.rar)  
+##### How to use it?
+Extract the rar in any folder you want.  
+Be sure that the *resources* folder its on the same directory that the *.jar*.  
+Use the *.jar* as an executable to launch a node as many time time as nodes you want.  
+In the resources folder there are three configuration files you cant tweak at your wish : *config-cars.properties*, *config-hwnodes.properties* and *hw-config.json*.  
+
+### About the protocol
+The protocol seeks to form [P2P](https://en.wikipedia.org/wiki/Peer-to-peer) networks among the vehicles that are "near" to each other. It also provides a platform of nodes (that know each other through a coordinator) for the vehicles to report to, that allow them to send and receive global messages. This nodes are the gateway of the vehicles that allow them to start the peer discovery.
+The current specification can be found [here](#)
 
 ### Peer-Discovery example
 <p align="center">
@@ -18,6 +32,3 @@
   
   <img src="https://i.imgur.com/JrBUGvu.png" width="500" alt="peer discovery example part8">
  </p>
-
-## Disclaimer
-This project does not feature the best practices or an enterprise quality solution, specially in the concurrent message handling. 
