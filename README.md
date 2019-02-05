@@ -7,7 +7,7 @@ You can download it from [here](/demo-application-V1.0.2.rar)
 ##### How to use it?
 Extract the rar in any folder you want.  
 Be sure that the *resources* folder its on the same directory that the *.jar*.  
-Use the *.jar* as an executable to launch a node as many time time as nodes you want.  
+Use the *.jar* as an executable to launch a node as many times as nodes you want.  
 In the resources folder there are three configuration files you cant tweak at your wish : *config-cars.properties*, *config-hwnodes.properties* and *hw-config.json*.  
 
 ### About the protocol
