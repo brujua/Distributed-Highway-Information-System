@@ -56,12 +56,12 @@ class HighWayTest {
             Thread.sleep(1000);
 
             Messageable nodeCoordinator = hwNode.getCoordinator();
-            assertEquals(coordinator.getId(), nodeCoordinator.getId());
             assertEquals(coordinator.getPort(), nodeCoordinator.getPort());
             List<Segment> hwList = hwNode.getSegments();
             for (Segment seg : segments)
                 assert (hwList.contains(seg));
 
+            hwNode.shutdown();
         } catch (Exception e) {
             e.printStackTrace();
             fail(e.getMessage());
@@ -86,6 +86,8 @@ class HighWayTest {
                 //else second one should have less segments
                 assertEquals(node1.getSegments().size(), node2.getSegments().size() + 1);
             }
+            node1.shutdown();
+            node2.shutdown();
         } catch (Exception e) {
             fail(e.getMessage());
         }

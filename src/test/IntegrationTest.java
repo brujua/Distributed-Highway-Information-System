@@ -71,6 +71,7 @@ class IntegrationTest {
             Car car = new Car(new Position(0.0, 0.0), 0);
 			car.listenForMsgs().registerInNetwork();
 			assert(car.getSelectedHWnode().equals(hwNode.getStNode()));
+            car.shutdown();
 		} catch (NoPeersFoundException e) {
 			fail("NoPeersFoundException");
 			e.printStackTrace();
@@ -178,6 +179,8 @@ class IntegrationTest {
             car1.setPosition(new Position(possX,possY));
             Thread.sleep(5000);
             assert(!car2.getSelectedHWnode().equals(car1.getSelectedHWnode()));
+            car1.shutdown();
+            car2.shutdown();
 
 		} catch (NoPeersFoundException | InterruptedException e) {
             e.printStackTrace();
