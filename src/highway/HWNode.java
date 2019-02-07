@@ -24,8 +24,6 @@ public class HWNode implements MsgListener {
     private static final String CONFIG_FILE_NAME = "config-hwnodes";
     private static final long SLEEP_BETWEEN_TRIES_REG_IN_NET = 5000;
 
-    public static final String ip = "localhost";
-
     //configurable parameters
     private int tentativePortCars = 7000;
     private int tentativePortHighway = 8000;
@@ -36,7 +34,6 @@ public class HWNode implements MsgListener {
 
 
 	private String id;
-	private StNode stNode;
     private String name = null;
 	private int portCars;
 	private int portHighway;
@@ -72,7 +69,6 @@ public class HWNode implements MsgListener {
         coordinatorMonitor = new SingleNodeMonitor(timeoutTime, timeoutCheckFrequency, getName());
 		carMsgHandler = new MsgHandler(portCars, getName());
 		carMsgHandler.addMsgListener(this);
-		stNode = new StNode(id, ip, portCars);
         coordinator = null;
         segments = null;
     }
@@ -427,11 +423,6 @@ public class HWNode implements MsgListener {
         return id;
     }
 
-    private String getIp() {
-        return ip;
-    }
-
-
     private int getPortCars() {
         return portCars;
     }
@@ -441,12 +432,12 @@ public class HWNode implements MsgListener {
     }
 
     public StNode getStNode() {
-        return new StNode(id, ip, portCars);
+        return new StNode(id, portCars);
     }
 
     public HWStNode getHWStNode() {
-        StNode stNode = new StNode(id, ip, getPortHighway());
-        StNode carstNode = new StNode(id, ip, getPortCars());
+        StNode stNode = new StNode(id, getPortHighway());
+        StNode carstNode = new StNode(id, getPortCars());
         return new HWStNode(carstNode, stNode, getSegments());
     }
 
