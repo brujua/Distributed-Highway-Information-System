@@ -319,7 +319,7 @@ public class HWNode implements MsgListener {
 			if (nodeRedirect!=null) {
 				redirect(m, nodeRedirect);
 			}else{
-                sendErrorOutOfHighWay(node);
+                sendErrorOutOfHighWay(m, node);
 			}
 		}
 	}
@@ -342,7 +342,7 @@ public class HWNode implements MsgListener {
         else {
             StNode nextNode = getNextNode();
             if (nextNode == null)
-                sendErrorOutOfHighWay(car);
+                sendErrorOutOfHighWay(msg, car);
             else
                 redirect(msg, getNextNode());
 
@@ -350,8 +350,8 @@ public class HWNode implements MsgListener {
 
     }
 
-    private void sendErrorOutOfHighWay(CarStNode node) {
-        carMsgHandler.sendUDP(node, new ErrorMessage(getStNode(), "404: No hw-node for position " + node.getPosition()));
+    private void sendErrorOutOfHighWay(Message msgReceived, CarStNode node) {
+        carMsgHandler.sendUDP(node, new ErrorMessage(getStNode(), "404: No hw-node for position " + node.getPosition(), msgReceived.getId()));
     }
 
     private void updateCar(CarStNode car) {

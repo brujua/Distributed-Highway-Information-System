@@ -5,10 +5,10 @@ import network.Message;
 
 public class ErrorMessage extends Message {
 
-    String errorMsg;
+    private String errorMsg;
 
-    public ErrorMessage(StNode sender, String errorMsg) {
-        super(MessageType.ERROR, sender);
+    public ErrorMessage(StNode sender, String errorMsg, String responseId) {
+        super(MessageType.ERROR, sender, responseId);
         this.errorMsg = errorMsg;
     }
 
