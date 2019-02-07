@@ -1,34 +1,36 @@
-package network;
+package network.messages;
 
-import java.io.Serializable;
+import common.StNode;
+import network.Message;
+
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
-public class MT_Broadcast implements Serializable {
+public class BroadcastMessage extends Message {
     private static final int DEFAULT_TTL = 5;
-    private String id;
+    private String broadcastId;
     private int TTL;
     private boolean fromCar;
     private String msg;
     private Instant timestamp;
 
-    public MT_Broadcast(String msg, int TTL, boolean fromCar) {
+    public BroadcastMessage(StNode sender, String msg, int TTL, boolean fromCar) {
+        super(MessageType.BROADCAST, sender);
         this.TTL = TTL;
         this.fromCar = fromCar;
         this.msg = msg;
-        this.id = UUID.randomUUID().toString();
+        this.broadcastId = UUID.randomUUID().toString();
         timestamp = Instant.now();
-
     }
 
-    public MT_Broadcast(String msg, boolean fromCar) {
-        this(msg, DEFAULT_TTL, fromCar);
+    public BroadcastMessage(StNode sender, String msg, boolean fromCar) {
+        this(sender, msg, DEFAULT_TTL, fromCar);
     }
 
 
-    public String getId() {
-        return id;
+    public String getBroadcastId() {
+        return broadcastId;
     }
 
     public int getTTL() {
@@ -39,13 +41,13 @@ public class MT_Broadcast implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        MT_Broadcast that = (MT_Broadcast) o;
-        return id.equals(that.id);
+        BroadcastMessage that = (BroadcastMessage) o;
+        return broadcastId.equals(that.broadcastId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(broadcastId);
     }
 
     public boolean isHw() {
@@ -60,17 +62,23 @@ public class MT_Broadcast implements Serializable {
         this.fromCar = fromCar;
     }
 
-    public MT_Broadcast setCar() {
+    public BroadcastMessage setSender(StNode sender, boolean fromCar) {
+        this.sender = sender;
+        this.fromCar = fromCar;
+        return this;
+    }
+
+    public BroadcastMessage setCar() {
         fromCar = true;
         return this;
     }
 
-    public MT_Broadcast setHw() {
+    public BroadcastMessage setHw() {
         fromCar = false;
         return this;
     }
 
-    public MT_Broadcast decrementTTL() {
+    public BroadcastMessage decrementTTL() {
         TTL--;
         return this;
     }

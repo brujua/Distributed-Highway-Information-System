@@ -1,18 +1,20 @@
-package network;
+package network.messages;
 
+import common.StNode;
 import highway.HWStNode;
+import network.Message;
 
-import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MT_Update implements Serializable {
+public class UpdateMessage extends Message {
 
 	private List<HWStNode> list;
 	private Instant timestamp;
 
-	public MT_Update(List<HWStNode> list) {
+	public UpdateMessage(StNode sender, List<HWStNode> list) {
+		super(MessageType.UPDATE, sender);
         if (list == null || list.isEmpty())
             throw new IllegalArgumentException();
         this.list = new ArrayList<>(list);
@@ -29,7 +31,7 @@ public class MT_Update implements Serializable {
 
     @Override
     public String toString() {
-        return "MT_Update{" +
+	    return "UpdateMessage{" +
                 "timestamp=" + timestamp +
                 '}';
     }

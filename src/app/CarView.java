@@ -11,7 +11,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import network.MT_Broadcast;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -89,7 +88,7 @@ public class CarView implements NodeView {
     }
 
     private void informAccident() {
-        car.sendBroadcast(new MT_Broadcast("Accident on" + car.getPulse().getPosition(), true));
+        car.sendBroadcast("Accident on" + car.getPulse().getPosition());
     }
 
     @Override

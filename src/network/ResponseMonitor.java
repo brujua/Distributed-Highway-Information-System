@@ -15,7 +15,7 @@ public class ResponseMonitor{
 	}
 	
 	public void remove(Message m) {
-		pendingMsgs.remove(m);
+		pendingMsgs.remove(m.getId());
 	}
 	
 	/**

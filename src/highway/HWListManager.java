@@ -1,6 +1,11 @@
 package highway;
 
-import network.*;
+import common.StNode;
+import network.Message;
+import network.Messageable;
+import network.MsgHandler;
+import network.messages.MessageType;
+import network.messages.UpdateMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +60,7 @@ public class HWListManager {
 
     private boolean isAlive(HWStNode node) {
 		Messageable dest = node.getStNode();
-        Message msg = new Message(MsgType.ALIVE, null, port, null);
+	    Message msg = new Message(MessageType.ALIVE, getStNode());
 		return MsgHandler.sendTCPMsg(dest, msg);
 
 	}
@@ -123,14 +128,18 @@ public class HWListManager {
 
     private synchronized void notifyUpdate() {
         if (!list.isEmpty()) {
-            logger.info("Notifying update of the assigned segments, new state of the hwlist: \n" + list);
-            MT_Update listUpdate = new MT_Update(list);
-            Message updateMsg = new Message(MsgType.UPDATE, null, 0, listUpdate);
+	        logger.info("Notifying update of the assigned segments, new state of the hwlist: \n {}", list);
+	        Message updateMsg = new UpdateMessage(getStNode(), list);
             for (HWStNode node : list) {
                 MsgHandler.sendTCPMsg(node, updateMsg);
             }
         }
 	}
+
+	private StNode getStNode() {
+		return new StNode(HWCoordinator.DEFAULT_ID, port);
+	}
+
 	public void shutDown() {
 		try {
 			timeoutScheduler.shutdown();

@@ -20,12 +20,12 @@ public class CarStNode implements Messageable, Serializable {
 	private final Pulse pulse;
 
 
-	public CarStNode(String id, String ip, int port, Pulse pulse) {
-		this(new StNode(id, ip, port), pulse);
-	}
+    public CarStNode(String id, int port, Pulse pulse) {
+        this(new StNode(id, port), pulse);
+    }
 
-	public CarStNode(String id, String ip, int port, Position position) {
-		this(new StNode(id, ip, port), new Pulse(position, 0, Instant.now()));
+    public CarStNode(String id, String ip, int port, Pulse pulse) {
+        this(new StNode(id, ip, port), pulse);
 	}
 
 	public CarStNode(StNode node, Pulse pulse) {
@@ -44,10 +44,6 @@ public class CarStNode implements Messageable, Serializable {
 
 	public double getVelocity() {
 		return this.pulse.getVelocity();
-	}
-
-	public CarStNode updatePulse(Pulse pulse) {
-		return new CarStNode(node.getId(), node.getIP(), node.getPort(), pulse);
 	}
 
 	public CarStNode changePulse(Pulse pulse) {

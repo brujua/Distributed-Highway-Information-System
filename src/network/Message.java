@@ -1,53 +1,48 @@
 package network;
 
+import common.StNode;
+import network.messages.MessageType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.*;
 import java.util.UUID;
 
 public class Message implements Serializable{
-	private MsgType type;
-	private String origIp;	//origin
-	private int origPort;	//origin
-	private String id;
-	private Object data;
-	
-	
+
+    public static final Logger logger = LoggerFactory.getLogger(Message.class);
+
+    protected StNode sender;
+    MessageType type;
+    String id;
+    String responseId;
+
+    public Message(MessageType type, StNode sender, String responseId) {
+        this.type = type;
+        this.sender = sender;
+        this.responseId = responseId;
+        id = UUID.randomUUID().toString();
+    }
+
+    public Message(MessageType type, StNode sender) {
+        this(type, sender, null);
+    }
 
 
-	public Message(MsgType type,String ip, int port, Object data) {
-		super();
-		this.type = type;
-		this.data = data;
-		this.id = UUID.randomUUID().toString();
-		this.origIp = ip;
-		this.origPort = port;
-	}
-	
-	
-	public MsgType getType() {
-		return type;
-	}
-	public Object getData() {
-		return data;
-	}
-	
 	public String getId() {
 		return id;
 	}
 	
 	public String getIp() {
-		return origIp;
-	}		
+        return sender.getIP();
+    }
 
-	public int getPort() {
-		return origPort;
-	}
-	
 	public void setIp(String ip) {
-		this.origIp = ip;
-	}
+        sender = sender.changeIp(ip);
+    }
 
-	public void setPort(int port) {
-		this.origPort = port;
+    public int getPort() {
+        return sender.getPort();
 	}
 
 	public byte[] toByteArr() {
@@ -57,42 +52,25 @@ public class Message implements Serializable{
 			oo.writeObject(this);
 			oo.close();	
 		} catch (IOException e) {
-			// TODO log error 
-			e.printStackTrace();
+            logger.error("Problems serializing msg:{}", e.getMessage());
 		}			
 		return bStream.toByteArray();
 	}
 	
 	public String getResponseId() {
-		switch(this.type) {
-		case ACK:
-			if(data instanceof String)
-				return (String) data;
-			break;
-		case HELLO_RESPONSE:
-			if(data instanceof MT_HelloResponse) {
-				MT_HelloResponse resp = (MT_HelloResponse) data;
-				return resp.getResponseId();
-			}
-			break;
-		case REDIRECT:
-			if(data instanceof MT_Redirect) {
-				MT_Redirect resp = (MT_Redirect) data;
-				return resp.getResponseId();
-			}
-			break;
-		default:
-			break;		
-		}
-		return null;
+        return responseId;
+    }
+
+    public StNode getSender() {
+        return sender;
 	}
 
 	@Override
 	public String toString() {
-		return "Message{" +
-				"type=" + type +
-				", origIp='" + origIp + '\'' +
-				", origPort=" + origPort +
-				"data=" + data + '}';
-	}
+        return "Message{id= " + id + "}";
+    }
+
+    public MessageType getType() {
+        return type;
+    }
 }
