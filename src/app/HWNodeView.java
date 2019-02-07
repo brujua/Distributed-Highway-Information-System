@@ -28,7 +28,8 @@ public class HWNodeView implements NodeView {
 
         //long lasting task in other thread so it doesn't freezes the view
         executorService.submit(() -> {
-            node = new HWNode().listenForMsgs().registerInNetwork().sendAliveToCarsPeriodically();
+            node = new HWNode();
+            node.listenForMsgs().registerInNetwork().sendAliveToCarsPeriodically();
             canvasAnimationTimer = new CanvasAnimationTimer(canvas, new HWNodeDrawer(node));
             Platform.runLater(() -> canvasAnimationTimer.start());
         });
@@ -48,8 +49,10 @@ public class HWNodeView implements NodeView {
 
     @Override
     public void close() {
-        canvasAnimationTimer.stop();
         executorService.shutdownNow();
-        node.shutdown();
+        if (canvasAnimationTimer != null)
+            canvasAnimationTimer.stop();
+        if (node != null)
+            node.shutdown();
     }
 }

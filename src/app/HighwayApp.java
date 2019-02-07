@@ -5,7 +5,6 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
@@ -101,13 +100,7 @@ public class HighwayApp extends Application {
     }
 
     private void back() {
-        try {
-            currentView.close();
-        } catch (Exception e) {
-            Alert alert = new Alert(Alert.AlertType.ERROR, AWATING_TAKS_MSG);
-            alert.show();
-            return;
-        }
+        currentView.close();
         mainPane.setCenter(defaultCenter);
         mainPane.setTop(null);
         window.sizeToScene();

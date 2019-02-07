@@ -98,8 +98,6 @@ public class CarView implements NodeView {
 
     @Override
     public void close() {
-        if (canvasAnimationTimer != null)
-            canvasAnimationTimer.stop();
         executorService.shutdown();
         try {
             if (!executorService.awaitTermination(1000, TimeUnit.MILLISECONDS))
@@ -110,7 +108,10 @@ public class CarView implements NodeView {
             // Preserve interrupt status
             Thread.currentThread().interrupt();
         }
-        car.shutdown();
+        if (canvasAnimationTimer != null)
+            canvasAnimationTimer.stop();
+        if (car != null)
+            car.shutdown();
     }
 
 

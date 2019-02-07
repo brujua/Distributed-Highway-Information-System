@@ -42,6 +42,8 @@ public class CoordinatorView implements NodeView {
 
     @Override
     public void close() {
-        coord.shutDown();
+        executorService.shutdownNow();
+        if (coord != null)
+            coord.shutDown();
     }
 }
