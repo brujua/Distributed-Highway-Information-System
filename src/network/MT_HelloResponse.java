@@ -1,51 +1,26 @@
 package network;
 
-import java.io.Serializable;
-
 import cars.CarStNode;
 import common.StNode;
 
-public class MT_HelloResponse implements Serializable{
+import java.util.List;
+
+public class MT_HelloResponse extends Message {
 	
-	private String responseId;
-	private StNode stNode;
 	private Iterable<CarStNode> cars;
 	
 	/**
-	 * @param responseId
-	 * @param stNode
+	 * @param responseId id of the message you are responding to.
+	 * @param sender information to contact the sender.
 	 * @param cars Must implement serializable
 	 */
-	public MT_HelloResponse(String responseId, StNode stNode, Iterable<CarStNode> cars) {
-		super();
-		this.responseId = responseId;
-		this.stNode = stNode;
+	public MT_HelloResponse(String responseId, StNode sender, List<CarStNode> cars) {
+		super(MsgType.HELLO_RESPONSE, sender, responseId);
 		this.cars = cars;
-	}
-
-	public String getResponseId() {
-		return responseId;
-	}
-
-	public void setResponseId(String responseId) {
-		this.responseId = responseId;
-	}
-
-	public StNode getStNode() {
-		return stNode;
-	}
-
-	public void setStNode(StNode stNode) {
-		this.stNode = stNode;
 	}
 
 	public Iterable<CarStNode> getCars() {
 		return cars;
 	}
-
-	public void setCars(Iterable<CarStNode> cars) {
-		this.cars = cars;
-	}
-	
 	
 }

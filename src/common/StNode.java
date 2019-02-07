@@ -3,6 +3,10 @@ package common;
 import network.Messageable;
 
 import java.io.Serializable;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.Objects;
 
 /**
@@ -11,18 +15,32 @@ import java.util.Objects;
  * @implSpec This class is immutable and thread-safe.
 */
 public final class StNode implements Serializable, Messageable {
+    private static final String DEFAULT_IP = "127.0.0.1";
 	private final String id;
 	private final String ip;
 	private final int port;
 
 
-	public StNode(String id, String ip, int port) {
-		super();
+    public StNode(String id, String ip, int port) {
+        if (ip == null) {
+            String ipAux; //need aux var to avoid "might be already initialized" compiler error.
+            try (final DatagramSocket socket = new DatagramSocket()) {
+                socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
+                ipAux = socket.getLocalAddress().getHostAddress();
+            } catch (SocketException | UnknownHostException e) {
+                ipAux = DEFAULT_IP;
+            }
+            this.ip = ipAux;
+        } else
+            this.ip = ip;
 
-		this.id = id;
-		this.ip = ip;
-		this.port = port;
-	}
+        this.id = id;
+        this.port = port;
+    }
+
+    public StNode(String id, int port) {
+        this(id, null, port);
+    }
 
 	@Override
 	public String getIP() {

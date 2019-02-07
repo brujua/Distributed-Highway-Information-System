@@ -2,27 +2,16 @@ package network;
 
 import common.StNode;
 
-import java.io.Serializable;
+public class MT_Redirect extends Message {
 
-public class MT_Redirect implements Serializable {
-	private String responseId;
 	private StNode redirectedNode;
-	
-	public MT_Redirect(String responseId, StNode redirectedNode) {
-		super();
-		this.responseId = responseId;
+
+	public MT_Redirect(StNode sender, String responseId, StNode redirectedNode) {
+		super(MsgType.REDIRECT, sender, responseId);
 		this.redirectedNode = redirectedNode;
 	}
-
-	public String getResponseId() {
-		return responseId;
-	}
-
 	public StNode getRedirectedNode() {
 		return redirectedNode;
 	}
-	
-	
-	
-	
+
 }

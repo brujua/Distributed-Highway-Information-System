@@ -14,10 +14,10 @@ import java.util.List;
 public class HWCoordinator implements Messageable, MsgListener {
 
 	public static final String ip = "localhost";
+	public static final String DEFAULT_ID = "0";
 	private int tentativePort = 9000;
 	private final static Logger logger = LoggerFactory.getLogger(HWCoordinator.class);
 	private final HWListManager hwlist;
-	private String id = "0";
 	private int port = 0;
 
 	private MsgHandler msgHandler;
@@ -79,11 +79,11 @@ public class HWCoordinator implements Messageable, MsgListener {
 	}
 
 	private void handleRegister(Message msg) throws CorruptDataException {
-		if (msg.getType() != MsgType.REGISTER || !(msg.getData() instanceof HWStNode)) {
+		if (msg.getType() != MsgType.REGISTER || !(msg instanceof MsgRegister)) {
 			throw new CorruptDataException();
 		}
-		HWStNode node = ((HWStNode) msg.getData());
-		logger.info("Register from node " + node);
+		HWStNode node = ((MsgRegister) msg).getHwNode();
+		logger.info("Register from node {}", node);
 		hwlist.add(node);
 	}
 
@@ -99,6 +99,6 @@ public class HWCoordinator implements Messageable, MsgListener {
 
 	@Override
 	public String getId() {
-		return id;
+		return DEFAULT_ID;
 	}
 }

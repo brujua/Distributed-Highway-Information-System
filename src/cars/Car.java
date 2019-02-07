@@ -5,6 +5,7 @@ import network.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.InvalidParameterException;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
@@ -19,7 +20,6 @@ public class Car implements MsgListener, MotionObservable{
     public final TimeUnit standardTimeUnit = TimeUnit.MILLISECONDS;
 
     // configurable parameters
-    public final String ip = "localhost";
     public int tentativePort = 5555;
     public double PRIMARY_RANGE = 2000; //near cars
     public double SECONDARY_RANGE = 9000; // far cars
@@ -150,7 +150,7 @@ public class Car implements MsgListener, MotionObservable{
 			if(hwNode==null)
 				return false;
             // send hello and wait for response
-			Message msg = new Message(MsgType.HELLO, this.ip, this.port, getCarStNode());
+            Message msg = new MsgHello(getCarStNode());
 			response = msgHandler.sendUDPWithResponse(hwNode, msg);
 
 			responseMsg = response.get();
@@ -158,14 +158,14 @@ public class Car implements MsgListener, MotionObservable{
         	switch(responseMsg.getType()) {
             	case HELLO_RESPONSE: {
                     handleHelloResponse(responseMsg);
-		            updateHWNode(((MT_HelloResponse) responseMsg.getData()).getStNode());
+                    updateHWNode(responseMsg.getSender());
 		            return true;
                 }
             	case REDIRECT: {
             		return handleRedirect(responseMsg);
             	}
             	default:{
-		            logger.error("Response from hw-node of wrong type, node: "+hwNode+" type: "+responseMsg.getType());
+                    logger.error("Response from hw-node of wrong type, type: {} ", responseMsg.getType());
             		return false;
             	}
         	}
@@ -177,7 +177,7 @@ public class Car implements MsgListener, MotionObservable{
         	try {
         		throw e.getCause();
         	} catch(TimeoutException toe) {
-		        logger.info("Node did not respond, tried on port: " + hwNode.getPort());
+                logger.info("Node did not respond, tried on port: {}", hwNode.getPort());
             	return false;
 
         	} catch (Throwable e1) {
@@ -262,41 +262,39 @@ public class Car implements MsgListener, MotionObservable{
 	public void msgReceived(Message m) {
 		// The logic of the received msg will be handled on a different thread
         if (!threadService.isShutdown()) {
-            threadService.execute(new Runnable() {
-                public void run() {
-                    try {
-                        switch (m.getType()) {
-                            case HELLO: {
-                                handleHello(m);
-                                break;
-                            }
-                            case PULSE: {
-                                handlePulse(m);
-                                break;
-                            }
-                            case REDIRECT: {
-                                handleRedirect(m);
-                                break;
-                            }
-                            case ERROR: {
-                                logger.error("Received error message: " + m);
-                                break;
-                            }
-	                        case BROADCAST: {
-                                handleBroadcast(m);
-		                        break;
-	                        }
-                            case ALIVE: {
-                                handleAlive(m);
-                                break;
-                            }
-                            default: {
-                                logger.error("Received message of wrong type: " + m.getType().toString());
-                            }
+            threadService.execute(() -> {
+                try {
+                    switch (m.getType()) {
+                        case HELLO: {
+                            handleHello(m);
+                            break;
                         }
-                    } catch (CorruptDataException cde) {
-                        logger.error("Corrupt data exception on message: " + m + " /n exception msg: " + cde.getMessage());
+                        case PULSE: {
+                            handlePulse(m);
+                            break;
+                        }
+                        case REDIRECT: {
+                            handleRedirect(m);
+                            break;
+                        }
+                        case ERROR: {
+                            logger.error("Received error message: " + m);
+                            break;
+                        }
+                        case BROADCAST: {
+                            handleBroadcast(m);
+                            break;
+                        }
+                        case ALIVE: {
+                            handleAlive(m);
+                            break;
+                        }
+                        default: {
+                            logger.error("Received message of wrong type: " + m.getType().toString());
+                        }
                     }
+                } catch (CorruptDataException cde) {
+                    logger.error("Corrupt data exception on message: " + m + " /n exception msg: " + cde.getMessage());
                 }
             });
         } else {
@@ -305,11 +303,11 @@ public class Car implements MsgListener, MotionObservable{
 	}
 
     private void handleAlive(Message m) throws CorruptDataException {
-        if (m.getType() != MsgType.ALIVE || !(m.getData() instanceof StNode)) {
+        if (m.getType() != MsgType.ALIVE) {
             throw new CorruptDataException();
         }
-        StNode node = (StNode) m.getData();
-        logger.debug("Received Alive from: " + node);
+        StNode node = m.getSender();
+        logger.debug("Received Alive from: {}", node);
 
         selectedHWNodeLock.readLock().lock();
         if (selectedHWNodeLock != null && selectedHWNode.equals(node))
@@ -318,10 +316,10 @@ public class Car implements MsgListener, MotionObservable{
     }
 
     private void handleHello(Message m) throws CorruptDataException {
-		if(m.getType() != MsgType.HELLO || ! (m.getData() instanceof StNode )){
+        if (m.getType() != MsgType.HELLO) {
 			throw new CorruptDataException();
 		}
-		StNode car = (StNode) m.getData();
+        StNode car = m.getSender();
         logger.info("Hello received from node: " + car);
 		sendHelloResponse(m);
 
@@ -333,10 +331,10 @@ public class Car implements MsgListener, MotionObservable{
 	 * @throws CorruptDataException when the message its of wrong type, or the containing data isn´t of type MT_Redirect
 	 */
 	private boolean handleRedirect(Message redirectMsg) throws CorruptDataException {
-		if (redirectMsg.getType() != MsgType.REDIRECT || !(redirectMsg.getData() instanceof MT_Redirect))
+        if (redirectMsg.getType() != MsgType.REDIRECT || !(redirectMsg instanceof MT_Redirect))
 			throw new CorruptDataException();
-		MT_Redirect redi = (MT_Redirect) redirectMsg.getData();
-		logger.info("Redirected received to: " + redi.getRedirectedNode());
+        MT_Redirect redi = (MT_Redirect) redirectMsg;
+        logger.info("Redirected received to: {}", redi.getRedirectedNode());
 		return tryRegister(redi.getRedirectedNode());
 	}
 
@@ -345,10 +343,10 @@ public class Car implements MsgListener, MotionObservable{
      * @throws CorruptDataException when the message its of wrong type, or the contained data isn´t of type MT_HelloResponse
      */
     private void handleHelloResponse(Message responseMsg) throws CorruptDataException {
-		if(responseMsg.getType() != MsgType.HELLO_RESPONSE || ! (responseMsg.getData() instanceof MT_HelloResponse) )
+        if (responseMsg.getType() != MsgType.HELLO_RESPONSE || !(responseMsg instanceof MT_HelloResponse))
 			throw new CorruptDataException();
-		MT_HelloResponse helloRsp = (MT_HelloResponse) responseMsg.getData();
-        logger.info("Hello Response received from node: " + helloRsp.getStNode());
+        MT_HelloResponse helloRsp = (MT_HelloResponse) responseMsg;
+        logger.info("Hello Response received from node: {}", helloRsp.getSender());
 
 		//check new cars that i dont know of, and send them a Hello msg
 		List<CarStNode> knownCars = primaryMonitor.getList();
@@ -366,31 +364,33 @@ public class Car implements MsgListener, MotionObservable{
 
 
 	private void handlePulse(Message m) throws CorruptDataException {
-		if (m.getType() != MsgType.PULSE || !(m.getData() instanceof CarStNode)) {
+        if (m.getType() != MsgType.PULSE || !(m instanceof MsgPulse)) {
 			throw new CorruptDataException();
 		}
-		CarStNode car = (CarStNode) m.getData();
+        CarStNode car = ((MsgPulse) m).getCarNode();
         updateNeigh(car);
-        logger.debug("Pulse received from node: " + car);
-	}
+        logger.debug("Pulse received from node: {}", car);
+    }
 
-    public void handleBroadcast(Message msg) throws CorruptDataException {
-		if (msg.getType() != MsgType.BROADCAST || !(msg.getData() instanceof MT_Broadcast)) {
+    private void handleBroadcast(Message msg) throws CorruptDataException {
+        if (msg.getType() != MsgType.BROADCAST || !(msg instanceof MT_Broadcast)) {
 			throw new CorruptDataException();
 		}
-		MT_Broadcast broadcast = (MT_Broadcast) msg.getData();
+        MT_Broadcast broadcast = (MT_Broadcast) msg;
         synchronized (broadcastMsgs) {
             if (!broadcastMsgs.contains(broadcast) && broadcast.getTTL() > 0) {
-                logger.info("Broadcast Message received: " + broadcast.getMsg());
+                logger.info("Broadcast Message received: {}", broadcast.getMsg());
                 broadcastMsgs.add(broadcast);
                 //resend the msg to flood
-                sendBroadcast(broadcast.decrementTTL());
+                broadcast.setSender(getStNode(), true);
+                broadcast.decrementTTL();
+                floodBroadcast(broadcast);
             }
         }
     }
 
     private boolean sendHelloToCar(StNode node){
-		CompletableFuture<Message> msgHelloRsp = msgHandler.sendUDPWithResponse(node, new Message(MsgType.HELLO, ip, port, getStNode()));
+        CompletableFuture<Message> msgHelloRsp = msgHandler.sendUDPWithResponse(node, new MsgHello(getCarStNode()));
         try {
             handleHelloResponse(msgHelloRsp.get());
 			return true;
@@ -408,15 +408,13 @@ public class Car implements MsgListener, MotionObservable{
         }
 	}
 
-    public void sendBroadcast(MT_Broadcast broadcastMsg) {
-        broadcastMsg.setFromCar(true);
-        Message msg = new Message(MsgType.BROADCAST, ip, port, broadcastMsg);
+    private void floodBroadcast(MT_Broadcast broadcastMsg) {
         for (CarStNode node : getNeighs()) {
-            msgHandler.sendUDP(node, msg);
+            msgHandler.sendUDP(node, broadcastMsg);
         }
         selectedHWNodeLock.readLock().lock();
         if (selectedHWNode != null)
-            msgHandler.sendUDP(selectedHWNode, msg);
+            msgHandler.sendUDP(selectedHWNode, broadcastMsg);
         selectedHWNodeLock.readLock().unlock();
 
         synchronized (broadcastMsgs) {
@@ -425,15 +423,20 @@ public class Car implements MsgListener, MotionObservable{
         }
 	}
 
-	private void sendHelloResponse(Message m) throws CorruptDataException {
-		if(! (m.getData() instanceof StNode )){
-			throw new CorruptDataException();
-		}
-		StNode car = (StNode) m.getData();
+    private void sendHelloResponse(Message m) {
+        if (!(m.getType() == MsgType.HELLO)) {
+            throw new InvalidParameterException();
+        }
+        StNode car = m.getSender();
 		MT_HelloResponse response = new MT_HelloResponse(m.getId(),getStNode(),primaryMonitor.getList());
-		Message msg = new Message(MsgType.HELLO_RESPONSE,ip,port, response);
-		msgHandler.sendUDP(car, msg);
-	}
+        msgHandler.sendUDP(car, response);
+    }
+
+    public MT_Broadcast sendBroadcast(String message) {
+        MT_Broadcast broadcast = new MT_Broadcast(getStNode(), message, true);
+        floodBroadcast(broadcast);
+        return broadcast;
+    }
 
 
 	public void move() {
@@ -476,11 +479,11 @@ public class Car implements MsgListener, MotionObservable{
 	}
 
 	public CarStNode getCarStNode() {
-        return new CarStNode(id, ip, port, getPulse());
+        return new CarStNode(id, port, getPulse());
 	}
 
 	public StNode getStNode() {
-		return new StNode(id, ip, port);
+        return new StNode(id, port);
 	}
 
 	public String getID() {

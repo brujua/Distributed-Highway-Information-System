@@ -224,12 +224,12 @@ class IntegrationTest {
 
 		    assert (!car3.getSelectedHWnode().equals(car1.getSelectedHWnode()));
 
-            MT_Broadcast msgBroadcast = new MT_Broadcast("Accidente en kilometro " + car1.getPulse().getPosition().getCordx(), true);
-            car1.sendBroadcast(msgBroadcast);
+		    String msgBroadcast = "Accidente en kilometro " + car1.getPulse().getPosition().getCordx();
+		    MT_Broadcast broadcast = car1.sendBroadcast(msgBroadcast);
 		    Thread.sleep(500);
-            assert (car1.containBroadcast(msgBroadcast));
-            assert (car3.containBroadcast(msgBroadcast));
-            assert (car2.containBroadcast(msgBroadcast));
+		    assert (car1.containBroadcast(broadcast));
+		    assert (car3.containBroadcast(broadcast));
+		    assert (car2.containBroadcast(broadcast));
 
 
 		    car1.shutdown();

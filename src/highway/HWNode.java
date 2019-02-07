@@ -136,7 +136,7 @@ public class HWNode implements MsgListener {
 	}
 
 	public HWNode registerInNetwork() {
-        Message msg = new Message(MsgType.REGISTER, ip, portHighway, getHWStNode());
+        Message msg = new MsgRegister(getHWStNode());
 		for (Messageable coordAux : posibleCoordinator) {
             logger.info("Attempting register to coordinator: " + coordAux);
 			if (MsgHandler.sendTCPMsg(coordAux, msg)) {
@@ -196,7 +196,7 @@ public class HWNode implements MsgListener {
                             break;
                         }
                         case ACK: {
-                            responseACK(m);
+                            handleACK(m);
                             break;
                         }
                         case BROADCAST: {
@@ -215,27 +215,31 @@ public class HWNode implements MsgListener {
     }
 
     private void handleBroadcast(Message msg) throws CorruptDataException {
-        if (msg.getType() != MsgType.BROADCAST || !(msg.getData() instanceof MT_Broadcast)) {
+        if (msg.getType() != MsgType.BROADCAST || !(msg instanceof MT_Broadcast)) {
             throw new CorruptDataException();
         }
-        MT_Broadcast broadcast = (MT_Broadcast) msg.getData();
+        MT_Broadcast broadcast = (MT_Broadcast) msg;
         synchronized (broadcastMsgs) {
             if (!broadcastMsgs.contains(broadcast) && broadcast.getTTL() > 0) {
                 broadcastMsgs.add(broadcast);
                 //if is from a car send it to the rest of the hwnodes
                 if (broadcast.isFromCar()) {
-                    logger.info("Broadcast Msg received from car: " + broadcast.getMsg());
-                    broadcast.setFromCar(false); //to be resent as from hwnode
+                    logger.info("Broadcast Msg received from car: {}", broadcast.getMsg());
+                    //resent as from here
+                    broadcast.setSender(getHWStNode().getStNode(), false);
+                    broadcast.decrementTTL();
                     for (HWStNode node : getHwlist()) {
                         if (!node.equals(this.getHWStNode())) {
-                            MsgHandler.sendTCPMsg(node.getStNode(), new Message(MsgType.BROADCAST, ip, portHighway, broadcast.decrementTTL()));
+                            MsgHandler.sendTCPMsg(node.getStNode(), broadcast);
                         }
                     }
                 } else //If its from Hwnode send it to my cars
                 {
-                    logger.info("Broadcast received from HW-Node: " + broadcast.getMsg());
+                    logger.info("Broadcast received from HW-Node: {}", broadcast.getMsg());
+                    broadcast.setSender(getStNode(), false);
+                    broadcast.decrementTTL();
                     for (CarStNode node : carMonitor.getList()) {
-                        carMsgHandler.sendUDP(node, new Message(MsgType.BROADCAST, ip, portCars, broadcast.decrementTTL()));
+                        carMsgHandler.sendUDP(node, broadcast);
                     }
                 }
             }
@@ -248,10 +252,10 @@ public class HWNode implements MsgListener {
 	}
 
 	private void handleUpdate(Message msg) throws CorruptDataException {
-		if (msg.getType() != MsgType.UPDATE || !(msg.getData() instanceof MT_Update)) {
+        if (msg.getType() != MsgType.UPDATE || !(msg instanceof MT_Update)) {
 			throw new CorruptDataException();
 		}
-		MT_Update update = (MT_Update) msg.getData();
+        MT_Update update = (MT_Update) msg;
 		logger.info("received update from coordinator");
 		//check timestamp
 		if (lastHWUpdate !=null){
@@ -287,29 +291,24 @@ public class HWNode implements MsgListener {
         hwLock.writeLock().unlock();
     }
 
-	private void responseACK(Message m) {
-		CarStNode node = (CarStNode) m.getData();
-		if (isInSegments(node.getPosition()))
-			carMsgHandler.sendUDP(node, ackMssg());
-
-	}
-
-	private Message ackMssg() {
-
-		return new Message(MsgType.ACK, getIp(), getPortCars(), carMonitor.getList());
+    private void handleACK(Message m) throws CorruptDataException {
+        if (m.getType() != MsgType.ACK)
+            throw new CorruptDataException();
+        logger.debug("ACK msg received.");
 	}
 
 	private void handleHello(Message m) throws CorruptDataException {
-		if(!(m.getData() instanceof CarStNode))
+        if (m.getType() != MsgType.HELLO || !(m instanceof MsgHello))
 			throw new CorruptDataException();
-		CarStNode node = (CarStNode) m.getData();
-        logger.debug("Hello received from: " + node);
+        MsgHello msgHello = (MsgHello) m;
+        CarStNode node = msgHello.getCarNode();
+        logger.debug("Hello received from: {}", node);
         if (segments == null) {
             logger.debug("not yet registered on network, ignoring hello.");
             return;
         }
 		if (isInSegments( node.getPosition() ) ) {
-            Message msg = new Message(MsgType.HELLO_RESPONSE, getIp(), getPortCars(), new MT_HelloResponse(m.getId(), getStNode(), carMonitor.getList()));
+            Message msg = new MT_HelloResponse(m.getId(), getStNode(), carMonitor.getList());
 			carMonitor.update(node);
             logger.debug(node + " accepted, sending hello response.");
 			carMsgHandler.sendUDP(node, msg);
@@ -325,17 +324,18 @@ public class HWNode implements MsgListener {
 	}
 
     private void sendAlive(Messageable dest) {
-        Message msg = new Message(MsgType.ALIVE, getIp(), getPortCars(), getStNode());
+        Message msg = new Message(MsgType.ALIVE, getStNode());
         carMsgHandler.sendUDP(dest, msg);
     }
 
 
     private void handlePulse(Message msg) throws CorruptDataException {
-        if(msg.getType() != MsgType.PULSE || ! (msg.getData() instanceof CarStNode )){
+        if (msg.getType() != MsgType.PULSE || !(msg instanceof MsgPulse)) {
             throw new CorruptDataException();
         }
-        CarStNode car = (CarStNode) msg.getData();
-        logger.debug("Pulse received from node: " + car);
+        MsgPulse msgPulse = (MsgPulse) msg;
+        CarStNode car = msgPulse.getCarNode();
+        logger.debug("Pulse received from node: {}", car);
         if(isInSegments(car.getPosition()))
             updateCar(car);
         else {
@@ -350,7 +350,7 @@ public class HWNode implements MsgListener {
     }
 
     private void sendErrorOutOfHighWay(CarStNode node) {
-        carMsgHandler.sendUDP(node, new Message(MsgType.ERROR, ip, portCars, "404: No hw-node for position " + node.getPosition()));
+        carMsgHandler.sendUDP(node, new MsgError(getStNode(), "404: No hw-node for position " + node.getPosition()));
     }
 
     private void updateCar(CarStNode car) {
@@ -359,13 +359,10 @@ public class HWNode implements MsgListener {
 
 	private void redirect(Message m, StNode hwRedirect) {
 
-		//StNode hwRedirect = searchRedirect(((Position) m.getData()));
-		MT_Redirect redirect = new MT_Redirect(m.getId(), hwRedirect);
-		Message msg = new Message(MsgType.REDIRECT,getIp(),portCars,redirect);
-
-		StNode carst = new StNode(m.getId(), m.getIp(), m.getPort());
-		carMsgHandler.sendUDP(carst, msg);
-        logger.debug(carst + " redirected to: " + hwRedirect);
+        MT_Redirect redirect = new MT_Redirect(getStNode(), m.getId(), hwRedirect);
+        StNode carst = m.getSender();
+        carMsgHandler.sendUDP(carst, redirect);
+        logger.debug("{} redirected to: {}", carst, hwRedirect);
 	}
 
 
