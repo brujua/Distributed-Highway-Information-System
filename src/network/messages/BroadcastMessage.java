@@ -1,12 +1,13 @@
-package network;
+package network.messages;
 
 import common.StNode;
+import network.Message;
 
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
-public class MT_Broadcast extends Message {
+public class BroadcastMessage extends Message {
     private static final int DEFAULT_TTL = 5;
     private String broadcastId;
     private int TTL;
@@ -14,8 +15,8 @@ public class MT_Broadcast extends Message {
     private String msg;
     private Instant timestamp;
 
-    public MT_Broadcast(StNode sender, String msg, int TTL, boolean fromCar) {
-        super(MsgType.BROADCAST, sender);
+    public BroadcastMessage(StNode sender, String msg, int TTL, boolean fromCar) {
+        super(MessageType.BROADCAST, sender);
         this.TTL = TTL;
         this.fromCar = fromCar;
         this.msg = msg;
@@ -23,7 +24,7 @@ public class MT_Broadcast extends Message {
         timestamp = Instant.now();
     }
 
-    public MT_Broadcast(StNode sender, String msg, boolean fromCar) {
+    public BroadcastMessage(StNode sender, String msg, boolean fromCar) {
         this(sender, msg, DEFAULT_TTL, fromCar);
     }
 
@@ -40,7 +41,7 @@ public class MT_Broadcast extends Message {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        MT_Broadcast that = (MT_Broadcast) o;
+        BroadcastMessage that = (BroadcastMessage) o;
         return broadcastId.equals(that.broadcastId);
     }
 
@@ -61,23 +62,23 @@ public class MT_Broadcast extends Message {
         this.fromCar = fromCar;
     }
 
-    public MT_Broadcast setSender(StNode sender, boolean fromCar) {
+    public BroadcastMessage setSender(StNode sender, boolean fromCar) {
         this.sender = sender;
         this.fromCar = fromCar;
         return this;
     }
 
-    public MT_Broadcast setCar() {
+    public BroadcastMessage setCar() {
         fromCar = true;
         return this;
     }
 
-    public MT_Broadcast setHw() {
+    public BroadcastMessage setHw() {
         fromCar = false;
         return this;
     }
 
-    public MT_Broadcast decrementTTL() {
+    public BroadcastMessage decrementTTL() {
         TTL--;
         return this;
     }

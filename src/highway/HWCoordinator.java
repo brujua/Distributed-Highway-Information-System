@@ -2,6 +2,8 @@ package highway;
 
 import common.Util;
 import network.*;
+import network.messages.MessageType;
+import network.messages.RegisterMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,10 +81,10 @@ public class HWCoordinator implements Messageable, MsgListener {
 	}
 
 	private void handleRegister(Message msg) throws CorruptDataException {
-		if (msg.getType() != MsgType.REGISTER || !(msg instanceof MsgRegister)) {
+		if (msg.getType() != MessageType.REGISTER || !(msg instanceof RegisterMessage)) {
 			throw new CorruptDataException();
 		}
-		HWStNode node = ((MsgRegister) msg).getHwNode();
+		HWStNode node = ((RegisterMessage) msg).getHwNode();
 		logger.info("Register from node {}", node);
 		hwlist.add(node);
 	}

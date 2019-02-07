@@ -3,6 +3,7 @@ package highway;
 import cars.CarStNode;
 import common.*;
 import network.*;
+import network.messages.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +46,7 @@ public class HWNode implements MsgListener {
     private List<HWStNode> hwlist; //other highway nodes
     private StNode nextHWNode;
     private Instant lastHWUpdate;
-    private final List<MT_Broadcast> broadcastMsgs = new ArrayList<>();
+    private final List<BroadcastMessage> broadcastMsgs = new ArrayList<>();
 
 
     private MsgHandler carMsgHandler;
@@ -136,7 +137,7 @@ public class HWNode implements MsgListener {
 	}
 
 	public HWNode registerInNetwork() {
-        Message msg = new MsgRegister(getHWStNode());
+        Message msg = new RegisterMessage(getHWStNode());
 		for (Messageable coordAux : posibleCoordinator) {
             logger.info("Attempting register to coordinator: " + coordAux);
 			if (MsgHandler.sendTCPMsg(coordAux, msg)) {
@@ -215,10 +216,10 @@ public class HWNode implements MsgListener {
     }
 
     private void handleBroadcast(Message msg) throws CorruptDataException {
-        if (msg.getType() != MsgType.BROADCAST || !(msg instanceof MT_Broadcast)) {
+        if (msg.getType() != MessageType.BROADCAST || !(msg instanceof BroadcastMessage)) {
             throw new CorruptDataException();
         }
-        MT_Broadcast broadcast = (MT_Broadcast) msg;
+        BroadcastMessage broadcast = (BroadcastMessage) msg;
         synchronized (broadcastMsgs) {
             if (!broadcastMsgs.contains(broadcast) && broadcast.getTTL() > 0) {
                 broadcastMsgs.add(broadcast);
@@ -252,10 +253,10 @@ public class HWNode implements MsgListener {
 	}
 
 	private void handleUpdate(Message msg) throws CorruptDataException {
-        if (msg.getType() != MsgType.UPDATE || !(msg instanceof MT_Update)) {
+        if (msg.getType() != MessageType.UPDATE || !(msg instanceof UpdateMessage)) {
 			throw new CorruptDataException();
 		}
-        MT_Update update = (MT_Update) msg;
+        UpdateMessage update = (UpdateMessage) msg;
 		logger.info("received update from coordinator");
 		//check timestamp
 		if (lastHWUpdate !=null){
@@ -292,23 +293,23 @@ public class HWNode implements MsgListener {
     }
 
     private void handleACK(Message m) throws CorruptDataException {
-        if (m.getType() != MsgType.ACK)
+        if (m.getType() != MessageType.ACK)
             throw new CorruptDataException();
         logger.debug("ACK msg received.");
 	}
 
 	private void handleHello(Message m) throws CorruptDataException {
-        if (m.getType() != MsgType.HELLO || !(m instanceof MsgHello))
+        if (m.getType() != MessageType.HELLO || !(m instanceof HelloMessage))
 			throw new CorruptDataException();
-        MsgHello msgHello = (MsgHello) m;
-        CarStNode node = msgHello.getCarNode();
+        HelloMessage helloMessage = (HelloMessage) m;
+        CarStNode node = helloMessage.getCarNode();
         logger.debug("Hello received from: {}", node);
         if (segments == null) {
             logger.debug("not yet registered on network, ignoring hello.");
             return;
         }
 		if (isInSegments( node.getPosition() ) ) {
-            Message msg = new MT_HelloResponse(m.getId(), getStNode(), carMonitor.getList());
+            Message msg = new HelloResponseMessage(m.getId(), getStNode(), carMonitor.getList());
 			carMonitor.update(node);
             logger.debug(node + " accepted, sending hello response.");
 			carMsgHandler.sendUDP(node, msg);
@@ -324,17 +325,17 @@ public class HWNode implements MsgListener {
 	}
 
     private void sendAlive(Messageable dest) {
-        Message msg = new Message(MsgType.ALIVE, getStNode());
+        Message msg = new Message(MessageType.ALIVE, getStNode());
         carMsgHandler.sendUDP(dest, msg);
     }
 
 
     private void handlePulse(Message msg) throws CorruptDataException {
-        if (msg.getType() != MsgType.PULSE || !(msg instanceof MsgPulse)) {
+        if (msg.getType() != MessageType.PULSE || !(msg instanceof PulseMessage)) {
             throw new CorruptDataException();
         }
-        MsgPulse msgPulse = (MsgPulse) msg;
-        CarStNode car = msgPulse.getCarNode();
+        PulseMessage pulseMessage = (PulseMessage) msg;
+        CarStNode car = pulseMessage.getCarNode();
         logger.debug("Pulse received from node: {}", car);
         if(isInSegments(car.getPosition()))
             updateCar(car);
@@ -350,7 +351,7 @@ public class HWNode implements MsgListener {
     }
 
     private void sendErrorOutOfHighWay(CarStNode node) {
-        carMsgHandler.sendUDP(node, new MsgError(getStNode(), "404: No hw-node for position " + node.getPosition()));
+        carMsgHandler.sendUDP(node, new ErrorMessage(getStNode(), "404: No hw-node for position " + node.getPosition()));
     }
 
     private void updateCar(CarStNode car) {
@@ -359,7 +360,7 @@ public class HWNode implements MsgListener {
 
 	private void redirect(Message m, StNode hwRedirect) {
 
-        MT_Redirect redirect = new MT_Redirect(getStNode(), m.getId(), hwRedirect);
+        RedirectMessage redirect = new RedirectMessage(getStNode(), m.getId(), hwRedirect);
         StNode carst = m.getSender();
         carMsgHandler.sendUDP(carst, redirect);
         logger.debug("{} redirected to: {}", carst, hwRedirect);

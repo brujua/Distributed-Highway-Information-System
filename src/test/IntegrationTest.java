@@ -7,7 +7,7 @@ import common.Position;
 import highway.HWCoordinator;
 import highway.HWNode;
 import highway.Segment;
-import network.MT_Broadcast;
+import network.messages.BroadcastMessage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -225,7 +225,7 @@ class IntegrationTest {
 		    assert (!car3.getSelectedHWnode().equals(car1.getSelectedHWnode()));
 
 		    String msgBroadcast = "Accidente en kilometro " + car1.getPulse().getPosition().getCordx();
-		    MT_Broadcast broadcast = car1.sendBroadcast(msgBroadcast);
+		    BroadcastMessage broadcast = car1.sendBroadcast(msgBroadcast);
 		    Thread.sleep(500);
 		    assert (car1.containBroadcast(broadcast));
 		    assert (car3.containBroadcast(broadcast));

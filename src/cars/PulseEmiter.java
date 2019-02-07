@@ -5,7 +5,7 @@ import common.Pulse;
 import common.StNode;
 import network.Message;
 import network.MsgHandler;
-import network.MsgPulse;
+import network.messages.PulseMessage;
 
 import java.util.List;
 
@@ -37,7 +37,7 @@ public class PulseEmiter implements Runnable, MotionObserver{
 		Message msg;
 		List<CarStNode> nodes = carMonitor.getList();
 		synchronized (lock) {
-			msg = new MsgPulse(source.getStNode(), source);
+			msg = new PulseMessage(source.getStNode(), source);
 		}
 		for (CarStNode node : nodes) {
 			msgHandler.sendUDP(node, msg);

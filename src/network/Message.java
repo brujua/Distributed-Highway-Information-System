@@ -1,6 +1,7 @@
 package network;
 
 import common.StNode;
+import network.messages.MessageType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,19 +12,19 @@ public class Message implements Serializable{
 
     public static final Logger logger = LoggerFactory.getLogger(Message.class);
 
-    MsgType type;
-    StNode sender;
+    protected StNode sender;
+    MessageType type;
     String id;
     String responseId;
 
-    public Message(MsgType type, StNode sender, String responseId) {
+    public Message(MessageType type, StNode sender, String responseId) {
         this.type = type;
         this.sender = sender;
         this.responseId = responseId;
         id = UUID.randomUUID().toString();
     }
 
-    public Message(MsgType type, StNode sender) {
+    public Message(MessageType type, StNode sender) {
         this(type, sender, null);
     }
 
@@ -69,7 +70,7 @@ public class Message implements Serializable{
         return "Message{id= " + id + "}";
     }
 
-    public MsgType getType() {
+    public MessageType getType() {
         return type;
     }
 }

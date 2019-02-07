@@ -1,15 +1,16 @@
-package network;
+package network.messages;
 
 import cars.CarStNode;
 import common.Position;
 import common.Pulse;
+import network.Message;
 
-public class MsgHello extends Message {
+public class HelloMessage extends Message {
 
     private CarStNode carNode;
 
-    public MsgHello(CarStNode sender) {
-        super(MsgType.HELLO, sender.getStNode());
+    public HelloMessage(CarStNode sender) {
+        super(MessageType.HELLO, sender.getStNode());
         carNode = sender;
     }
 
