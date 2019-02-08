@@ -33,10 +33,7 @@ public class CarDrawer implements Drawer {
     private Image carImg;
 
     private Car car;
-    private List<CarStNode> neighs;
     private long previousTime = 0;
-    private Position carPosition;
-    private Position middleCanvasPosition;
 
 
     public CarDrawer(Car car) {
@@ -61,9 +58,9 @@ public class CarDrawer implements Drawer {
         if (updateNeeded(currentTime)) {
             drawBackground(canvas);
             GraphicsContext gc = canvas.getGraphicsContext2D();
-            middleCanvasPosition = calculateMiddlePosition(canvas);
-            neighs = car.getNeighs();
-            carPosition = car.getPulse().getPosition();
+            Position middleCanvasPosition = calculateMiddlePosition(canvas);
+            Position carPosition = car.getPulse().getPosition();
+            List<CarStNode> neighs = car.getNeighs();
             //draw car in the middle
             gc.drawImage(carImg, middleCanvasPosition.getCordx() - (carImg.getWidth() / 2), middleCanvasPosition.getCordy() - (carImg.getHeight() / 2));
             for (CarStNode neigh : neighs) {
@@ -92,17 +89,19 @@ public class CarDrawer implements Drawer {
     }
 
     private void drawNeighbourCar(Position carPos, CarStNode neigh, Position canvasMiddlePosition, Canvas canvas) {
+        GraphicsContext gc = canvas.getGraphicsContext2D();
+
         Position neighPos = neigh.getPosition();
         double scaledCoordX = ((neighPos.getCordx() - carPos.getCordx()) * SCALE_FACTOR_X) + canvasMiddlePosition.getCordx();
         double scaledCoordY = ((neighPos.getCordy() - carPos.getCordy()) * SCALE_FACTOR_Y) + canvasMiddlePosition.getCordy();
-        GraphicsContext gc = canvas.getGraphicsContext2D();
 
-        //Warning! Assuming that scaledCoordY never exceeds canvas bounds. if it doest, wont be drawn
+        //Warning! Assuming that scaledCoordY never exceeds canvas bounds. if it does, wont be drawn
+        String etiquette = getNeighEtiquette(neigh);
+        double etiquetteYAdjusted = scaledCoordY + (NEIGH_FONT_SIZE / 3.0); //arbitrary adjustment
 
         gc.setFill(Color.GREEN);
         gc.setFont(new Font(NEIGH_FONT_SIZE));
-        String etiquette = getNeighEtiquette(neigh);
-        double etiquetteYAdjusted = scaledCoordY + (NEIGH_FONT_SIZE / 3.0); //arbitrary adjustment
+
         if (scaledCoordX > canvas.getWidth()) {// out of canvas by the right
             gc.fillPolygon(new double[]{canvas.getWidth() - TRIANGLE_WIDTH, canvas.getWidth() - 1, canvas.getWidth() - TRIANGLE_WIDTH},
                     new double[]{scaledCoordY + TRIANGLE_HEIGHT, scaledCoordY, scaledCoordY - TRIANGLE_HEIGHT},
@@ -110,7 +109,8 @@ public class CarDrawer implements Drawer {
             gc.fillText(etiquette, canvas.getWidth() - TRIANGLE_WIDTH - ETIQUETTE_MAX_WIDHT, etiquetteYAdjusted, ETIQUETTE_MAX_WIDHT);
         } else if (scaledCoordX < 0) { //out of canvas by the left
             gc.fillPolygon(new double[]{TRIANGLE_WIDTH, 1, TRIANGLE_WIDTH},
-                    new double[]{scaledCoordY + TRIANGLE_HEIGHT, scaledCoordY, scaledCoordY - TRIANGLE_HEIGHT}, 3);
+                    new double[]{scaledCoordY + TRIANGLE_HEIGHT, scaledCoordY, scaledCoordY - TRIANGLE_HEIGHT},
+                    3);
             gc.fillText(etiquette, TRIANGLE_WIDTH + 2, etiquetteYAdjusted, ETIQUETTE_MAX_WIDHT); //arbitrary adjustment
         } else { //within bounds of the canvas
             gc.drawImage(neighImg, scaledCoordX - (neighImg.getWidth() / 2), scaledCoordY - (neighImg.getHeight() / 2));
