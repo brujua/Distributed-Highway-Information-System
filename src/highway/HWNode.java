@@ -192,10 +192,6 @@ public class HWNode implements MsgListener {
                             handleAlive(m);
                             break;
                         }
-                        case ACK: {
-                            handleACK(m);
-                            break;
-                        }
                         case BROADCAST: {
                             handleBroadcast(m);
                             break;
@@ -287,12 +283,6 @@ public class HWNode implements MsgListener {
         }
         hwLock.writeLock().unlock();
     }
-
-    private void handleACK(Message m) throws CorruptDataException {
-        if (m.getType() != MessageType.ACK)
-            throw new CorruptDataException();
-        logger.debug("ACK msg received.");
-	}
 
 	private void handleHello(Message m) throws CorruptDataException {
         if (m.getType() != MessageType.HELLO || !(m instanceof HelloMessage))
