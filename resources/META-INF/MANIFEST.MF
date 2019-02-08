@@ -3,4 +3,4 @@ Main-Class: app.HighwayApp
 Specification-Title: Highway Information System.
 Specification-Version: 1.0
 Implementation-Title: HighwayApp
-Implementation-Version: 1.1
+Implementation-Version: 1.2

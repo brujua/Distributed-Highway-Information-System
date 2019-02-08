@@ -3,7 +3,7 @@ System to trace a fleet of vehicles and manage the communication between them, i
 
 ### Demo application
 This its a simple visual application to demostrate some capabilities of the core system.  
-You can download it from [here](/demo-application-V1.0.3.rar)  
+You can download it from [here](/demo-application-V1.2.rar)  
 ##### How to use it?
  * Extract the rar in any folder you want.  
  * Be sure that the *resources* folder its on the same directory that the *.jar*.  

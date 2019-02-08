@@ -44,7 +44,7 @@ public class CarView implements NodeView {
 
         carVisualContext = new Canvas(CANVAS_WIDHT, CANVAS_HEIGHT);
         executorService.submit(() -> {
-            car = new Car(new Position((Math.random() * 50) + 1, (Math.random() * 200) + 50), 1, "Car");
+            car = new Car(new Position((Math.random() * 50) + 1, (Math.random() * 200) + 50), 10, "Car");
             try {
                 car.listenForMsgs().registerInNetwork().emitPulses();
                 canvasAnimationTimer = new CanvasAnimationTimer(carVisualContext, new CarDrawer(car));
@@ -65,7 +65,7 @@ public class CarView implements NodeView {
 
     private Pane initCarControls() {
         Label velocityLabel = new Label(VELOCITY_LABEL);
-        velocityField = new TextField("1");
+        velocityField = new TextField("10");
         velocityField.setPrefWidth(30);
         velocityField.setMaxWidth(30);
 
