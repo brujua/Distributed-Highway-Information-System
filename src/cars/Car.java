@@ -282,7 +282,7 @@ public class Car implements MsgListener, MotionObservable{
                             break;
                         }
                         case ERROR: {
-                            logger.error("Received error message: " + m);
+                            handleError(m);
                             break;
                         }
                         case BROADCAST: {
@@ -305,6 +305,13 @@ public class Car implements MsgListener, MotionObservable{
             logger.info("Message receive while shut down");
         }
 	}
+
+    private void handleError(Message m) throws CorruptDataException {
+        if (m.getType() != MessageType.ERROR || !(m instanceof ErrorMessage))
+            throw new CorruptDataException();
+        ErrorMessage error = (ErrorMessage) m;
+        logger.error("Received error message: {}" + error.getErrorMsg());
+    }
 
     private void handleAlive(Message m) throws CorruptDataException {
         if (m.getType() != MessageType.ALIVE) {
