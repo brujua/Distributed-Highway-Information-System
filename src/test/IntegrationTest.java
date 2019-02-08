@@ -22,6 +22,7 @@ class IntegrationTest {
 
 	private static final int NUMBER_OF_SEGMENTS = 10;
 	private static final int DEFAULT_SEGMENT_SIDE_SIZE = 5;
+    private static final double SEGMENT_MAX_VEL = 50;
 	private static HWCoordinator coordinator;
 	private static HWNode hwNode;
     private static HWNode hwNode2;
@@ -37,7 +38,7 @@ class IntegrationTest {
 		for (int i = 0; i < NUMBER_OF_SEGMENTS; i++) {
 			double begin = i * DEFAULT_SEGMENT_SIDE_SIZE;
 			double end = begin + DEFAULT_SEGMENT_SIDE_SIZE;
-			segments.add(new Segment(begin, end, 0, DEFAULT_SEGMENT_SIDE_SIZE, i));
+            segments.add(new Segment(begin, end, 0, DEFAULT_SEGMENT_SIDE_SIZE, i, SEGMENT_MAX_VEL));
 		}
 		coordinator = new HWCoordinator(segments);
 		coordinator.listenForMsgs();
