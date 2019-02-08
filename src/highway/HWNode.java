@@ -294,7 +294,7 @@ public class HWNode implements MsgListener {
             logger.debug("not yet registered on network, ignoring hello.");
             return;
         }
-		if (isInSegments( node.getPosition() ) ) {
+		if (isInSegments( node ) ) {
             Message msg = new HelloResponseMessage(m.getId(), getStNode(), carMonitor.getList());
 			carMonitor.update(node);
             logger.debug(node + " accepted, sending hello response.");
@@ -323,8 +323,13 @@ public class HWNode implements MsgListener {
         PulseMessage pulseMessage = (PulseMessage) msg;
         CarStNode car = pulseMessage.getCarNode();
         logger.debug("Pulse received from node: {}", car);
-        if(isInSegments(car.getPosition()))
+        //if(isInSegments(car.getPosition())){
+          if(isInSegments(car)){
             updateCar(car);
+            //checkCar(car);
+
+        }
+
         else {
             StNode nextNode = getNextNode();
             if (nextNode == null)
@@ -334,6 +339,14 @@ public class HWNode implements MsgListener {
 
         }
 
+    }
+
+    private void checkCar(CarStNode car, Segment seg) {
+        if (seg.getMaxVelocity()<= car.getVelocity()){
+            String msg = " Maximum speed alert exceeded, You:"+car.getVelocity()+" Limit:"+seg.getMaxVelocity();
+            carMsgHandler.sendUDP(car,new AlertMessage(getStNode(),AlertType.MaxSpeed,msg));
+            logger.info("{} Maximun speed alert exceeded in segment: {} ",car.getStNode(),seg.getIndex());
+        }
     }
 
     private void sendErrorOutOfHighWay(Message msgReceived, CarStNode node) {
@@ -395,11 +408,12 @@ public class HWNode implements MsgListener {
         return response;
     }
 
-    private boolean isInSegments(Position pos) {
+    private boolean isInSegments(CarStNode car) {
         hwLock.readLock().lock();
         if (segments != null) {
             for (Segment seg : segments) {
-                if (seg.contains(pos)) {
+                if (seg.contains(car.getPosition())) {
+                    checkCar(car,seg);
                     hwLock.readLock().unlock();
                     return true;
                 }

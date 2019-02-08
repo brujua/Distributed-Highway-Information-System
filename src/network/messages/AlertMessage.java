@@ -8,6 +8,7 @@ import java.util.UUID;
 
 public class AlertMessage extends Message {
 
+    private final AlertType alertType;
     //private static final int  = ;
     private String alertId;
     private String msg;
@@ -17,7 +18,7 @@ public class AlertMessage extends Message {
         super(MessageType.ALERT, sender);
         this.msg = msg;
         this.alertId = UUID.randomUUID().toString();
-
+        this.alertType = alertType;
     }
 
 
@@ -25,6 +26,9 @@ public class AlertMessage extends Message {
         return alertId;
     }
 
+    public AlertType getAlertType() {
+        return alertType;
+    }
 
     public String getMsg() {
         return msg;
