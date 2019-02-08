@@ -168,6 +168,11 @@ public class Car implements MsgListener, MotionObservable{
             	case REDIRECT: {
             		return handleRedirect(responseMsg);
             	}
+                case ERROR: {
+                    if (!(responseMsg instanceof ErrorMessage))
+                        throw new CorruptDataException();
+                    logger.error("hw-node responded with an error msg: {}", ((ErrorMessage) responseMsg).getErrorMsg());
+                }
             	default:{
                     logger.error("Response from hw-node of wrong type, type: {} ", responseMsg.getType());
             		return false;
