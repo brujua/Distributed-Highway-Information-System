@@ -158,9 +158,11 @@ public class HWNode implements MsgListener {
     private void handleCoordDown() {
         logger.error("Coordinator offline, periodically trying to re-register...");
         coordinator = null;
+
         if (!isTempCoordinator){
-            isTempCoordinator = true;
             tryReplaceCoordinator();
+
+            isTempCoordinator = true;
         }
         while (coordinator == null) {
             try {
@@ -178,17 +180,18 @@ public class HWNode implements MsgListener {
 
     private void tryReplaceCoordinator() {
 
-        List<Segment> segmentsAux = null;
+        List<Segment> segmentsAux = new ArrayList<>();
        // HWListManager tempCoord = new HWListManager()
-
+        
         for (HWStNode hwNode: getHwlist()) {
 
             for (Segment seg:hwNode.getSegments()) {
+
+
                 segmentsAux.add(seg);
             }
 
         }
-
         hwListManager = new HWListManager(segmentsAux,portHighway);
         hwListManager.setList(getHwlist());
 
@@ -290,9 +293,9 @@ public class HWNode implements MsgListener {
 		}
 		updateHWList(update.getList());
 		lastHWUpdate = update.getTimestamp();
-		if(update.getIp() != coordinator.getIP() && update.getPort() !=coordinator.getPort() && !isTempCoordinator){
+/*		if(update.getIp() != coordinator.getIP() && update.getPort() !=coordinator.getPort() && !isTempCoordinator){
             isTempCoordinator=true;
-        }
+        }*/
 	}
 
     /**
