@@ -55,6 +55,9 @@ public class HWNode implements MsgListener {
     private ExecutorService threadService = Executors.newCachedThreadPool();
     private ReentrantReadWriteLock hwLock = new ReentrantReadWriteLock();
 
+    private boolean isTempCoordinator;
+    private HWListManager hwListManager;
+
 
 
 
@@ -71,6 +74,7 @@ public class HWNode implements MsgListener {
 		carMsgHandler.addMsgListener(this);
         coordinator = null;
         segments = null;
+        isTempCoordinator = false;
     }
 
     public HWNode(String name) {
@@ -154,6 +158,10 @@ public class HWNode implements MsgListener {
     private void handleCoordDown() {
         logger.error("Coordinator offline, periodically trying to re-register...");
         coordinator = null;
+        if (!isTempCoordinator){
+            isTempCoordinator = true;
+            tryReplaceCoordinator();
+        }
         while (coordinator == null) {
             try {
                 registerInNetwork();
@@ -162,6 +170,29 @@ public class HWNode implements MsgListener {
                 logger.info("interrupted while sleeping handling coordinator down");
             }
         }
+
+        isTempCoordinator = false;
+        if(hwListManager != null)
+            hwListManager.shutDown();
+    }
+
+    private void tryReplaceCoordinator() {
+
+        List<Segment> segmentsAux = null;
+       // HWListManager tempCoord = new HWListManager()
+
+        for (HWStNode hwNode: getHwlist()) {
+
+            for (Segment seg:hwNode.getSegments()) {
+                segmentsAux.add(seg);
+            }
+
+        }
+
+        hwListManager = new HWListManager(segmentsAux,portHighway);
+        hwListManager.setList(getHwlist());
+
+
     }
 
     public List<CarStNode> getCarNodes() {
@@ -259,6 +290,9 @@ public class HWNode implements MsgListener {
 		}
 		updateHWList(update.getList());
 		lastHWUpdate = update.getTimestamp();
+		if(update.getIp() != coordinator.getIP() && update.getPort() !=coordinator.getPort() && !isTempCoordinator){
+            isTempCoordinator=true;
+        }
 	}
 
     /**
@@ -413,7 +447,8 @@ public class HWNode implements MsgListener {
         if (segments != null) {
             for (Segment seg : segments) {
                 if (seg.contains(car.getPosition())) {
-                    checkCar(car,seg);
+
+                    checkCar(car, new Segment(seg.getBeginX(),seg.getEndX(),seg.getBeginY(),seg.getEndY(),seg.getIndex(),seg.getMaxVelocity()));
                     hwLock.readLock().unlock();
                     return true;
                 }

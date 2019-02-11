@@ -23,7 +23,7 @@ public class HWListManager {
     public static final long ALIVE_REFRESH_TIME = 2000;
 	private static final Logger logger = LoggerFactory.getLogger(HWListManager.class);
 	private static final int MIN_SEGMENTS_PER_NODE = 1;
-	private final List<HWStNode> list;
+	private List<HWStNode> list;
 	private final List<Segment> segments;
 	private ScheduledExecutorService timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
     private int port;
@@ -153,4 +153,11 @@ public class HWListManager {
     public void setPort(int port) {
         this.port = port;
     }
+
+	public void setList (List<HWStNode> hwlist){
+		synchronized (list) {
+			list = hwlist;
+		}
+	}
+
 }
