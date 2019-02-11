@@ -132,7 +132,8 @@ public class HWListManager {
 	        logger.info("Notifying update of the assigned segments, new state of the hwlist: \n {}", list);
 	        Message updateMsg = new UpdateMessage(getStNode(), list);
             for (HWStNode node : list) {
-                MsgHandler.sendTCPMsg(node, updateMsg);
+                logger.debug("notifying to: {}", node.getHWStNode());
+                MsgHandler.sendTCPMsg(node.getHWStNode(), updateMsg);
             }
         }
 	}
