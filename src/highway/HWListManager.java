@@ -59,7 +59,7 @@ public class HWListManager {
 
 
     private boolean isAlive(HWStNode node) {
-		Messageable dest = node.getStNode();
+        Messageable dest = node.getHWStNode();
 	    Message msg = new Message(MessageType.ALIVE, getStNode());
 		return MsgHandler.sendTCPMsg(dest, msg);
 
@@ -70,7 +70,8 @@ public class HWListManager {
         synchronized (list) {
             if (list.isEmpty()) {
                 logger.info("First hwnode added");
-                list.add(new HWStNode(node.getCarStNode(), node.getStNode(), new ArrayList<>(segments)));
+                node.addSegments(segments);
+                list.add(node);
                 notifyUpdate();
                 return true;
             } else {
@@ -90,7 +91,7 @@ public class HWListManager {
                 List<Segment> segmentsNewNode = new ArrayList<>(loadedSegments.subList(startIndexSegmentsNewNode, sizeSegments));
 
                 //insert after the most loaded node
-                list.add(mostLoadedIndex + 1, new HWStNode(node.getCarStNode(), node.getStNode(), segmentsNewNode));
+                list.add(mostLoadedIndex + 1, new HWStNode(node.getCarStNode(), node.getHWStNode(), segmentsNewNode));
                 notifyUpdate();
                 return true;
             }

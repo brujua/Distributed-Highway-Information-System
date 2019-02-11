@@ -2,9 +2,7 @@ package highway;
 
 import common.Position;
 import common.StNode;
-import network.Messageable;
 
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -12,15 +10,15 @@ import java.util.Objects;
 /**
  * Lightweight representation of a highway node. Fulfills the purpose of identifying it and storing the data to send messages to it.
  */
-public class HWStNode implements Messageable, Serializable {
+public class HWStNode extends StNode {
 
-	private StNode stNode;
-	private StNode carStNode;
+
+    private StNode hwStNode;
 	private List<Segment> segments;
 
 	public HWStNode(StNode carStNode, StNode stNode, List<Segment> segments) {
-		this.stNode = stNode;
-		this.carStNode= carStNode;
+        super(carStNode);
+        this.hwStNode = stNode;
 		this.segments = segments;
 	}
 
@@ -35,14 +33,12 @@ public class HWStNode implements Messageable, Serializable {
 		return false;
 	}
 
-	public StNode getCarStNode() { return carStNode; }
+    public StNode getCarStNode() {
+        return this;
+    }
 
-	public StNode getStNode() {
-		return stNode;
-	}
-
-	public void setStNode(StNode stNode) {
-		this.stNode = stNode;
+    public StNode getHWStNode() {
+        return hwStNode;
 	}
 
 	public int getSegmentCount() {
@@ -57,17 +53,22 @@ public class HWStNode implements Messageable, Serializable {
 		this.segments = segments;
 	}
 
+    @Override
+    public StNode changeIp(String ip) {
+        return new HWStNode(new StNode(getId(), ip, getPort()), new StNode(hwStNode.getId(), ip, hwStNode.getPort()), segments);
+    }
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		HWStNode hwStNode = (HWStNode) o;
-		return Objects.equals(stNode, hwStNode.stNode);
+        return Objects.equals(this.getId(), hwStNode.getId());
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(stNode);
+        return Objects.hash(getId());
 	}
 
 	public void addSegments(List<Segment> newSegments) {
@@ -75,25 +76,11 @@ public class HWStNode implements Messageable, Serializable {
         Collections.sort(segments);
 	}
 
-	@Override
-	public String getIP() {
-		return stNode.getIP();
-	}
-
-	@Override
-	public int getPort() {
-		return stNode.getPort();
-	}
-
-	@Override
-	public String getId() {
-		return stNode.getId();
-	}
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(stNode.toString());
+        sb.append(hwStNode.toString());
         sb.append("Segments:[");
         for (Segment seg : segments) {
             sb.append(seg.getIndex());

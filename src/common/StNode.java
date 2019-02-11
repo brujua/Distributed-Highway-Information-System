@@ -14,12 +14,16 @@ import java.util.Objects;
  * 
  * @implSpec This class is immutable and thread-safe.
 */
-public final class StNode implements Serializable, Messageable {
+public class StNode implements Serializable, Messageable {
     private static final String DEFAULT_IP = "127.0.0.1";
 	private final String id;
 	private final String ip;
 	private final int port;
 
+
+    public StNode(StNode node) {
+        this(node.getId(), node.getIP(), node.getPort());
+    }
 
     public StNode(String id, String ip, int port) {
         if (ip == null) {
@@ -42,7 +46,7 @@ public final class StNode implements Serializable, Messageable {
         this(id, null, port);
     }
 
-	@Override
+    @Override
 	public String getIP() {
 		return this.ip;
 	}

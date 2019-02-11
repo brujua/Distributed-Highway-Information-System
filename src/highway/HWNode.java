@@ -219,11 +219,11 @@ public class HWNode implements MsgListener {
                 if (broadcast.isFromCar()) {
                     logger.info("Broadcast Msg received from car: {}", broadcast.getMsg());
                     //resent as from here
-                    broadcast.setSender(getHWStNode().getStNode(), false);
+                    broadcast.setSender(getHWStNode().getHWStNode(), false);
                     broadcast.decrementTTL();
                     for (HWStNode node : getHwlist()) {
                         if (!node.equals(this.getHWStNode())) {
-                            MsgHandler.sendTCPMsg(node.getStNode(), broadcast);
+                            MsgHandler.sendTCPMsg(node.getHWStNode(), broadcast);
                         }
                     }
                 } else //If its from Hwnode send it to my cars
@@ -329,14 +329,12 @@ public class HWNode implements MsgListener {
             //checkCar(car);
 
         }
-
         else {
             StNode nextNode = getNextNode();
             if (nextNode == null)
                 sendErrorOutOfHighWay(msg, car);
             else
                 redirect(msg, getNextNode());
-
         }
 
     }
@@ -362,7 +360,7 @@ public class HWNode implements MsgListener {
         RedirectMessage redirect = new RedirectMessage(getStNode(), m.getId(), hwRedirect);
         StNode carst = m.getSender();
         carMsgHandler.sendUDP(carst, redirect);
-        logger.debug("{} redirected to: {}", carst, hwRedirect);
+        logger.info("{} redirected to: {}", carst, hwRedirect);
 	}
 
 
