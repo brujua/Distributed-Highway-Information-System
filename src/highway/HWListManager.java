@@ -70,7 +70,7 @@ public class HWListManager {
         synchronized (list) {
             if (list.isEmpty()) {
                 logger.info("First hwnode added");
-                node.addSegments(segments);
+                node.setSegments(segments);
                 list.add(node);
                 notifyUpdate();
                 return true;
@@ -124,7 +124,15 @@ public class HWListManager {
         // on default the segments are added to the next node of the list
         // if its the last, they are added to the one on the previous
 		int indexToAdd = (indexRemoved != listsize - 1) ? indexRemoved + 1 : indexRemoved - 1;
-		list.get(indexToAdd).addSegments(node.getSegments());
+        HWStNode nodeToAdd = list.get(indexToAdd);
+        // add them only if its not repeated.
+        List<Segment> newSegments = new ArrayList<>(nodeToAdd.getSegments());
+        for (Segment seg : node.getSegments()) {
+            if (!(newSegments.equals(seg))) {
+                newSegments.add(seg);
+            }
+        }
+        nodeToAdd.setSegments(newSegments);
 	}
 
     private synchronized void notifyUpdate() {

@@ -22,7 +22,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class HWNode implements MsgListener {
 
     private static final String CONFIG_FILE_NAME = "config-hwnodes";
-    private static final long SLEEP_BETWEEN_TRIES_REG_IN_NET = 5000;
+    private static final long SLEEP_BETWEEN_TRIES_REG_IN_NET = 500;
 
     //configurable parameters
     private int tentativePortCars = 7000;
