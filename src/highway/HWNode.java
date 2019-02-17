@@ -22,7 +22,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class HWNode implements MsgListener {
 
     private static final String CONFIG_FILE_NAME = "config-hwnodes";
-    private static final long SLEEP_BETWEEN_TRIES_REG_IN_NET = 500;
+    private static final long SLEEP_BETWEEN_TRIES_REG_IN_NET = 5000;
 
     //configurable parameters
     private int tentativePortCars = 7000;
@@ -55,9 +55,6 @@ public class HWNode implements MsgListener {
     private ExecutorService threadService = Executors.newCachedThreadPool();
     private ReentrantReadWriteLock hwLock = new ReentrantReadWriteLock();
 
-    private boolean isTempCoordinator;
-    private HWListManager hwListManager;
-
 
 
 
@@ -74,7 +71,6 @@ public class HWNode implements MsgListener {
 		carMsgHandler.addMsgListener(this);
         coordinator = null;
         segments = null;
-        isTempCoordinator = false;
     }
 
     public HWNode(String name) {
@@ -158,12 +154,6 @@ public class HWNode implements MsgListener {
     private void handleCoordDown() {
         logger.error("Coordinator offline, periodically trying to re-register...");
         coordinator = null;
-
-        if (!isTempCoordinator){
-            tryReplaceCoordinator();
-
-            isTempCoordinator = true;
-        }
         while (coordinator == null) {
             try {
                 registerInNetwork();
@@ -172,30 +162,6 @@ public class HWNode implements MsgListener {
                 logger.info("interrupted while sleeping handling coordinator down");
             }
         }
-
-        isTempCoordinator = false;
-        if(hwListManager != null)
-            hwListManager.shutDown();
-    }
-
-    private void tryReplaceCoordinator() {
-
-        List<Segment> segmentsAux = new ArrayList<>();
-       // HWListManager tempCoord = new HWListManager()
-        
-        for (HWStNode hwNode: getHwlist()) {
-
-            for (Segment seg:hwNode.getSegments()) {
-
-
-                segmentsAux.add(seg);
-            }
-
-        }
-        hwListManager = new HWListManager(segmentsAux,portHighway);
-        hwListManager.setList(getHwlist());
-
-
     }
 
     public List<CarStNode> getCarNodes() {
@@ -253,11 +219,11 @@ public class HWNode implements MsgListener {
                 if (broadcast.isFromCar()) {
                     logger.info("Broadcast Msg received from car: {}", broadcast.getMsg());
                     //resent as from here
-                    broadcast.setSender(getHWStNode().getHWStNode(), false);
+                    broadcast.setSender(getHWStNode().getStNode(), false);
                     broadcast.decrementTTL();
                     for (HWStNode node : getHwlist()) {
                         if (!node.equals(this.getHWStNode())) {
-                            MsgHandler.sendTCPMsg(node.getHWStNode(), broadcast);
+                            MsgHandler.sendTCPMsg(node.getStNode(), broadcast);
                         }
                     }
                 } else //If its from Hwnode send it to my cars
@@ -293,9 +259,6 @@ public class HWNode implements MsgListener {
 		}
 		updateHWList(update.getList());
 		lastHWUpdate = update.getTimestamp();
-/*		if(update.getIp() != coordinator.getIP() && update.getPort() !=coordinator.getPort() && !isTempCoordinator){
-            isTempCoordinator=true;
-        }*/
 	}
 
     /**
@@ -331,7 +294,7 @@ public class HWNode implements MsgListener {
             logger.debug("not yet registered on network, ignoring hello.");
             return;
         }
-		if (isInSegments( node ) ) {
+        if (isInSegments(node.getPosition())) {
             Message msg = new HelloResponseMessage(m.getId(), getStNode(), carMonitor.getList());
 			carMonitor.update(node);
             logger.debug(node + " accepted, sending hello response.");
@@ -360,28 +323,17 @@ public class HWNode implements MsgListener {
         PulseMessage pulseMessage = (PulseMessage) msg;
         CarStNode car = pulseMessage.getCarNode();
         logger.debug("Pulse received from node: {}", car);
-        //if(isInSegments(car.getPosition())){
-          if(isInSegments(car)){
+        if (isInSegments(car.getPosition()))
             updateCar(car);
-            //checkCar(car);
-
-        }
         else {
             StNode nextNode = getNextNode();
             if (nextNode == null)
                 sendErrorOutOfHighWay(msg, car);
             else
                 redirect(msg, getNextNode());
+
         }
 
-    }
-
-    private void checkCar(CarStNode car, Segment seg) {
-        if (seg.getMaxVelocity()<= car.getVelocity()){
-            String msg = " Maximum speed alert exceeded, You:"+car.getVelocity()+" Limit:"+seg.getMaxVelocity();
-            carMsgHandler.sendUDP(car,new AlertMessage(getStNode(),AlertType.MaxSpeed,msg));
-            logger.info("{} Maximun speed alert exceeded in segment: {} ",car.getStNode(),seg.getIndex());
-        }
     }
 
     private void sendErrorOutOfHighWay(Message msgReceived, CarStNode node) {
@@ -397,7 +349,7 @@ public class HWNode implements MsgListener {
         RedirectMessage redirect = new RedirectMessage(getStNode(), m.getId(), hwRedirect);
         StNode carst = m.getSender();
         carMsgHandler.sendUDP(carst, redirect);
-        logger.info("{} redirected to: {}", carst, hwRedirect);
+        logger.debug("{} redirected to: {}", carst, hwRedirect);
 	}
 
 
@@ -443,13 +395,11 @@ public class HWNode implements MsgListener {
         return response;
     }
 
-    private boolean isInSegments(CarStNode car) {
+    private boolean isInSegments(Position pos) {
         hwLock.readLock().lock();
         if (segments != null) {
             for (Segment seg : segments) {
-                if (seg.contains(car.getPosition())) {
-
-                    checkCar(car, new Segment(seg.getBeginX(),seg.getEndX(),seg.getBeginY(),seg.getEndY(),seg.getIndex(),seg.getMaxVelocity()));
+                if (seg.contains(pos)) {
                     hwLock.readLock().unlock();
                     return true;
                 }

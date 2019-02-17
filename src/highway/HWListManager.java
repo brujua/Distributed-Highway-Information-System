@@ -23,7 +23,7 @@ public class HWListManager {
     public static final long ALIVE_REFRESH_TIME = 2000;
 	private static final Logger logger = LoggerFactory.getLogger(HWListManager.class);
 	private static final int MIN_SEGMENTS_PER_NODE = 1;
-	private List<HWStNode> list;
+    private final List<HWStNode> list;
 	private final List<Segment> segments;
 	private ScheduledExecutorService timeoutScheduler = Executors.newSingleThreadScheduledExecutor();
     private int port;
@@ -59,7 +59,7 @@ public class HWListManager {
 
 
     private boolean isAlive(HWStNode node) {
-        Messageable dest = node.getHWStNode();
+        Messageable dest = node.getStNode();
 	    Message msg = new Message(MessageType.ALIVE, getStNode());
 		return MsgHandler.sendTCPMsg(dest, msg);
 
@@ -70,8 +70,7 @@ public class HWListManager {
         synchronized (list) {
             if (list.isEmpty()) {
                 logger.info("First hwnode added");
-                node.setSegments(segments);
-                list.add(node);
+                list.add(new HWStNode(node.getCarStNode(), node.getStNode(), new ArrayList<>(segments)));
                 notifyUpdate();
                 return true;
             } else {
@@ -91,7 +90,7 @@ public class HWListManager {
                 List<Segment> segmentsNewNode = new ArrayList<>(loadedSegments.subList(startIndexSegmentsNewNode, sizeSegments));
 
                 //insert after the most loaded node
-                list.add(mostLoadedIndex + 1, new HWStNode(node.getCarStNode(), node.getHWStNode(), segmentsNewNode));
+                list.add(mostLoadedIndex + 1, new HWStNode(node.getCarStNode(), node.getStNode(), segmentsNewNode));
                 notifyUpdate();
                 return true;
             }
@@ -124,15 +123,7 @@ public class HWListManager {
         // on default the segments are added to the next node of the list
         // if its the last, they are added to the one on the previous
 		int indexToAdd = (indexRemoved != listsize - 1) ? indexRemoved + 1 : indexRemoved - 1;
-        HWStNode nodeToAdd = list.get(indexToAdd);
-        // add them only if its not repeated.
-        List<Segment> newSegments = new ArrayList<>(nodeToAdd.getSegments());
-        for (Segment seg : node.getSegments()) {
-            if (!(newSegments.equals(seg))) {
-                newSegments.add(seg);
-            }
-        }
-        nodeToAdd.setSegments(newSegments);
+        list.get(indexToAdd).addSegments(node.getSegments());
 	}
 
     private synchronized void notifyUpdate() {
@@ -140,8 +131,7 @@ public class HWListManager {
 	        logger.info("Notifying update of the assigned segments, new state of the hwlist: \n {}", list);
 	        Message updateMsg = new UpdateMessage(getStNode(), list);
             for (HWStNode node : list) {
-                logger.debug("notifying to: {}", node.getHWStNode());
-                MsgHandler.sendTCPMsg(node.getHWStNode(), updateMsg);
+                MsgHandler.sendTCPMsg(node, updateMsg);
             }
         }
 	}
@@ -163,11 +153,4 @@ public class HWListManager {
     public void setPort(int port) {
         this.port = port;
     }
-
-	public void setList (List<HWStNode> hwlist){
-		synchronized (list) {
-			list = hwlist;
-		}
-	}
-
 }

@@ -86,7 +86,6 @@ public class HWCoordinator implements Messageable, MsgListener {
 		}
 		HWStNode node = ((RegisterMessage) msg).getHwNode();
 		logger.info("Register from node {}", node);
-
 		hwlist.add(node);
 	}
 

@@ -8,7 +8,7 @@ public class RegisterMessage extends Message {
     private HWStNode HwNode;
 
     public RegisterMessage(HWStNode sender) {
-        super(MessageType.REGISTER, sender.getHWStNode());
+        super(MessageType.REGISTER, sender.getStNode());
         this.HwNode = sender;
     }
 

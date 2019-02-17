@@ -298,10 +298,6 @@ public class Car implements MsgListener, MotionObservable{
                             handleAlive(m);
                             break;
                         }
-                        case ALERT: {
-                            handleAlert(m);
-                            break;
-                        }
                         default: {
                             logger.error("Received message of wrong type: " + m.getType().toString());
                         }
@@ -313,19 +309,6 @@ public class Car implements MsgListener, MotionObservable{
         } else {
             logger.info("Message receive while shut down");
         }
-	}
-
-    private void handleAlert(Message m) throws CorruptDataException{
-        if (m.getType() != MessageType.ALERT) {
-            throw new CorruptDataException();
-        }
-        AlertMessage alert = (AlertMessage) m;
-
-        StNode node = m.getSender();
-
-        logger.info("Received Alert: {} from: {}",alert.getMsg(),node);
-
-
 	}
 
     private void handleError(Message m) throws CorruptDataException {

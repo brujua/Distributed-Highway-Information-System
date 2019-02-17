@@ -2,7 +2,9 @@ package highway;
 
 import common.Position;
 import common.StNode;
+import network.Messageable;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -10,15 +12,15 @@ import java.util.Objects;
 /**
  * Lightweight representation of a highway node. Fulfills the purpose of identifying it and storing the data to send messages to it.
  */
-public class HWStNode extends StNode {
+public class HWStNode implements Messageable, Serializable {
 
-
-    private StNode hwStNode;
+	private StNode stNode;
+	private StNode carStNode;
 	private List<Segment> segments;
 
 	public HWStNode(StNode carStNode, StNode stNode, List<Segment> segments) {
-        super(carStNode);
-        this.hwStNode = stNode;
+		this.stNode = stNode;
+		this.carStNode = carStNode;
 		this.segments = segments;
 	}
 
@@ -33,12 +35,16 @@ public class HWStNode extends StNode {
 		return false;
 	}
 
-    public StNode getCarStNode() {
-        return this;
-    }
+	public StNode getCarStNode() {
+		return carStNode;
+	}
 
-    public StNode getHWStNode() {
-        return hwStNode;
+	public StNode getStNode() {
+		return stNode;
+	}
+
+	public void setStNode(StNode stNode) {
+		this.stNode = stNode;
 	}
 
 	public int getSegmentCount() {
@@ -53,22 +59,17 @@ public class HWStNode extends StNode {
 		this.segments = segments;
 	}
 
-    @Override
-    public StNode changeIp(String ip) {
-        return new HWStNode(new StNode(getId(), ip, getPort()), new StNode(hwStNode.getId(), ip, hwStNode.getPort()), segments);
-    }
-
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		HWStNode hwStNode = (HWStNode) o;
-        return Objects.equals(this.getId(), hwStNode.getId());
+		return Objects.equals(stNode, hwStNode.stNode);
 	}
 
 	@Override
 	public int hashCode() {
-        return Objects.hash(getId());
+		return Objects.hash(stNode);
 	}
 
 	public void addSegments(List<Segment> newSegments) {
@@ -76,11 +77,25 @@ public class HWStNode extends StNode {
         Collections.sort(segments);
 	}
 
+	@Override
+	public String getIP() {
+		return stNode.getIP();
+	}
+
+	@Override
+	public int getPort() {
+		return stNode.getPort();
+	}
+
+	@Override
+	public String getId() {
+		return stNode.getId();
+	}
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(hwStNode.toString());
+	    sb.append(stNode.toString());
         sb.append("Segments:[");
         for (Segment seg : segments) {
             sb.append(seg.getIndex());
