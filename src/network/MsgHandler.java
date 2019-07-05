@@ -14,8 +14,8 @@ import java.util.concurrent.*;
 public class MsgHandler implements MsgObservable{
 
 	private static final int DEFAULT_MAX_RETRIES = 3;
-	private static final int DEFAULT_TIMEOUT = 200;
-    private static final int LISTENING_SOCKET_TIMEOUT_MS = 2000;//milliseconds
+	private static final int DEFAULT_TIMEOUT_MS = 200;
+	private static final int LISTENING_SOCKET_TIMEOUT_MS = 2000;
     private static final int UDP_PACKET_BUFFER_SIZE = 4096;
 
 	private int port;
@@ -37,7 +37,6 @@ public class MsgHandler implements MsgObservable{
 	public MsgHandler (int port) {
 		this(port,"");
 	}
-
 
 	public static boolean sendTCPMsg(Messageable dest, Message msg) {
 		try (Socket connection = new Socket(dest.getIP(), dest.getPort())) {
@@ -156,7 +155,7 @@ public class MsgHandler implements MsgObservable{
 	}
 
 	public CompletableFuture<Message> sendUDPWithResponse(Messageable dest, Message msg) {
-		return sendUDPWithResponse(dest, msg, DEFAULT_TIMEOUT, DEFAULT_MAX_RETRIES);
+		return sendUDPWithResponse(dest, msg, DEFAULT_TIMEOUT_MS, DEFAULT_MAX_RETRIES);
 	}
 
 	public CompletableFuture<Message> sendUDPWithResponse(Messageable dest, Message msg, int timeout, int maxtries) {
@@ -174,7 +173,7 @@ public class MsgHandler implements MsgObservable{
 					response.completeExceptionally(new TimeoutException("retries exceeded"));
 				}
 				// sleep some in case a duplicate response arrives and then remove from monitor
-				Thread.sleep(DEFAULT_TIMEOUT);
+				Thread.sleep(DEFAULT_TIMEOUT_MS);
                 responseMonitor.remove(msg);
 
 			} catch (InterruptedException e) {

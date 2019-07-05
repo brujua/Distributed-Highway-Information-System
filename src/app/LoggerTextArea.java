@@ -7,12 +7,12 @@ import java.io.OutputStream;
 
 public class LoggerTextArea extends TextArea {
 
-    private static final double PREF_WIDHT = 600;
+    private static final double PREF_WIDTH = 600;
 
     public LoggerTextArea() {
         super();
         this.setEditable(false);
-        this.setPrefWidth(PREF_WIDHT);
+        this.setPrefWidth(PREF_WIDTH);
         TextAreaOutputStream outputStream = new TextAreaOutputStream(this);
         MyStaticOutputStreamAppender.setStaticOutputStream(outputStream);
     }
