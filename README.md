@@ -8,8 +8,12 @@ The current specification can be found [here](/Protocol-Specification.pdf)
 
 ### Demo application
 This its a simple visual application to demonstrate some capabilities of the core system.  
-You can download it from [here](/demo-application-V1.2.rar)  
+You can download it from [here](/demo-application-V1.2.rar)
+![Demo App Gif](/demo-app.gif)
+Note: Every instance could run on a different machine.
+  
 ##### How to use it?
+ * You need to have Java 8 o greater installed on your system.
  * Extract the rar in any folder you want.  
  * Be sure that the *resources* folder its on the same directory that the *.jar*.  
  * Use the *.jar* as an executable to launch a node as many times as nodes you want.  
